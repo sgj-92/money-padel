@@ -630,6 +630,7 @@ function renderMeritTable(){
 
   content.innerHTML = html;
   wireRequestPlayerLinks(content);
+  wireRaceStakes(content);
 
   document.getElementById('meritGroupedBtn').onclick = ()=>{ leagueGrouped = true; meritDrill = null; resetMeritTierSections(); renderMeritTable(); };
   document.getElementById('meritAllBtn').onclick = ()=>{ leagueGrouped = false; meritDrill = null; renderMeritTable(); };
@@ -692,8 +693,23 @@ function raceDrillRowHtml(d, tier){
       <span class="merit-drill-pts race-pts ${d.points < 0 ? 'is-neg' : ''}">${racePoints(d.points)}</span>
     </div>
     <div class="merit-drill-teams"><b>${verb}</b>${partner} v ${who(d.opponents)}${score ? ` <span class="race-drill-score">${escapeHtml(score)}</span>` : ''}</div>
+    <button type="button" class="race-stakes-toggle" aria-expanded="false">Details <span class="race-stakes-chev" aria-hidden="true">›</span></button>
     <div class="merit-drill-meta race-drill-meta">Stakes: win ${racePoints(d.stakes.win)} · draw ${racePoints(d.stakes.draw)} · lose ${racePoints(d.stakes.loss)}<br>An ordinary Tier ${escapeHtml(tier)} player wins this ${Math.round(d.parWin*100)}% of the time</div>
   </div>`;
+}
+
+// The stakes and the par win chance are the working behind a match's points:
+// hidden until asked for (Shaun, 31 Oct), one match at a time, so a list of
+// nine wins reads as nine results.
+function wireRaceStakes(content){
+  content.querySelectorAll('.race-stakes-toggle').forEach(btn=>{
+    btn.onclick = ()=>{
+      const row = btn.closest('.race-drill-row');
+      const open = !row.classList.contains('show-stakes');
+      row.classList.toggle('show-stakes', open);
+      btn.setAttribute('aria-expanded', String(open));
+    };
+  });
 }
 
 function buildRaceTableHtml(rows, ranked){
@@ -786,6 +802,7 @@ function renderMonthlyRace(){
   if(unresolved.length) html += `<div class="section-sub">${unresolved.length} match${unresolved.length===1?'':'es'} could not be scored: a player's tier or pre-match rating on that date is unknown.</div>`;
 
   content.innerHTML = html;
+  wireRaceStakes(content);
   wireRequestPlayerLinks(content);
   const ex = document.getElementById('raceExplainerToggle');
   if(ex) ex.onclick = ()=>{ raceExplainerOpen = !raceExplainerOpen; renderMonthlyRace(); };

@@ -348,3 +348,36 @@ maybe('raceStandingOf places a player exactly as the Race table does', async () 
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 31 Oct: "hide the stakes and % info unless we tap a button/chevron".
+maybe('a match\'s stakes and win chance stay hidden until its Details button is tapped, in the Race and on the Merit Table', async () => {
+  const app = await withRace({ now: NOW });
+  try {
+    const r = await app.run(() => {
+      const shown = (row) => getComputedStyle(row.querySelector('.race-drill-meta')).display !== 'none';
+      openRace();
+      document.querySelector('.race-score').click();
+      const rows = [...document.querySelectorAll('.race-drill-row')];
+      const before = rows.map(shown);
+      const btn = rows[0].querySelector('.race-stakes-toggle');
+      btn.click();
+      const afterOne = rows.map(shown);
+      const expanded = btn.getAttribute('aria-expanded');
+      btn.click();
+      const closed = shown(rows[0]);
+      // The Merit Table's Race column opens the same rows.
+      summaryMode = 'merit'; leagueGrouped = false; meritDrill = null; renderSummary();
+      document.querySelector('#summaryContent .merit-count[data-kind="race"]').click();
+      const mRow = document.querySelector('#summaryContent .race-drill-row');
+      const mBefore = shown(mRow);
+      mRow.querySelector('.race-stakes-toggle').click();
+      return { before, afterOne, expanded, closed, mBefore, mAfter: shown(mRow) };
+    });
+    assert.ok(r.before.length > 1 && r.before.every((x) => !x), 'hidden by default');
+    assert.deepStrictEqual(r.afterOne, r.before.map((_, i) => i === 0), 'one tap shows that match only');
+    assert.strictEqual(r.expanded, 'true');
+    assert.strictEqual(r.closed, false, 'a second tap hides it again');
+    assert.deepStrictEqual([r.mBefore, r.mAfter], [false, true]);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
