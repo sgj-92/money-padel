@@ -152,6 +152,9 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Race match details hidden until asked for — DONE (commit below), 31 Oct.** Shaun: "Can we hide the stakes and % info unless we tap a button/chevron to show it please?"
+- Each match in a Race drill-down (the Race table's score and P/W/D/L, and the Merit Table's Race column) shows date, points, result and score; a **Details ›** button under it reveals that match's stakes and par win chance. One match at a time; nothing else changes. `wireRaceStakes` in leagueScreen.js. 973 / 973.
+
 **Redesign: Power Rankings calmer; one type system app-wide — DONE (`646d91b` on `redesign`), 31 Oct.** Shaun: "Too many fonts, a lot of visual noise. Can't see October or all tiers inside the boxes"; approved from a mock, then "apply the fonts app-wide".
 - **Decision (Shaun): Inter for everything read or tapped; Georgia for titles and player names.** Instrument Serif retired (files removed); `--font-display` is Georgia; the Helvetica/Arial `--font-interface` token, the Georgia `body` default and unstyled buttons/inputs all resolve to Inter. The Power screen had four families and ~20 sizes; it now has two.
 - Power: eyebrow removed; month/tier boxes lose their icons and show whole names ("September 2026", "All tiers") down to 360px; Include idle / temporarily inactive moved into Filters; Kings of Tiers is a list (crown, name over tier, rating); podium and Monthly Summary on the type scale.
@@ -9063,6 +9066,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 31 Oct (latest): Race match details behind a Details button (commit below, 973 / 973).** Baton → Shaun.
 
 **CCode, 31 Oct (latest): redesign Power Rankings + app-wide fonts (`646d91b` on `redesign`).** Baton → Shaun to review at mpr.sgj.luxe.
 
