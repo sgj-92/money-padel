@@ -55,7 +55,7 @@ function renderSummary(){
         <option value="race">Monthly Race</option>
         <option value="merit">Merit Table</option>
         <option value="league">League Table</option>
-        <option value="honours">Roll of Honour</option>
+        <option value="honours">Honours</option>
         <option value="information">Information</option>
       </select>
     </div>

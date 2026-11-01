@@ -153,7 +153,7 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 ### Added since the compaction
 
 **Roll of Honour — DONE (`ffe1dd4`), 1 Nov.** Shaun: "We need to have somewhere that we're recording the historical Monthly Champions and voted Player of the Months."
-- League › View › **Roll of Honour** (after League Table; also on the standings site): every month on record, newest first — each tier's Monthly Champion with their Race score (`championsFor`), and the Player of the Month from the stored `playerOfTheMonth` award (or "Voting" / "Not chosen yet"). The month in progress shows leaders. A Champion opens that month's Race. Kings are not listed (a King is today's All-time leader).
+- League › View › **Honours** (the Roll of Honour; after League Table; also on the standings site): every month on record, newest first — each tier's Monthly Champion with their Race score (`championsFor`), and the Player of the Month from the stored `playerOfTheMonth` award (or "Voting" / "Not chosen yet"). The month in progress shows leaders. A Champion opens that month's Race. Kings are not listed (a King is today's All-time leader).
 - Player of the Month is a stored snapshot (since `7dca948`); **Champions are derived from the record**, so a later edit to an old match could change a past Champion. Open question for Shaun: lock them (Open Questions, 1 Nov).
 - 977 / 977.
 
