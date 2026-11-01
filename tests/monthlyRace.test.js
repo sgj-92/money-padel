@@ -211,7 +211,7 @@ maybe('the Monthly Race is a view on the League screen, first, then Merit and Le
       document.querySelector('#tabrow .tab-btn[data-tab="summary"]').click();
       return [...document.querySelectorAll('#summaryModeSelect option')].map((o) => o.value);
     });
-    assert.deepStrictEqual(r, ['race', 'merit', 'league', 'honours', 'information'], 'in order of importance (Shaun, 31 Oct), then the Roll of Honour (1 Nov)');
+    assert.deepStrictEqual(r, ['race', 'merit', 'league', 'vstiers', 'honours', 'information'], 'in order of importance (Shaun, 31 Oct), then the Roll of Honour (1 Nov)');
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });

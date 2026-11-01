@@ -756,3 +756,16 @@
 .roh-admin-btn{ font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 8px; cursor: pointer;
   border: 1px solid var(--gold-hairline, var(--line)); background: var(--gold-wash, transparent); color: var(--gold-bright); }
 .roh-admin-btn.roh-quiet{ background: none; border-color: var(--line); color: var(--text-dim); font-weight: 500; }
+
+/* Vs Tiers (Shaun, 1 Nov): each player's record against every tier. */
+.tr-cell{ padding: 6px 1px; text-align: center; line-height: 1.15; }
+.tr-cell b{ display: block; font-variant-numeric: tabular-nums; }
+.tr-wdl{ display: block; font-size: 10px; letter-spacing: -0.02em; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.tr-cell.is-own, .tr-head.is-own{ background: var(--gold-wash, rgba(212,175,55,0.08)); }
+.tr-head.is-own{ color: var(--gold-bright); }
+.tr-none{ color: var(--text-dim); }
+.tr-chev{ color: var(--text-dim); font-weight: 400; }
+.tr-break .merit-drill-head{ margin-top: 6px; }
+.tr-opp{ display: grid; grid-template-columns: minmax(0, 1fr) auto 44px; gap: 10px; padding: 5px 0; font-size: 13px; border-top: 1px solid var(--line); }
+.tr-opp-rec{ color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.tr-opp-pct{ text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
