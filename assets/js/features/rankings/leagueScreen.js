@@ -96,6 +96,8 @@ function renderSummary(){
 // Month the club voted for (the stored award, potmWinnerOf). Every month on
 // record, newest first; the month still being played shows who is leading.
 // Kings are not here: a King is whoever leads the All-time Power Rankings now.
+// A finished month's Champions are Provisional until an Admin confirms them
+// (championsData.js); from then on they are the stored record.
 function rollOfHonourMonths(){
   return getAvailableMonths().filter(m => m !== 'all').slice().sort().reverse();
 }
@@ -109,6 +111,7 @@ function renderRollOfHonour(){
   months.forEach(month=>{
     const champs = championsFor(month);
     const final = month < currentMonthKey();
+    const locked = !!championRecordFor(month);
     const potm = potmWinnerOf(month);
     const tiers = groupedTiers().filter(t => champs && champs[t]);
     const rows = tiers.map(t => {
@@ -125,12 +128,34 @@ function renderRollOfHonour(){
           <span class="roh-who"><span class="request-player-link" data-player="${escapeHtml(potm.name)}">${escapeHtml(potm.name)}</span></span><span class="roh-figure" aria-hidden="true">🏆</span></div>`
       : `<div class="roh-row roh-potm"><span class="roh-what">Player of the Month</span>
           <span class="roh-who roh-dim">${final ? (potmShortlistOf(month) ? 'Voting' : 'Not chosen yet') : 'Voted after the month'}</span></div>`);
+    let admin = '';
+    if(isUnlocked && final){
+      if(locked){
+        const changed = championsChangedSince(month);
+        admin = `<div class="roh-admin">
+          ${changed.length ? `<div class="roh-admin-note">Since confirming, the games give ${changed.map(c => `Tier ${c.tier}: ${escapeHtml(c.now || 'nobody')} (confirmed ${escapeHtml(c.confirmed || 'nobody')})`).join('; ')}. Reopen to confirm again.</div>` : ''}
+          <button type="button" class="roh-admin-btn roh-quiet" data-roh-reopen="${month}">Reopen Champions</button>
+        </div>`;
+      } else {
+        admin = `<div class="roh-admin"><button type="button" class="roh-admin-btn" data-roh-confirm="${month}">Confirm Champions</button></div>`;
+      }
+    }
     html += `<div class="callout-card roh-month">
-      <div class="roh-month-head"><span>${monthLabel(month)}</span>${final ? '' : '<span class="roh-live">In progress</span>'}</div>
+      <div class="roh-month-head"><span>${monthLabel(month)}</span>${!final ? '<span class="roh-live">In progress</span>' : locked ? '<span class="roh-live roh-confirmed">Confirmed</span>' : '<span class="roh-live">Provisional</span>'}</div>
       ${rows.join('')}
+      ${admin}
     </div>`;
   });
   content.innerHTML = html;
+  // Admin: lock a finished month's Champions, or reopen them. Nothing is
+  // written without one of these taps.
+  const act = async (btn, fn) => {
+    btn.disabled = true;
+    try { await fn(); renderRollOfHonour(); }
+    catch(e){ btn.disabled = false; btn.textContent = 'Could not save: ' + (e && e.message ? e.message : e); }
+  };
+  content.querySelectorAll('[data-roh-confirm]').forEach(b=>{ b.onclick = ()=> act(b, ()=> confirmMonthlyChampions(b.dataset.rohConfirm)); });
+  content.querySelectorAll('[data-roh-reopen]').forEach(b=>{ b.onclick = ()=> act(b, ()=> reopenMonthlyChampions(b.dataset.rohReopen)); });
   wireRequestPlayerLinks(content);
   // A Champion opens that month's Race, where the score comes from.
   content.querySelectorAll('.roh-champ').forEach(b=>{

@@ -152,6 +152,12 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Monthly Champions locked once confirmed — DONE (commit below), 1 Nov.** Shaun approved CCode's recommendation ("Yes").
+- New collection **`monthlyChampions`** (one doc per month, id YYYY-MM): `{ month, champions: { A: { playerId, name, score, played }, … }, confirmedAt, confirmedBy }`, every tier stored (Tier S too). `features/awards/championsData.js`; loaded at start-up with Player of the Month.
+- An Admin taps **Confirm Champions** on a finished month in the Roll of Honour; **Reopen Champions** deletes the record so the month reads from the games again. Nothing is written without one of those taps.
+- `championsFor` answers from the record once a month is confirmed, so the Roll of Honour and the Power Rankings Champions panel agree. Members see each finished month as **Provisional** or **Confirmed**. If the games later disagree with a confirmed month, Admins see a note naming the difference.
+- The beta Firestore is open (no rules change needed). 979 / 979.
+
 **Roll of Honour — DONE (`ffe1dd4`), 1 Nov.** Shaun: "We need to have somewhere that we're recording the historical Monthly Champions and voted Player of the Months."
 - League › View › **Honours** (the Roll of Honour; after League Table; also on the standings site): every month on record, newest first — each tier's Monthly Champion with their Race score (`championsFor`), and the Player of the Month from the stored `playerOfTheMonth` award (or "Voting" / "Not chosen yet"). The month in progress shows leaders. A Champion opens that month's Race. Kings are not listed (a King is today's All-time leader).
 - Player of the Month is a stored snapshot (since `7dca948`); **Champions are derived from the record**, so a later edit to an old match could change a past Champion. Open question for Shaun: lock them (Open Questions, 1 Nov).
@@ -2999,7 +3005,7 @@ with Shaun.**
 
 ## 5. OPEN QUESTIONS / DECISIONS
 
-### OPEN 1 Nov — Lock each month's Champions once the month is over? (Shaun)
+### RESOLVED 1 Nov — Lock each month's Champions once the month is over: yes (Shaun), built as recommended
 The Roll of Honour reads Player of the Month from stored awards, but works
 Champions out from the games each time. Correcting an old game could
 therefore change a past Champion. **CCode's recommendation:** store each
@@ -9087,6 +9093,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 1 Nov (latest): Monthly Champions locked by Admin confirmation (commit below, 979 / 979).** Baton → Shaun: unlock Admin and confirm June–October in League › Honours.
 
 **CCode, 1 Nov (latest): Roll of Honour (`ffe1dd4`, 977 / 977).** Baton → Shaun: lock Champions once a month ends? (Open Questions, 1 Nov.)
 

@@ -2221,7 +2221,7 @@ async function init(){
   // the application has no rating without it and will not invent one -- and it
   // is, because nothing below runs until every one of these has landed.
   const [ , stored, myName, ownerHash, boardHash, unlocked,
-          visibility, requests, areas, challenges, northSouth, potmRecords ] =
+          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords ] =
     await PerfTrace.timeAsync('load the record', Promise.all([
       loadV3State(),
       loadStoredData(),
@@ -2235,6 +2235,7 @@ async function init(){
       loadChallenges(),
       loadNorthSouthResults(),
       loadPotmRecords(),
+      loadChampionRecords(),
     ]));
   extraMatchesState = stored.extraMatches;
   tagOverridesState = stored.tagOverrides;
@@ -2251,6 +2252,7 @@ async function init(){
   challengesState = challenges;
   northSouthResultsState = northSouth;
   potmRecordsState = potmRecords;
+  championRecordsState = championRecords;
   PerfTrace.mark('record ready');
   // Power Rankings opens on the most recently completed month rather than
   // All Time. getAvailableMonths() only needs the raw match state loaded
