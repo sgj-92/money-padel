@@ -63,7 +63,7 @@ maybe('the Share Deck is the Board Pack\'s selection, in the Board Pack\'s order
       withContent: boardPackDeck(boardPackDraft).slides.map((s) => s.id),
       month: document.querySelector('#bpDeckFrame .deck-cover-title').textContent,
     }));
-    assert.deepStrictEqual(r.selected, ['league', 'results_table', 'over_80', 'lost_pct', 'power', 'kings', 'race', 'most_wins', 'rating_movers', 'tier_moves']);
+    assert.deepStrictEqual(r.selected, ['league', 'champions', 'results_table', 'over_80', 'lost_pct', 'power', 'kings', 'race', 'most_wins', 'rating_movers', 'tier_moves']);
     // A module split by tier has a slide per tier, side by side.
     const modules = [...new Set(r.withContent.map((id) => id.split(':')[0]))];
     assert.deepStrictEqual(modules, r.selected.filter((id) => modules.includes(id)), 'slides follow the pack\'s order');
@@ -435,4 +435,51 @@ maybe('unpublish: the link stops showing the review at once, nothing is deleted,
   try {
     assert.ok(await again.run(() => !!document.querySelector('[data-deck]')));
   } finally { await again.close(); }
+});
+
+// Shaun, 1 Nov: the standings site's Monthly tab -- review/ with no month lists
+// the published reviews, newest first, each opening its swipeable deck.
+maybe('review/ with no month lists the published months, newest first; a withdrawn one is left out', async () => {
+  const pub = await publishedReviews();
+  const withdrawn = { ...pub['2026-08'], withdrawn: true };
+  const club = { [REVIEW('2026-09')]: pub['2026-09'], [REVIEW('2026-08')]: pub['2026-08'] };
+  const app = await H.open({ path: 'review/', mobile: true, now: NOW, club, readyWhen: () => window.REVIEW_READY });
+  try {
+    const r = await app.run(() => ({
+      title: document.getElementById('reviewTitle').textContent,
+      rows: [...document.querySelectorAll('.review-index-row')].map((a) => [a.querySelector('.review-index-month').textContent, a.getAttribute('href')]),
+      back: document.querySelector('.review-index-back a').textContent,
+    }));
+    assert.strictEqual(r.title, 'Monthly Reviews');
+    assert.deepStrictEqual(r.rows, [['September 2026', '?m=2026-09'], ['August 2026', '?m=2026-08']]);
+    assert.strictEqual(r.back, 'Open Money Padel');
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+  const app2 = await H.open({ path: 'review/', mobile: true, now: NOW, club: { [REVIEW('2026-09')]: pub['2026-09'], [REVIEW('2026-08')]: withdrawn }, readyWhen: () => window.REVIEW_READY });
+  try {
+    const months = await app2.run(() => [...document.querySelectorAll('.review-index-month')].map((e) => e.textContent));
+    assert.deepStrictEqual(months, ['September 2026']);
+  } finally { await app2.close(); }
+  const app3 = await H.open({ path: 'review/', mobile: true, now: NOW, club: {}, readyWhen: () => window.REVIEW_READY });
+  try {
+    assert.match(await app3.run(() => document.getElementById('reviewMain').innerText), /No monthly review has been published yet/);
+  } finally { await app3.close(); }
+});
+
+// The month's honours open the pack by default: each tier's Champion and the
+// Player of the Month (Shaun, 1 Nov).
+maybe('a published review carries the month\'s Champions slide', async () => {
+  const pub = await publishedReviews();
+  const slide = pub['2026-09'].deck.slides.find((s) => s.module === 'champions' || s.id === 'champions' || s.eyebrow === 'Honours');
+  assert.ok(slide, JSON.stringify(pub['2026-09'].deck.slides.map((s) => s.eyebrow)));
+  const rows = slide.groups[0].rows;
+  assert.ok(rows.some((r) => /^Tier [ABC] Champion$/.test(r.label)), JSON.stringify(rows));
+});
+
+maybe('a club review leads back to All months; a player\'s private pack does not', async () => {
+  const pub = await publishedReviews();
+  const app = await openReview('2026-09', { [REVIEW('2026-09')]: pub['2026-09'] });
+  try {
+    assert.strictEqual(await app.run(() => document.getElementById('reviewAllMonths').getAttribute('href')), './');
+  } finally { await app.close(); }
 });

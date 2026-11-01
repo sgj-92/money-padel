@@ -140,6 +140,17 @@ function boardPackSources(){ return {
     return Object.assign({ minGames, players, rankingsDefault: minGames === defaultRankingMinGames(month) }, boardPackSplit(o, pool, r => r.tier));
   },
 
+  // The Roll of Honour's month: each shown tier's Champion (confirmed, or as
+  // the Race stands) and the confirmed Player of the Month.
+  champions(month){
+    const c = championsFor(month);
+    const tiers = groupedTiers().filter(t => c && c[t])
+      .map(t => ({ tier: t, name: c[t].name, score: c[t].score, played: c[t].played }));
+    const potm = potmWinnerOf(month);
+    return { final: !!(c && c._final) || month < currentMonthKey(), locked: !!(c && c._locked), tiers,
+      potm: potm ? { name: potm.name, title: potm.title || '' } : null };
+  },
+
   kings(month){
     const minGames = defaultRankingMinGames('all');
     const kings = kingsOfTiersFor(month);

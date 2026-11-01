@@ -131,6 +131,15 @@ function boardPackBlocks(){ return {
     .concat(bpSHiddenFoot(d))
     .concat([bpFoot(`Month-end Power Rating and the tier held at the month's close; ${d.minGames}+ game${d.minGames === 1 ? '' : 's'} in the month${d.rankingsDefault ? ' (the Rankings month default)' : ''}${d.players === 'ranked' ? '; Ranked players only (2+ rated games in the 30 days to the month\'s end, not inactive)' : d.players === 'active' ? '; inactive players left out' : ''}.`)]),
 
+  champions: (d) => {
+    if(!d.tiers.length && !d.potm) return [bpEmpty('No Champions or Player of the Month for this month yet.')];
+    return [bpSub(d.final ? 'Monthly Champions — the Monthly Race winner in each tier' : 'Leading the Monthly Race'),
+      ...bpLines(d.tiers.map(t => ({ rank: `Tier ${t.tier}`, name: t.name, value: `${bpSigned(Math.round(t.score))} race pts · ${t.played} match${t.played === 1 ? '' : 'es'}` })), 'Nobody reached 5 matches.'),
+      bpSub('Player of the Month'),
+      ...bpLines(d.potm ? [{ rank: '🏆', name: d.potm.name, value: d.potm.title }] : [], 'Not chosen yet — voted by the club.')]
+      .concat(d.final && d.tiers.length && !d.locked ? [bpFoot('Champions not confirmed yet: League › Honours.')] : []);
+  },
+
   kings: (d) => {
     if(!d.kings) return [bpEmpty('No tier had a field of two or more.')];
     const tiles = TIER_ORDER_LIST.filter(t => d.kings[t] || d.kings._fieldSize[t]).map(t => {

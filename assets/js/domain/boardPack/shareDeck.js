@@ -139,6 +139,18 @@
       };
     }),
 
+    // The month's honours: each tier's Champion, then Player of the Month.
+    champions: (d) => {
+      const rows = (d.tiers || []).map((t) => ({ tier: t.tier, label: `Tier ${t.tier} Champion`, name: t.name, value: signed(Math.round(t.score)), sub: plural(t.played, 'match', 'matches') }));
+      if (d.potm) rows.push({ label: 'Player of the Month', name: d.potm.name, value: '🏆', sub: d.potm.title || '' });
+      if (!rows.length) return null;
+      return {
+        eyebrow: 'Honours', title: d.final ? 'Champions of the month' : 'Leading the month', groups: [{ rows }],
+        foot: 'Champion: the Monthly Race winner in each tier',
+        summary: rows.map((r) => `${r.label}: ${r.name}`),
+      };
+    },
+
     kings: (d) => {
       if (!d.kings) return null;
       const rows = ['S', 'A', 'B', 'C'].filter((t) => d.kings[t]).map((t) => ({ tier: t, label: `Tier ${t}`, name: d.kings[t].name, value: String(d.kings[t].rating) }));

@@ -92,6 +92,9 @@ function enterStandingsMode(){
     { tab: 'summary', label: 'League', icon: icon('summary') },
     { tab: 'power', label: 'Power', icon: icon('power') },
     { tab: 'games', label: 'Results', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 7h14"/><path d="M5 12h14"/><path d="M5 17h9"/></svg>' },
+    // The published Monthly Reviews, each a swipeable deck (Shaun, 1 Nov). A
+    // page of its own (review/), so this item goes there, not to a tab.
+    { tab: 'monthly', label: 'Monthly', href: 'review/', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 3.5v17"/></svg>' },
   ];
   // The three are the whole site: no More tables either.
   RANKINGS_MORE_TABLES.length = 0;
@@ -233,22 +236,25 @@ function renderSectionSubnav(){
   const screens = (activeSection === 'play' && playScreensVisible()) ? SECTION_SCREENS.play : [];
   const entries = screens.length
     ? screens.map(s => ({ attr: `data-screen="${s.screen}"`, label: s.label, on: activeShellScreen === s.screen }))
-    : (SECTION_SUBNAV[activeSection] || []).filter(it => canSeeTab(it.tab))
-        .map(it => ({ attr: `data-tab="${it.tab}"`, label: it.label, on: it.tab === activeTab && !activeShellScreen }));
+    : (SECTION_SUBNAV[activeSection] || []).filter(it => it.href || canSeeTab(it.tab))
+        .map(it => ({ attr: `data-tab="${it.tab}"`, label: it.label, href: it.href, on: !it.href && it.tab === activeTab && !activeShellScreen }));
   const moreTables = activeSection === 'rankings' ? rankingsMoreTablesVisible() : [];
   const arrange = activeSection === 'play' ? arrangeModesVisible() : [];
   if(entries.length < 2 && !moreTables.length && !arrange.length){ container.style.display = 'none'; container.innerHTML = ''; syncDesktopShell(); return; }
   container.style.display = 'flex';
   const onMore = moreTables.some(it => it.tab === activeTab);
   container.innerHTML = `<div class="mp-seg" role="tablist" aria-label="${escapeHtml(SECTION_LABELS[activeSection] || '')}">`
-    + entries.map(it =>
-      `<button type="button" role="tab" class="section-subnav-item mp-seg-item${it.on ? ' active' : ''}" ${it.attr} aria-selected="${it.on}" tabindex="${it.on ? 0 : -1}">${escapeHtml(it.label)}</button>`
+    + entries.map(it => it.href
+      // A page of its own (the standings site's Monthly: review/), so a link.
+      ? `<a class="section-subnav-item mp-seg-item" ${it.attr} href="${it.href}" tabindex="-1">${escapeHtml(it.label)}</a>`
+      : `<button type="button" role="tab" class="section-subnav-item mp-seg-item${it.on ? ' active' : ''}" ${it.attr} aria-selected="${it.on}" tabindex="${it.on ? 0 : -1}">${escapeHtml(it.label)}</button>`
     ).join('')
     + `</div>`
     + (moreTables.length ? `<button type="button" class="section-more-btn" id="rankingsMoreBtn" aria-haspopup="dialog" aria-pressed="${onMore}">More tables</button>` : '')
     + (arrange.length ? `<button type="button" class="section-more-btn section-arrange-btn" id="arrangeGameBtn" aria-haspopup="dialog">Arrange a Game</button>` : '');
   const tabs = [...container.querySelectorAll('.section-subnav-item')];
   tabs.forEach((btn, i)=>{
+    if(btn.tagName === 'A') return;   // a link goes where it points
     btn.onclick = ()=>{
       if(btn.dataset.screen){ enterShellScreen(btn.dataset.screen); return; }
       const b = legacyTabBtn(btn.dataset.tab); if(b) b.click();

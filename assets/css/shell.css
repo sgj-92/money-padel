@@ -339,3 +339,8 @@ body.standings-mode .home-viewer-switch,
 body.standings-mode #tabrow{ display: none !important; }
 body.standings-mode{ padding-bottom: calc(24px + var(--shell-safe-bottom)); --rail-w: 0px; }
 body.standings-mode .update-notice{ bottom: calc(var(--shell-safe-bottom) + 14px); }
+/* Four tabs (League, Power, Results, Monthly): words without icons, so all four fit a phone. */
+body.standings-mode .section-subnav-item svg{ display: none; }
+
+/* A subnav entry that is a link (the standings site's Monthly). */
+a.section-subnav-item.mp-seg-item{ display: flex; align-items: center; justify-content: center; text-decoration: none; }
