@@ -59,15 +59,19 @@ test('historical tier is real in the browser, not just in Node', { skip }, async
         });
       });
     });
-    selectedMonth = '2026-06'; activeTier = 'All';
-    const kings = computeKingsOfTiers();
-    out.kings = kings ? ['A', 'B', 'C'].map((t) => (kings[t] ? `${t}:${kings[t].name}` : `${t}:none`)) : null;
+    // Kings are filed under the tier held at that month's close, not today's.
+    out.kingTiers = [];
+    ['2026-06', '2026-07', '2026-08', '2026-09'].forEach((m) => {
+      const kings = kingsOfTiersFor(m);
+      ['A', 'B', 'C'].forEach((t) => { if (kings && kings[t]) out.kingTiers.push([m, t, kings[t].name, tierAtMonthClose(kings[t].name, m)]); });
+    });
     selectedMonth = 'all'; activeTier = 'All'; minGames = 10;
     return out;
   });
   assert.strictEqual(r.counts.undefined, undefined, `June rows with no tier: ${JSON.stringify(r.counts)}`);
   assert.deepStrictEqual(r.leaks, [], 'a player appeared under a tier they did not hold that month');
-  assert.ok(r.kings.includes('C:Shaun'), `June's Tier C king is missing: ${r.kings}`);
+  assert.ok(r.kingTiers.length >= 4, JSON.stringify(r.kingTiers));
+  r.kingTiers.forEach(([m, t, name, held]) => assert.strictEqual(held, t, `${m}: ${name} is Tier ${t} King but held Tier ${held}`));
 });
 
 // Shipped defect: the profile journey was a separate reconstruction that could

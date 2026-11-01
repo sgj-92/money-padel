@@ -138,7 +138,7 @@ function boardPackBlocks(){ return {
       return k ? { tier: t, name: k.name, rating: String(k.rating) }
                : { tier: t, name: null, rating: null, none: d.kings._fieldSize[t] === 1 ? 'only one qualified' : 'nobody qualified' };
     });
-    return [{ type: 'kings', tiles }, bpFoot(`${d.minGames}+ games in the month; a tier needs two qualifiers to crown a king.`)];
+    return [{ type: 'kings', tiles }, bpFoot(`Each tier's leader in the All-time Power Rankings at the month's end (Ranked, ${d.minGames}+ rated games); a tier needs two qualifiers to crown a king.`)];
   },
 
   league: (d) => bpTiers(d.tiers, rows => bpTable(['#', 'Player', 'P', 'W', 'D', 'L', 'GD', 'Pts'],

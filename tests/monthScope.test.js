@@ -229,6 +229,7 @@ test('only Power Rankings reads or writes selectedMonth', () => {
     'rankingsMonthSelectHandler',
     'applyRankingsMonth', 'arriveAtRankings', 'renderRankingsMonthNote',
     'syncRankingsFilterDot',
+    'computeMonthlyChampions', 'renderMonthlyChampionsPanel', 'renderKingsPanel',
   ]);
   const offenders = [];
   const { appScriptFiles, readAppScript } = require('./helpers/appSource.js');
