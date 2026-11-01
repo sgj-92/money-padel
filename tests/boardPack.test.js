@@ -180,6 +180,7 @@ maybe('every figure is the canonical one: the same functions the app\'s own scre
         eq(data('most_games', m).groups, info.mostGames, `${m} most games`);
 
         // Monthly stories: the Power Rankings stories for the month.
+        monthlySummaryOpen = true;   // closed by default since 1 Nov; its figures are what is compared
         const stories = document.createElement('div'); stories.innerHTML = buildMonthlyStoriesHtml(m);
         const st = stories.textContent.replace(/\s+/g, ' ');
         const mv = data('rating_movers', m);

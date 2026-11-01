@@ -1751,7 +1751,7 @@ test('club-decision movement stays labelled apart from movement on court', { ski
   const app = await H.open();
   try {
     const r = await app.run(() => {
-      selectedMonth = '2026-07'; minGames = 5; activeTab = 'power'; render();
+      selectedMonth = '2026-07'; minGames = 5; activeTab = 'power'; monthlySummaryOpen = true; render();
       // After render, so rebuilding MONTHLY_VIEWS cannot discard it.
       // The biggest riser, so the row is certain to be one of the three shown.
       const subject = MonthlyViews.ratingMovementTable(MONTHLY_VIEWS, '2026-07')[0];
@@ -1776,7 +1776,7 @@ test('the monthly stories keep all four parts behind a takeaways summary', { ski
   const app = await H.open();
   try {
     const r = await app.run(() => {
-      selectedMonth = '2026-07'; minGames = 5; activeTab = 'power'; render();
+      selectedMonth = '2026-07'; minGames = 5; activeTab = 'power'; monthlySummaryOpen = true; render();
       const box = document.querySelector('.monthly-stories');
       const folds = [...box.querySelectorAll('.ms-fold')];
       folds.forEach((f) => { f.open = true; });
@@ -4401,14 +4401,20 @@ test('a mid-month reassessment never shows the new tier beside the old rating', 
   } finally { await app.close(); }
 });
 
-test('Monthly Summary is expanded by default and folds as one', { skip }, async () => {
+test('Monthly Summary is collapsed by default and folds as one', { skip }, async () => {
   const app = await H.open();
   try {
     await app.page.setViewportSize({ width: 375, height: 812 });
-    await app.run(() => {
+    // Shaun, 1 Nov: closed until asked for.
+    const byDefault = await app.run(() => {
       selectedMonth = '2026-08'; activeTab = 'power'; activeTier = 'All'; minGames = 0;
-      monthlySummaryOpen = true;
       goToSection('rankings'); render();
+      return { aria: document.getElementById('monthlySummaryToggle').getAttribute('aria-expanded'), body: !!document.getElementById('monthlySummaryBody') };
+    });
+    assert.deepStrictEqual(byDefault, { aria: 'false', body: false });
+    await app.run(() => {
+      monthlySummaryOpen = true;
+      render();
     });
     await app.page.waitForTimeout(50);
     const r = await app.run(() => {
@@ -4446,7 +4452,7 @@ test('Monthly Summary is expanded by default and folds as one', { skip }, async 
     });
 
     assert.strictEqual(r.open.present, true, 'the Monthly Summary heading is a control');
-    assert.strictEqual(r.open.aria, 'true', 'and defaults expanded');
+    assert.strictEqual(r.open.aria, 'true', 'and, opened, says so');
     // innerText, so CSS text-transform applies — compare case-insensitively.
     const openBody = r.open.body.toLowerCase();
     ['Key takeaways', 'Monthly Performance', 'Rating Movement', 'Ranking Movement',

@@ -152,6 +152,8 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Power Rankings' Monthly Summary collapsed by default — DONE (`f43a002`), 1 Nov.** Shaun: "This needs to be collapsed by default. I'm considering removing it entirely." Its heading stays as the only line until tapped. Its Monthly Performance blurb no longer mentions the podium (none on a month). **Open (Shaun):** remove it entirely? Its figures also appear in the Board Pack (Performance, Rating movers), which reads `MonthlyViews` directly and is unaffected either way.
+
 **No podium on a month's Power Rankings — DONE (`d40442f`), 1 Nov.** Shaun: the October podium (Osh, KC, Len) "doesn't make sense ... Len's record of 0 wins, 1 draw and 6 losses". It ranked the month's 5+-game regulars by Power Rating, which is built over months.
 - **Decision (Shaun, option 1):** the podium is All time only (the All-time Power top three). On a month, Kings of Tiers then the month's Champions (the Race) — on desktop, side by side where the podium was. The list beneath is unchanged (the Power table; Form / Clutch / Upsets re-rank it). The Board Pack's "Power" module keeps its own top three.
 - **Decision (Shaun): Champions have no "field of two" rule.** CCode had proposed matching Kings (no crown when only one qualifies — Topsy was October's only qualified Tier C runner). Shaun: not fair on players trying to be active who can't get games in their tier. A Champion is the top qualified runner, even if alone.
@@ -9098,6 +9100,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 1 Nov (latest): Monthly Summary collapsed by default (`f43a002`, 979 / 979).** Baton → Shaun: keep collapsed, or remove?
 
 **CCode, 1 Nov (latest): podium All time only (`d40442f`, 979 / 979).** Baton → Shaun.
 
