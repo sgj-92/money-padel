@@ -55,6 +55,7 @@ function renderSummary(){
         <option value="race">Monthly Race</option>
         <option value="merit">Merit Table</option>
         <option value="league">League Table</option>
+        <option value="honours">Honours</option>
         <option value="information">Information</option>
       </select>
     </div>
@@ -71,6 +72,8 @@ function renderSummary(){
   });
   const modeSel = document.getElementById('summaryModeSelect');
   modeSel.value = summaryMode;
+  const controls = box.querySelector('.lg-controls');
+  if(controls) controls.classList.toggle('roh-mode', summaryMode === 'honours');
   modeSel.onchange = (e)=>{ summaryMode = e.target.value; renderSummary(); };
 
   resetLeagueTierSections();
@@ -78,12 +81,61 @@ function renderSummary(){
   const legacyExplainer = document.getElementById('explainerWrapper');
   // Merit carries its own explanation too, so the legacy per-tab block would
   // be a second one on that view as well.
-  if(legacyExplainer) legacyExplainer.style.display = (summaryMode === 'league' || summaryMode === 'merit' || summaryMode === 'race') ? 'none' : '';
+  if(legacyExplainer) legacyExplainer.style.display = (summaryMode === 'league' || summaryMode === 'merit' || summaryMode === 'race' || summaryMode === 'honours') ? 'none' : '';
 
   if(summaryMode === 'league') renderSummaryLeagueTable();
   else if(summaryMode === 'merit') renderMeritTable();
   else if(summaryMode === 'race') renderMonthlyRace();
+  else if(summaryMode === 'honours') renderRollOfHonour();
   else renderSummaryInformation();
+}
+
+// ===================== ROLL OF HONOUR =====================
+// Shaun, 1 Nov: one place recording each month's honours -- the Monthly
+// Champion of every tier (the Race winner, championsFor) and the Player of the
+// Month the club voted for (the stored award, potmWinnerOf). Every month on
+// record, newest first; the month still being played shows who is leading.
+// Kings are not here: a King is whoever leads the All-time Power Rankings now.
+function rollOfHonourMonths(){
+  return getAvailableMonths().filter(m => m !== 'all').slice().sort().reverse();
+}
+
+function renderRollOfHonour(){
+  const content = document.getElementById('summaryContent');
+  let html = `<div class="section-heading" style="margin-top:6px;">🏆 Roll of Honour</div>
+    <div class="section-sub" style="margin:2px 0 12px;">Each month's Champions (the Monthly Race winner in each tier) and the club's Player of the Month.</div>`;
+  const months = rollOfHonourMonths();
+  if(!months.length) html += `<div class="section-sub">No months on record yet.</div>`;
+  months.forEach(month=>{
+    const champs = championsFor(month);
+    const final = month < currentMonthKey();
+    const potm = potmWinnerOf(month);
+    const tiers = groupedTiers().filter(t => champs && champs[t]);
+    const rows = tiers.map(t => {
+      const c = champs[t];
+      return `<button type="button" class="roh-row roh-champ" data-roh-month="${month}">
+        <span class="roh-what">Tier ${t} ${final ? 'Champion' : 'leader'}</span>
+        <span class="roh-who">${escapeHtml(c.name)}</span>
+        <span class="roh-figure">${raceWholePoints(c.score)}</span>
+      </button>`;
+    });
+    if(!tiers.length) rows.push(`<div class="roh-row roh-none"><span class="roh-what">Champions</span><span class="roh-who roh-dim">${final ? 'Nobody reached 5 matches' : 'Nobody has 5 matches yet'}</span></div>`);
+    rows.push(potm
+      ? `<div class="roh-row roh-potm"><span class="roh-what">Player of the Month</span>
+          <span class="roh-who"><span class="request-player-link" data-player="${escapeHtml(potm.name)}">${escapeHtml(potm.name)}</span></span><span class="roh-figure" aria-hidden="true">🏆</span></div>`
+      : `<div class="roh-row roh-potm"><span class="roh-what">Player of the Month</span>
+          <span class="roh-who roh-dim">${final ? (potmShortlistOf(month) ? 'Voting' : 'Not chosen yet') : 'Voted after the month'}</span></div>`);
+    html += `<div class="callout-card roh-month">
+      <div class="roh-month-head"><span>${monthLabel(month)}</span>${final ? '' : '<span class="roh-live">In progress</span>'}</div>
+      ${rows.join('')}
+    </div>`;
+  });
+  content.innerHTML = html;
+  wireRequestPlayerLinks(content);
+  // A Champion opens that month's Race, where the score comes from.
+  content.querySelectorAll('.roh-champ').forEach(b=>{
+    b.onclick = ()=>{ summaryMonth = b.dataset.rohMonth; summaryMode = 'race'; renderSummary(); };
+  });
 }
 
 let leagueGrouped = true;

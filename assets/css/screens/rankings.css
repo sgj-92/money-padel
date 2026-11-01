@@ -733,3 +733,20 @@
    -- the wordmark is directly above. */
 .rankings-hero-title{ font-family: var(--font-prestige); font-size: 28px; letter-spacing: -0.01em; margin-top: 2px; }
 .rankings-hero-sub{ font-family: var(--font-ui); font-size: 14px; color: var(--text-soft); margin-top: 6px; line-height: 1.4; }
+
+/* Roll of Honour (Shaun, 1 Nov): each month's Champions and Player of the Month. */
+.roh-month{ padding: 4px 14px 6px; margin-bottom: 12px; }
+.roh-month-head{ display: flex; align-items: baseline; justify-content: space-between; padding: 10px 0 6px;
+  font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-bright); }
+.roh-live{ font-size: 11px; font-weight: 600; letter-spacing: .04em; color: var(--text-dim); }
+.roh-row{ display: grid; grid-template-columns: 148px minmax(0, 1fr) 44px; align-items: baseline; gap: 10px;
+  width: 100%; padding: 9px 0; border: 0; border-top: 1px solid var(--line); background: none; color: var(--text);
+  font: inherit; font-size: 14px; text-align: left; }
+.roh-champ{ cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.roh-what{ color: var(--text-dim); font-size: 13px; }
+.roh-who{ font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roh-dim{ font-weight: 400; color: var(--text-dim); }
+.roh-figure{ font-variant-numeric: tabular-nums; font-weight: 700; color: var(--gold-bright); text-align: right; }
+/* Every month is on the list: the Month box has nothing to choose here. */
+.lg-controls.roh-mode{ grid-template-columns: 1fr; }
+.lg-controls.roh-mode .fg-row:first-child{ display: none; }
