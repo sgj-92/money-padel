@@ -212,7 +212,10 @@
   html[data-tab="power"] #rankingsMonthNoteHost:empty{ display: none; }
   html[data-tab="power"] #kingsOfTiersPanel{ grid-column: content-start / mid; margin-right: 8px; }
   html[data-tab="power"] #rankingsPodium{ grid-column: mid / content-end; margin-left: 8px; }
-  html[data-tab="power"] #kingsOfTiersPanel, html[data-tab="power"] #rankingsPodium{ align-self: stretch; }
+  /* A month has no podium (Shaun, 1 Nov): the month's Champions take its place. */
+  html[data-tab="power"] #monthlyChampionsPanel{ grid-column: mid / content-end; margin-left: 8px; }
+  html[data-tab="power"] #kingsOfTiersPanel, html[data-tab="power"] #rankingsPodium,
+  html[data-tab="power"] #monthlyChampionsPanel{ align-self: stretch; }
   /* Tables have room: headers stay in view while a long table scrolls. */
   .merit-table thead th{ position: sticky; top: var(--shell-header-height); background: var(--surface-1); z-index: 1; }
 }
