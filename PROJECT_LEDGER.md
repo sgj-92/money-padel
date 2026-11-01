@@ -152,6 +152,11 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Roll of Honour — DONE (commit below), 1 Nov.** Shaun: "We need to have somewhere that we're recording the historical Monthly Champions and voted Player of the Months."
+- League › View › **Roll of Honour** (after League Table; also on the standings site): every month on record, newest first — each tier's Monthly Champion with their Race score (`championsFor`), and the Player of the Month from the stored `playerOfTheMonth` award (or "Voting" / "Not chosen yet"). The month in progress shows leaders. A Champion opens that month's Race. Kings are not listed (a King is today's All-time leader).
+- Player of the Month is a stored snapshot (since `7dca948`); **Champions are derived from the record**, so a later edit to an old match could change a past Champion. Open question for Shaun: lock them (Open Questions, 1 Nov).
+- 977 / 977.
+
 **King of Tier vs Monthly Champion — DONE (`7682bf3`), 1 Nov.** Shaun saw October's Kings of Tiers crown Osh while Kaz held the higher Power Rating: the King was the best rating among players with 5+ games that month.
 - **Decision (Shaun, 1 Nov): three honours, three sources.** **King of Tier** = the tier's leader in the All-time Power Rankings. **Monthly Champion** = the winner of the tier's Monthly Race (called "Champion"). **Player of the Month** = voted by the club (existing feature). Live app and redesign.
 - `kingsOfTiersFor(month)`: the All-time pool (Ranked, 10+ rated games), whatever the month's games; for a finished month, that pool at the month's end (month-end rating, tier at the close, Ranked then); for the current month or All time, today's. Board Pack and share card follow (foot text updated).
@@ -2993,6 +2998,15 @@ with Shaun.**
 ---
 
 ## 5. OPEN QUESTIONS / DECISIONS
+
+### OPEN 1 Nov — Lock each month's Champions once the month is over? (Shaun)
+The Roll of Honour reads Player of the Month from stored awards, but works
+Champions out from the games each time. Correcting an old game could
+therefore change a past Champion. **CCode's recommendation:** store each
+finished month's Champions as a snapshot, like Player of the Month, written
+when an Admin confirms the month (one tap, which can be undone), so the record
+never moves on its own. Needs Shaun's go-ahead: it writes a new record to the
+live database.
 
 ### RESOLVED 30 Oct — Monthly Race score as a column on the Merit Table (built as proposed)
 Shaun wants the Race score beside Merit for context. A mock with an 11th
@@ -9073,6 +9087,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 1 Nov (latest): Roll of Honour (commit below, 977 / 977).** Baton → Shaun: lock Champions once a month ends? (Open Questions, 1 Nov.)
 
 **CCode, 1 Nov (latest): King of Tier (All-time leader) and Monthly Champion (Race winner) separated (`7682bf3`, 976 / 976).** Baton → Shaun.
 

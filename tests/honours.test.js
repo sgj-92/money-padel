@@ -93,3 +93,45 @@ maybe('Power Rankings shows Kings, then the month\'s Champions; a Champion opens
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 1 Nov: "somewhere that we're recording the historical Monthly
+// Champions and voted Player of the Months".
+maybe('the Roll of Honour lists every month, newest first: each tier\'s Champion and the Player of the Month', async () => {
+  const app = await H.open({ viewport: { width: 390, height: 844 }, now: NOW });
+  try {
+    const r = await app.run(() => {
+      // A confirmed August award, made the way Admin makes one.
+      const shortlist = PlayerOfMonth.finaliseShortlist({ month: '2026-08', entries: [{ playerId: 'Rishi', name: 'Rishi', tier: 'B', title: 'Strongest Results', citation: 'A month to remember.' }], by: 'test', at: 0 });
+      potmRecordsState = { '2026-08': PlayerOfMonth.confirmWinner(shortlist, { playerId: 'Rishi', by: 'test', at: 0 }) };
+      legacyTabBtn('summary').click();
+      summaryMode = 'honours'; renderSummary();
+      const cards = [...document.querySelectorAll('#summaryContent .roh-month')].map((card) => ({
+        head: card.querySelector('.roh-month-head').innerText,
+        rows: [...card.querySelectorAll('.roh-row')].map((row) => [...row.children].map((c) => c.innerText.trim())),
+      }));
+      const want = {};
+      ['2026-09', '2026-08', '2026-07', '2026-06'].forEach((m) => {
+        const c = championsFor(m);
+        want[m] = ['A', 'B', 'C'].filter((t) => c && c[t]).map((t) => [t, c[t].name, raceWholePoints(c[t].score)]);
+      });
+      const monthHidden = getComputedStyle(document.querySelector('.lg-controls .fg-row')).display === 'none';
+      // A Champion opens that month's Race.
+      document.querySelectorAll('#summaryContent .roh-month')[2].querySelector('.roh-champ').click();
+      return { cards, want, monthHidden, opened: [summaryMode, summaryMonth] };
+    });
+    assert.deepStrictEqual(r.cards.map((c) => c.head.split('\n')[0].toLowerCase()), ['september 2026', 'august 2026', 'july 2026', 'june 2026']);
+    assert.match(r.cards[0].head, /In progress/i, 'September is still being played on 26 September');
+    const months = ['2026-09', '2026-08', '2026-07', '2026-06'];
+    r.cards.forEach((card, i) => {
+      const champs = card.rows.filter((row) => /^Tier [ABCS] (Champion|leader)$/.test(row[0]));
+      assert.deepStrictEqual(champs.map((row) => [row[0].split(' ')[1], row[1], row[2]]), r.want[months[i]], months[i]);
+      assert.strictEqual(card.rows[card.rows.length - 1][0], 'Player of the Month');
+    });
+    assert.match(r.cards[0].rows.find((row) => row[0].startsWith('Tier'))[0], /leader$/, 'a month in progress has leaders, not Champions');
+    assert.deepStrictEqual(r.cards[1].rows[r.cards[1].rows.length - 1].slice(0, 2), ['Player of the Month', 'Rishi']);
+    assert.strictEqual(r.cards[2].rows[r.cards[2].rows.length - 1][1], 'Not chosen yet');
+    assert.strictEqual(r.monthHidden, true, 'every month is listed: no Month box');
+    assert.deepStrictEqual(r.opened, ['race', '2026-07']);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
