@@ -149,10 +149,11 @@ maybe('every figure is the canonical one: the same functions the app\'s own scre
       const eq = (a, b, what) => { if (JSON.stringify(a) !== JSON.stringify(b)) out.push(`${what}: ${JSON.stringify(a).slice(0, 200)} != ${JSON.stringify(b).slice(0, 200)}`); };
       const data = (id, month, options) => boardPackModuleData({ id, options: Object.assign(BoardPack.defaultOptions(id), options || {}) }, month);
       boardPackMonths().forEach((m) => {
-        // Rankings: the podium and Kings of Tiers the Rankings screen draws for that month.
+        // Rankings: the month's Power list and Kings of Tiers, as the Rankings screen has them.
+        // (The screen draws no podium on a month since 1 Nov; the pack keeps its top three.)
         activeTab = 'power'; activeSortP = 'rating'; query = ''; activeTier = 'All'; selectedMonth = m; minGames = 5;
-        const podium = computeRankingsPodiumTop3();
-        eq(data('power', m, { top: '3', split: 'one' }).rows.map((x) => ({ name: x.name, rating: x.rating })), podium, `${m} power = podium`);
+        const top3 = rankingPool(m, defaultRankingMinGames(m)).slice(0, 3).map((p) => ({ name: p.name, rating: p.scopeRating }));
+        eq(data('power', m, { top: '3', split: 'one' }).rows.map((x) => ({ name: x.name, rating: x.rating })), top3, `${m} power = the month's top three`);
         // Split by tier: each tier's section is that tier's own ranking, from the same pool.
         const pool = rankingPool(m, defaultRankingMinGames(m));
         data('power', m, { top: 'all' }).tiers.forEach((t) => eq(t.rows.map((x) => x.name), pool.filter((x) => x.scopeTier === t.tier).map((x) => x.name), `${m} power tier ${t.tier}`));

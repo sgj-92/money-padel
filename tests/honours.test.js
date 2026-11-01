@@ -69,7 +69,7 @@ maybe('a Monthly Champion is the tier\'s Race leader among qualified players; "L
   } finally { await app.close(); }
 });
 
-maybe('Power Rankings shows Kings, then the month\'s Champions; a Champion opens that month\'s Race; All time shows Kings only', async () => {
+maybe('Power Rankings: a month shows Kings then its Champions and no podium; a Champion opens the Race; All time shows Kings and the podium', async () => {
   const app = await H.open({ viewport: { width: 390, height: 844 }, now: NOW });
   try {
     const r = await app.run(() => {
@@ -83,13 +83,15 @@ maybe('Power Rankings shows Kings, then the month\'s Champions; a Champion opens
       const opened = { tab: activeTab, mode: summaryMode, month: summaryMonth, heading: document.querySelector('#summaryContent .section-heading').textContent };
       legacyTabBtn('power').click();
       applyRankingsMonth('all'); render();
-      return { month, order, title, name, opened, allTime: [...document.querySelectorAll('#kingsOfTiersPanel, #monthlyChampionsPanel')].map((e) => e.id) };
+      return { month, order, title, name, opened, allTime: [...document.querySelectorAll('#kingsOfTiersPanel, #monthlyChampionsPanel, #rankingsPodium')].map((e) => e.id) };
     });
-    assert.deepStrictEqual(r.order, ['kingsOfTiersPanel', 'monthlyChampionsPanel', 'rankingsPodium']);
+    // Shaun, 1 Nov: a month's podium ranked regulars by Power Rating, so Len
+    // stood third in October on 0W 1D 6L. The month's winners are its Champions.
+    assert.deepStrictEqual(r.order, ['kingsOfTiersPanel', 'monthlyChampionsPanel']);
     assert.match(r.title, /^(Leading \w+|\w+ Champions)$/);
     assert.deepStrictEqual([r.opened.tab, r.opened.mode, r.opened.month], ['summary', 'race', r.month]);
     assert.match(r.opened.heading, /Monthly Race/);
-    assert.deepStrictEqual(r.allTime, ['kingsOfTiersPanel']);
+    assert.deepStrictEqual(r.allTime, ['kingsOfTiersPanel', 'rankingsPodium'], 'All time: Kings and the All-time top three');
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });

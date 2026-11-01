@@ -153,8 +153,18 @@ maybe('sheets are dialogs on a monitor, bottom sheets on a phone -- the same she
 maybe('Rankings: Kings of Tiers beside the podium, the filters in one toolbar, the list in the column', async () => {
   const app = await open(1440, 900);
   try {
-    const r = await app.run(() => {
+    // A month: Kings beside the month's Champions, and no podium (1 Nov).
+    const month = await app.run(() => {
       goToSection('rankings');
+      const b = (sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top) }; };
+      return { month: selectedMonth, kings: b('#kingsOfTiersPanel'), champs: b('#monthlyChampionsPanel'), podium: b('#rankingsPodium') };
+    });
+    assert.notStrictEqual(month.month, 'all');
+    assert.strictEqual(month.podium, null, 'no podium on a month');
+    assert.strictEqual(month.kings.t, month.champs.t, 'Kings and Champions side by side');
+    assert.ok(month.kings.r <= month.champs.l);
+    const r = await app.run(() => {
+      applyRankingsMonth('all'); render();
       const b = (sel) => { const e = document.querySelector(sel); const r = e.getBoundingClientRect(); return { l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), w: Math.round(r.width) }; };
       return { kings: b('#kingsOfTiersPanel'), podium: b('#rankingsPodium'), bar: b('#rankingsToolbar'), sort: b('#sortbarPower'), list: b('#list'),
         rows: document.querySelectorAll('#list .row').length, legacy: renderRankingsPodium.length };

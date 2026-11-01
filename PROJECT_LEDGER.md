@@ -152,6 +152,11 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**No podium on a month's Power Rankings — DONE (`d40442f`), 1 Nov.** Shaun: the October podium (Osh, KC, Len) "doesn't make sense ... Len's record of 0 wins, 1 draw and 6 losses". It ranked the month's 5+-game regulars by Power Rating, which is built over months.
+- **Decision (Shaun, option 1):** the podium is All time only (the All-time Power top three). On a month, Kings of Tiers then the month's Champions (the Race) — on desktop, side by side where the podium was. The list beneath is unchanged (the Power table; Form / Clutch / Upsets re-rank it). The Board Pack's "Power" module keeps its own top three.
+- **Decision (Shaun): Champions have no "field of two" rule.** CCode had proposed matching Kings (no crown when only one qualifies — Topsy was October's only qualified Tier C runner). Shaun: not fair on players trying to be active who can't get games in their tier. A Champion is the top qualified runner, even if alone.
+- 979 / 979.
+
 **Monthly Champions locked once confirmed — DONE (`a2dbcf8`), 1 Nov.** Shaun approved CCode's recommendation ("Yes").
 - New collection **`monthlyChampions`** (one doc per month, id YYYY-MM): `{ month, champions: { A: { playerId, name, score, played }, … }, confirmedAt, confirmedBy }`, every tier stored (Tier S too). `features/awards/championsData.js`; loaded at start-up with Player of the Month.
 - An Admin taps **Confirm Champions** on a finished month in the Roll of Honour; **Reopen Champions** deletes the record so the month reads from the games again. Nothing is written without one of those taps.
@@ -9093,6 +9098,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 1 Nov (latest): podium All time only (`d40442f`, 979 / 979).** Baton → Shaun.
 
 **CCode, 1 Nov (latest): Monthly Champions locked by Admin confirmation (`a2dbcf8`, 979 / 979).** Baton → Shaun: unlock Admin and confirm June–October in League › Honours.
 

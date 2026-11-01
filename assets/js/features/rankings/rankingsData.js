@@ -162,8 +162,13 @@ function derivedChampionsFor(month){
 // search, or a non-default min-games threshold. Replicates render()'s own
 // filter sequence exactly (tier -> month merge -> min-games) and the fixed
 // rating sort, so the podium can never disagree with the list beneath it.
+// All time only (Shaun, 1 Nov). On a month view the podium ranked the month's
+// regulars by Power Rating, which is built over months: Len stood third in
+// October on 0W 1D 6L. Who had the best month is the Champions panel's
+// answer (the Monthly Race); the podium is the All-time Power top three.
 function computeRankingsPodiumTop3(){
   if(activeTab !== 'power') return null;
+  if(selectedMonth !== 'all') return null;
   if(activeSortP !== 'rating') return null;
   if(query !== '') return null;
   if(minGames !== defaultRankingMinGames(selectedMonth)) return null;
