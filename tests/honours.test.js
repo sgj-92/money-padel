@@ -135,3 +135,71 @@ maybe('the Roll of Honour lists every month, newest first: each tier\'s Champion
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 1 Nov: a finished month's Champions are locked once an Admin
+// confirms them, as Player of the Month is, so correcting an old game never
+// quietly changes a past Champion. Nothing is written without that tap.
+maybe('an Admin confirms a finished month\'s Champions; the record then stands, and can be reopened', async () => {
+  const app = await H.open({ viewport: { width: 390, height: 844 }, now: NOW });
+  try {
+    const r = await app.run(async () => {
+      const out = {};
+      legacyTabBtn('summary').click();
+      summaryMode = 'honours'; renderSummary();
+      const card = (m) => [...document.querySelectorAll('#summaryContent .roh-month')].find((c) => c.querySelector('[data-roh-confirm="' + m + '"], [data-roh-reopen="' + m + '"]') || c.innerText.toLowerCase().includes(monthLabel(m).toLowerCase()));
+      out.memberButtons = document.querySelectorAll('#summaryContent .roh-admin-btn').length;
+      out.memberLabel = card('2026-08').querySelector('.roh-month-head').innerText;
+      out.writesBefore = window.__writes.length;
+
+      isUnlocked = true; currentUserName = 'Shaun'; renderSummary();
+      out.confirmable = [...document.querySelectorAll('[data-roh-confirm]')].map((b) => b.dataset.rohConfirm);
+      const games = championsFor('2026-08');
+      document.querySelector('[data-roh-confirm="2026-08"]').click();
+      await new Promise((res) => setTimeout(res, 20));
+      const w = window.__writes.filter((x) => x.collection === 'monthlyChampions');
+      out.write = w.length === 1 ? { id: w[0].id, champions: Object.fromEntries(Object.entries(w[0].doc.champions).map(([t, c]) => [t, c.name])), by: w[0].doc.confirmedBy } : w;
+      out.games = Object.fromEntries(['A', 'B', 'C', 'S'].filter((t) => games[t]).map((t) => [t, games[t].name]));
+      out.afterLabel = card('2026-08').querySelector('.roh-month-head').innerText;
+      out.reopenShown = !!document.querySelector('[data-roh-reopen="2026-08"]');
+
+      // The record stands even if the games later say otherwise.
+      const rec = championRecordFor('2026-08');
+      const other = PLAYERS.find((p) => p.name !== rec.champions.A.name).name;
+      championRecordsState = { ...championRecordsState, '2026-08': { ...rec, champions: { ...rec.champions, A: { ...rec.champions.A, playerId: playerIdFor(other), name: other } } } };
+      out.locked = championsFor('2026-08').A.name === other;
+      renderSummary();
+      out.note = (card('2026-08').querySelector('.roh-admin-note') || {}).innerText || '';
+      out.rollShowsLocked = card('2026-08').innerText.includes(other);
+
+      // Reopen: the record goes, and the month reads from the games again.
+      document.querySelector('[data-roh-reopen="2026-08"]').click();
+      await new Promise((res) => setTimeout(res, 20));
+      out.deleted = window.__writes.some((x) => x.collection === 'monthlyChampions' && x.id === '2026-08' && x.deleted);
+      out.backToGames = championsFor('2026-08').A.name === games.A.name && !championRecordFor('2026-08');
+      return out;
+    });
+    assert.strictEqual(r.memberButtons, 0, 'members see no Admin controls');
+    assert.match(r.memberLabel, /Provisional/i, 'an unconfirmed finished month says so');
+    assert.strictEqual(r.writesBefore, 0, 'nothing is written on its own');
+    assert.ok(r.confirmable.includes('2026-08') && !r.confirmable.includes('2026-09'), 'finished months only');
+    assert.deepStrictEqual(r.write, { id: '2026-08', champions: r.games, by: 'Shaun' });
+    assert.match(r.afterLabel, /Confirmed/i);
+    assert.strictEqual(r.reopenShown, true);
+    assert.strictEqual(r.locked, true, 'a confirmed month answers from its record');
+    assert.strictEqual(r.rollShowsLocked, true);
+    assert.match(r.note, /Since confirming, the games give Tier A/);
+    assert.strictEqual(r.deleted, true);
+    assert.strictEqual(r.backToGames, true);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
+
+maybe('confirmed Champions load with the record at start-up', async () => {
+  const stored = { month: '2026-07', champions: { A: { playerId: 'Kaz', name: 'Kaz', score: 12.3, played: 6 } }, confirmedAt: '2026-08-01T09:00:00.000Z', confirmedBy: 'Shaun' };
+  const app = await H.open({ now: NOW, collections: { monthlyChampions: { '2026-07': stored } } });
+  try {
+    const r = await app.run(() => ({ rec: championRecordFor('2026-07'), a: championsFor('2026-07').A }));
+    assert.strictEqual(r.rec.confirmedBy, 'Shaun');
+    assert.deepStrictEqual([r.a.name, r.a.score], ['Kaz', 12.3]);
+  } finally { await app.close(); }
+});

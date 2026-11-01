@@ -135,8 +135,14 @@ function kingsOfTiersFor(month){
 // Monthly Champions: each tier's Monthly Race leader among qualified runners,
 // read from the Race's own table (it is sorted qualified first, then score).
 // "Leading" while the month is still being played; "Champion" once it is
-// over. No month, no champion.
+// over. No month, no champion. A month an Admin has confirmed answers from
+// its stored record instead (championsData.js), so it never moves.
 function championsFor(month){
+  if(month === 'all') return null;
+  return lockedChampionsFor(month) || derivedChampionsFor(month);
+}
+
+function derivedChampionsFor(month){
   if(month === 'all') return null;
   const table = buildMonthlyRace(month).table;
   const champions = {};
