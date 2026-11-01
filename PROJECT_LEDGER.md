@@ -152,6 +152,9 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Board Pack: "matches", not "games", in the win/loss % sections — DONE (commit below), 1 Nov.** Shaun: "rename from game to match please, as a game means something in padel." "Won/Lost a set % of matches or more", "Minimum matches", "3+ matches", "every match", and the pack's and share card's own lines. Saved packs store values, not labels, so they need nothing.
+- **Open (Shaun): the same rename app-wide?** "Games" for matches appears throughout (profile "14 games · 9W-4D-1L", Home "7 games", League P column notes, Monthly Race "fewer than 5 matches" already says matches, Board Pack's other sections, Games tab name). Terminology decision before a sweep.
+
 **Power Rankings' Monthly Summary collapsed by default — DONE (`f43a002`), 1 Nov.** Shaun: "This needs to be collapsed by default. I'm considering removing it entirely." Its heading stays as the only line until tapped. Its Monthly Performance blurb no longer mentions the podium (none on a month). **Open (Shaun):** remove it entirely? Its figures also appear in the Board Pack (Performance, Rating movers), which reads `MonthlyViews` directly and is unaffected either way.
 
 **No podium on a month's Power Rankings — DONE (`d40442f`), 1 Nov.** Shaun: the October podium (Osh, KC, Len) "doesn't make sense ... Len's record of 0 wins, 1 draw and 6 losses". It ranked the month's 5+-game regulars by Power Rating, which is built over months.
@@ -9100,6 +9103,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 1 Nov (latest): Board Pack win/loss % sections say matches (commit below, 979 / 979).** Baton → Shaun: rename games → matches app-wide?
 
 **CCode, 1 Nov (latest): Monthly Summary collapsed by default (`f43a002`, 979 / 979).** Baton → Shaun: keep collapsed, or remove?
 

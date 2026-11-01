@@ -38,8 +38,9 @@
   const SPLIT = { label: 'Layout', values: ['split', 'one'], labels: { split: 'Split by tier', one: 'One list' }, default: 'split' };
   const SLIDES = { label: 'Slides', values: ['each', 'leaders'], labels: { each: 'A slide per tier', leaders: 'Leaders on one slide' }, default: 'each' };
 
-  const THRESHOLD = { label: 'At least', values: ['50', '60', '70', '75', '80', '90', '100'], labels: { 50: '50% or more', 60: '60% or more', 70: '70% or more', 75: '75% or more', 80: '80% or more', 90: '90% or more', 100: '100% (every game)' }, default: '80' };
-  const PCT_MIN = { label: 'Minimum games', values: ['3', '1', '5'], labels: { 1: 'Everyone', 3: '3+ games', 5: '5+ games' }, default: '3' };
+  // "Matches", not "games" (Shaun, 1 Nov): in padel a game is a part of a set.
+  const THRESHOLD = { label: 'At least', values: ['50', '60', '70', '75', '80', '90', '100'], labels: { 50: '50% or more', 60: '60% or more', 70: '70% or more', 75: '75% or more', 80: '80% or more', 90: '90% or more', 100: '100% (every match)' }, default: '80' };
+  const PCT_MIN = { label: 'Minimum matches', values: ['3', '1', '5'], labels: { 1: 'Everyone', 3: '3+ matches', 5: '5+ matches' }, default: '3' };
 
   // The catalogue, in its default order. `on` is whether a month with no
   // saved pack starts with it selected.
@@ -51,8 +52,8 @@
     // Kept as 'over_80' so packs saved before the threshold became a choice
     // still find it; 80% is the default. Winning and losing were one module
     // until 1 Oct; losing is now its own (lost_pct), with its own threshold.
-    { id: 'over_80', title: 'Won a set % of games or more', on: true, options: { threshold: THRESHOLD, min: PCT_MIN } },
-    { id: 'lost_pct', title: 'Lost a set % of games or more', on: true, splitFrom: 'over_80', options: { threshold: THRESHOLD, min: PCT_MIN } },
+    { id: 'over_80', title: 'Won a set % of matches or more', on: true, options: { threshold: THRESHOLD, min: PCT_MIN } },
+    { id: 'lost_pct', title: 'Lost a set % of matches or more', on: true, splitFrom: 'over_80', options: { threshold: THRESHOLD, min: PCT_MIN } },
     { id: 'information', title: 'Monthly Information (the players’ month review)', on: false, options: {} },
     { id: 'power', title: 'Power Rankings at month end', on: true, options: { split: SPLIT, tier: TIER, top: top('10'),
       min: { label: 'Minimum games', values: ['1', '3', '5', '10'], labels: { 1: 'Any (1+)', 3: '3+ games', 5: '5+ games', 10: '10+ games' }, default: '5' },

@@ -46,8 +46,8 @@ test('losing is its own module with its own threshold; a pack saved before the s
   const c = BP.defaultConfig(M);
   const on = BP.selected(c).map((it) => it.id);
   assert.deepStrictEqual(on.slice(on.indexOf('over_80'), on.indexOf('over_80') + 2), ['over_80', 'lost_pct'], 'on by default, right after winning');
-  assert.strictEqual(BP.BY_ID.over_80.title, 'Won a set % of games or more');
-  assert.strictEqual(BP.BY_ID.lost_pct.title, 'Lost a set % of games or more');
+  assert.strictEqual(BP.BY_ID.over_80.title, 'Won a set % of matches or more');
+  assert.strictEqual(BP.BY_ID.lost_pct.title, 'Lost a set % of matches or more');
   assert.deepStrictEqual(BP.BY_ID.lost_pct.options.threshold.values, BP.BY_ID.over_80.options.threshold.values);
   assert.deepStrictEqual(c.items[at(c, 'lost_pct')].options, { threshold: '80', min: '3' });
   assert.strictEqual(BP.BY_ID.worst_record.title, 'Highest loss % (3+ games)');

@@ -88,9 +88,9 @@ function bpRankMoveLine(r){
 function bpThresholdBlocks(d, what, list, pct){
   const t = d.threshold || 80;
   const word = what.toLowerCase();
-  return [bpSub(t === 100 ? `${what} every game` : `${what} ${t}% or more`),
+  return [bpSub(t === 100 ? `${what} every match` : `${what} ${t}% or more`),
     ...bpLines(d[list].map(s => ({ rank: '•', name: s.name, value: `${word} ${s[pct]}% · ${s.wins}W ${s.draws}D ${s.losses}L of ${s.games}` })), 'Nobody.'),
-    bpFoot(`${d.min > 1 ? `Players with ${d.min}+ games that month. ` : 'Every player who played that month. '}Draws count as games played.${t === 80 ? ' 4 of 5 is 80% and counts.' : ''}`)];
+    bpFoot(`${d.min > 1 ? `Players with ${d.min}+ matches that month. ` : 'Every player who played that month. '}Draws count as matches played.${t === 80 ? ' 4 of 5 is 80% and counts.' : ''}`)];
 }
 
 function boardPackBlocks(){ return {

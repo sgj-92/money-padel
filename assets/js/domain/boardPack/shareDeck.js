@@ -75,12 +75,12 @@
   // "Won (or Lost) N% or more": one slide, or nothing when nobody reached it.
   function thresholdSlide(d, what, list, pct, eyebrow, everyTitle) {
     const t = d.threshold || 80;
-    const label = t === 100 ? `${what} every game` : `${what} ${t}% or more`;
+    const label = t === 100 ? `${what} every match` : `${what} ${t}% or more`;
     const rows = listRows(list, (s) => ({ name: s.name, value: `${s[pct]}%`, sub: `${record(s)} of ${s.games}` }));
     if (!rows.length) return null;
     return {
       eyebrow, title: t === 100 ? everyTitle : label, groups: [{ rows }],
-      foot: d.min > 1 ? `${d.min}+ games played` : '',
+      foot: d.min > 1 ? `${d.min}+ matches played` : '',
       summary: [`${label}: ${rows.map((r) => `${r.name} (${r.value})`).join(', ')}`],
     };
   }
@@ -109,7 +109,7 @@
     },
 
     over_80: (d) => thresholdSlide(d, 'Won', d.won, 'winpct', 'Out on their own', 'Perfect months'),
-    lost_pct: (d) => thresholdSlide(d, 'Lost', d.lost, 'losspct', 'Loss rate', 'Lost every game'),
+    lost_pct: (d) => thresholdSlide(d, 'Lost', d.lost, 'losspct', 'Loss rate', 'Lost every match'),
 
     information: (d) => {
       const rows = [];
