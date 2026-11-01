@@ -14,8 +14,9 @@
 // versa. League Table is untouched and stays on its own tab.
 // Independent of the League table disclosures: collapsing one says nothing
 // about the other. Not persisted -- the month should open the same way each
-// time it is chosen.
-let monthlySummaryOpen = true;
+// time it is chosen. Closed by default (Shaun, 1 Nov): it filled the screen
+// between the month's honours and the list.
+let monthlySummaryOpen = false;
 
 function buildMonthlyStoriesHtml(month){
   // The stories themselves are monthlyStories() (monthlyStoryData.js): the
@@ -87,7 +88,7 @@ function buildMonthlyStoriesHtml(month){
   // to the heading: same type, same colour, same spacing, and deliberately not
   // the bordered card treatment that was rejected during the League work.
   const body = `${takeawaysHtml}
-    ${block('Monthly Performance', 'Who most beat their pre-match expectation. Its own measure: the podium and Kings of Tiers rank on rating, not on this.', perfBody)}
+    ${block('Monthly Performance', 'Who most beat their pre-match expectation. Its own measure: Kings of Tiers and the list rank on rating, not on this.', perfBody)}
     ${foldBlock('Rating Movement', 'How far the real Power Rating actually moved — risers and fallers. Not the same question as performance.', riseBody)}
     ${foldBlock('Ranking Movement', 'Overall rank at the start and end of the month — climbs and slides both.', climbBody)}
     ${foldBlock('Moved without playing', 'Rank can move while a player sits out, because others moved around them. Their rating did not change.', idleBody)}
