@@ -377,7 +377,7 @@ maybe('winning and losing each have their own threshold; Highest loss % is losse
     const p = app.page;
     const idx = (id) => p.$eval(`[data-bp-module="${id}"]`, (el) => Number(el.dataset.bpItem));
     assert.deepStrictEqual(await p.$$eval('[data-bp-module="over_80"] .bp-check, [data-bp-module="lost_pct"] .bp-check, [data-bp-module="worst_record"] .bp-check', (els) => els.map((e) => e.textContent.trim())),
-      ['Won a set % of games or more', 'Lost a set % of games or more', 'Highest loss % (3+ games)']);
+      ['Won a set % of matches or more', 'Lost a set % of matches or more', 'Highest loss % (3+ games)']);
     await p.selectOption(`[data-bp-opt="${await idx('over_80')}"][data-key="threshold"]`, '60');
     await p.selectOption(`[data-bp-opt="${await idx('lost_pct')}"][data-key="threshold"]`, '50');
     await p.selectOption(`[data-bp-opt="${await idx('lost_pct')}"][data-key="min"]`, '5');
@@ -400,7 +400,7 @@ maybe('winning and losing each have their own threshold; Highest loss % is losse
     assert.match(r.won, /Won 60% or more/);
     assert.ok(!/Lost/.test(r.won), 'the win module no longer lists losers');
     assert.match(r.lost, /Lost 50% or more/);
-    assert.match(r.lost, /Players with 5\+ games that month/);
+    assert.match(r.lost, /Players with 5\+ matches that month/);
     r.lostRows.forEach(([n, g, pct]) => { assert.ok(g >= 5 && pct >= 50, n); assert.ok(r.lost.includes(`${n}lost ${pct}%`), n); });
     r.wonNames.forEach((n) => assert.ok(r.won.includes(n), n));
     assert.ok(r.worstFirst && r.worst.includes(`${r.worstFirst.value}% lost`), r.worst);
