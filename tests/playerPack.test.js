@@ -341,7 +341,7 @@ maybe('the club\'s Board Pack is untouched by Player Packs: its catalogue, its s
       return { same: before === after, club: BoardPack.MODULES.length, player: BoardPack.PLAYER.MODULES.map((m) => m.id), keys: [BoardPack.storageKey('2026-09'), playerPacksKey('2026-09')], writes: window.__writes.length };
     });
     assert.strictEqual(r.same, true, 'building every pack changes no table or rating');
-    assert.strictEqual(r.club, 23);
+    assert.strictEqual(r.club, 24, 'the club catalogue: 23, plus Monthly Champions & Player of the Month (1 Nov)');
     assert.deepStrictEqual(r.player, ['overview', 'matchups', 'partners', 'rivals', 'best', 'weaker', 'movement', 'targets']);
     assert.deepStrictEqual(r.keys, ['moneypadel_board_pack_2026-09', 'moneypadel_player_packs_2026-09']);
     assert.strictEqual(r.writes, 0, 'building packs writes nothing');

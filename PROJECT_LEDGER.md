@@ -152,6 +152,13 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Monthly Reviews on the standings site + Champions in the Board Pack — DONE (commit below), 1 Nov.** Shaun asked for an Instagram-style swipeable monthly pack for members, on mpstandings; "Yes please sort that all out".
+- The Share Deck (`4af924d`) already is that: 4:5 swipeable cards at `review/?m=YYYY-MM`, and **Share all slides** sends 1080×1350 pictures (Instagram portrait) as a WhatsApp album / Instagram carousel.
+- **`review/` with no month** now lists the published, not-withdrawn months newest first (it asks for this month and the 23 before it), each opening its deck; a deck links back with **All months** (club reviews only, not private Player Packs). On the standings host the back link reads "Back to the standings".
+- **Standings site:** a fourth tab, **Monthly**, opens `review/`. `vercel.json` now lets `/review` and `/review/` through on mpstandings (still read-only published decks); every other path still goes home. Standings tabs drop their icons so four fit at 360px.
+- **Board Pack: new section "Monthly Champions & Player of the Month"** (`champions`), on by default, second after the overview: each shown tier's Champion (confirmed or as the Race stands) with race points and matches, and the confirmed Player of the Month; a note when finished-month Champions are not confirmed yet. Share Deck slide "Honours · Champions of the month". Packs saved before today get it switched off at the end (the catalogue's rule for new sections) — tick it in.
+- 982 / 982.
+
 **Board Pack: "matches", not "games", in the win/loss % sections — DONE (`d250f2e`), 1 Nov.** Shaun: "rename from game to match please, as a game means something in padel." "Won/Lost a set % of matches or more", "Minimum matches", "3+ matches", "every match", and the pack's and share card's own lines. Saved packs store values, not labels, so they need nothing.
 - **Open (Shaun): the same rename app-wide?** "Games" for matches appears throughout (profile "14 games · 9W-4D-1L", Home "7 games", League P column notes, Monthly Race "fewer than 5 matches" already says matches, Board Pack's other sections, Games tab name). Terminology decision before a sweep.
 
@@ -9103,6 +9110,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 1 Nov (latest): Monthly Reviews on the standings site; Champions in the Board Pack (commit below, 982 / 982).** Baton → Shaun: confirm October's Champions, tick the Champions section in October's pack, Publish its Share Deck — it then appears under Monthly on mpstandings.
 
 **CCode, 1 Nov (latest): Board Pack win/loss % sections say matches (`d250f2e`, 979 / 979).** Baton → Shaun: rename games → matches app-wide?
 

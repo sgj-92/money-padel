@@ -79,7 +79,7 @@ maybe('choose a month, select, deselect, reorder, set options, add commentary, p
       powerRows: document.querySelectorAll('#bpPreview [data-module="power"] tbody tr').length,
       powerTiers: [...document.querySelectorAll('#bpPreview [data-module="power"] .bp-subhead')].map((h) => h.textContent),
     }));
-    assert.deepStrictEqual(preview.order, ['note:Chair’s summary', 'results_table', 'over_80', 'lost_pct', 'kings', 'power', 'league', 'merit', 'race', 'rating_movers', 'tier_moves']);
+    assert.deepStrictEqual(preview.order, ['note:Chair’s summary', 'champions', 'results_table', 'over_80', 'lost_pct', 'kings', 'power', 'league', 'merit', 'race', 'rating_movers', 'tier_moves']);
     assert.strictEqual(preview.noteTag, 'Admin commentary', 'manual content is marked as such');
     assert.strictEqual(preview.noteHtml, 'Good month.<br>&lt;b&gt;Not bold&lt;/b&gt;', 'and is text, not markup');
     assert.strictEqual(preview.powerRows, 3);
@@ -96,7 +96,7 @@ maybe('choose a month, select, deselect, reorder, set options, add commentary, p
     assert.strictEqual(saved.updatedBy, 'Shaun');
     assert.ok(saved.updatedAt && saved.basis && saved.basis.games > 0 && saved.basis.fingerprint);
     const on = saved.items.filter((it) => it.kind === 'note' || it.enabled).map((it) => it.kind === 'note' ? 'note' : it.id);
-    assert.deepStrictEqual(on, ['note', 'results_table', 'over_80', 'lost_pct', 'kings', 'power', 'league', 'merit', 'race', 'rating_movers', 'tier_moves']);
+    assert.deepStrictEqual(on, ['note', 'champions', 'results_table', 'over_80', 'lost_pct', 'kings', 'power', 'league', 'merit', 'race', 'rating_movers', 'tier_moves']);
     assert.deepStrictEqual(saved.items.find((it) => it.id === 'power').options, { split: 'split', tier: 'A', top: '3', min: '5', players: 'all' });
     assert.deepStrictEqual(Object.keys(saved).sort(), ['basis', 'items', 'month', 'updatedAt', 'updatedBy', 'version'], 'the choice and its stamp -- no figures');
     assert.match(await p.textContent('#bpStatus'), /^Saved .* by Shaun\.$/);
@@ -119,7 +119,7 @@ maybe('choose a month, select, deselect, reorder, set options, add commentary, p
       powerTop: document.querySelector(`[data-bp-module="power"] [data-key="top"]`).value,
     }));
     assert.match(r.status, /^Saved .* by Shaun\.$/);
-    assert.deepStrictEqual(r, { status: r.status, drift: false, checked: ['results_table', 'over_80', 'lost_pct', 'kings', 'power', 'league', 'merit', 'race', 'rating_movers', 'tier_moves'],
+    assert.deepStrictEqual(r, { status: r.status, drift: false, checked: ['champions', 'results_table', 'over_80', 'lost_pct', 'kings', 'power', 'league', 'merit', 'race', 'rating_movers', 'tier_moves'],
       first: true, title: 'Chair’s summary', body: 'Good month.\n<b>Not bold</b>', powerTop: '3' });
     // September was never saved: its own default, untouched by August's pack.
     await again.page.selectOption('#bpMonth', '2026-09');

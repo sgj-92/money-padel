@@ -161,7 +161,7 @@
   display: flex; align-items: center; justify-content: center; gap: 6px;
   background: var(--surface-1); border: 1px solid var(--surface-border); border-radius: var(--radius-sm);
   color: var(--text-dim); font-family: var(--font-interface); font-size: 12.5px; font-weight: 600;
-  padding: 12px 4px; text-align: center; cursor: pointer;
+  padding: 12px 4px; text-align: center; cursor: pointer; text-decoration: none;   /* also an <a> (the standings Monthly link) */
 }
 .section-subnav-item svg{ width: 15px; height: 15px; flex-shrink: 0; opacity: 0.8; }
 /* The ellipsis needs to live on the text span, not the flex row itself --
@@ -341,3 +341,5 @@ body.standings-mode .home-viewer-switch,
 body.standings-mode #tabrow{ display: none !important; }
 body.standings-mode{ padding-bottom: calc(24px + var(--shell-safe-bottom)); --rail-w: 0px; }
 body.standings-mode .update-notice{ bottom: calc(var(--shell-safe-bottom) + 14px); }
+/* Four tabs (League, Power, Results, Monthly): words without icons, so all four fit a phone. */
+body.standings-mode .section-subnav-item svg{ display: none; }

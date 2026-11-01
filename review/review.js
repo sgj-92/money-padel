@@ -1,5 +1,7 @@
 // ===================== MONTHLY REVIEW: THE PUBLIC PAGE =====================
 // review/?m=YYYY-MM -- the link an Admin shares into the club's WhatsApp.
+// review/ (no month) -- the published months, newest first, each opening its
+// deck: the standings site's Monthly tab (Shaun, 1 Nov).
 // review/?p=<token> -- one player's Monthly Pack, by its private link. The
 // token is 128 random bits, the only name the pack is stored under (in its
 // own playerPacks collection), so a pack cannot be reached by changing a
@@ -31,7 +33,7 @@
   }
   function empty(title, text) {
     main.innerHTML = '<div class="review-empty" data-review-empty><h1>' + esc(title) + '</h1><p>' + esc(text) +
-      '</p><p><a href="' + esc(appLink) + '">Open Money Padel</a></p></div>';
+      '</p><p><a href="' + esc(appLink) + '">' + esc(backLabel) + '</a></p></div>';
     window.REVIEW_READY = true;
   }
   function copy(text) {
@@ -79,11 +81,44 @@
         copy(shareUrl).then(function (ok) { say(ok ? 'Link copied' : shareUrl); });
       };
     }
+    // A club review leads back to the list of months (a player's private
+    // pack does not: it is not one of the club's).
+    if (token === null) actions.insertAdjacentHTML('afterbegin', '<a class="review-btn review-btn-quiet" href="./" id="reviewAllMonths">All months</a>');
+    window.REVIEW_READY = true;
+  }
+
+  // On the standings site the way back is to the standings, not "the app".
+  var backLabel = /^mpstandings\./i.test(location.hostname) ? 'Back to the standings' : 'Open Money Padel';
+
+  // The months a review could have been published for: this one and the
+  // two years before it, asked for at once. Only published, not withdrawn,
+  // reviews are listed.
+  async function bootIndex() {
+    document.getElementById('reviewTitle').textContent = 'Monthly Reviews';
+    if (!storageAvailable()) return empty('Monthly Reviews', 'This page can’t reach Money Padel right now. Try again in a moment.');
+    var now = new Date();
+    var months = [];
+    for (var i = 0; i < 24; i++) {
+      var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
+    }
+    var got = await Promise.all(months.map(function (m) { return loadPublishedReview(m).catch(function () { return null; }); }));
+    var live = months.filter(function (m, i) { var p = got[i]; return p && !p.withdrawn && p.deck && Array.isArray(p.deck.slides); });
+    if (!live.length) return empty('Monthly Reviews', 'No monthly review has been published yet.');
+    main.innerHTML = '<div class="review-index" data-review-index>' +
+      '<h1>Monthly Reviews</h1><p class="review-index-sub">Swipe through each month at Money Padel.</p>' +
+      live.map(function (m) {
+        var deck = got[months.indexOf(m)].deck;
+        return '<a class="review-index-row" href="?m=' + m + '"><span class="review-index-month">' + esc(ShareDeck.monthLabel(m)) + '</span>' +
+          '<span class="review-index-count">' + deck.slides.length + ' slides</span><span class="review-index-chev" aria-hidden="true">›</span></a>';
+      }).join('') +
+      '<p class="review-index-back"><a href="' + esc(appLink) + '">' + esc(backLabel) + '</a></p></div>';
     window.REVIEW_READY = true;
   }
 
   async function boot() {
     if (token !== null) return bootPlayer();
+    if (!month) return bootIndex();
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return empty('No review chosen', 'This link does not name a month.');
     var label = ShareDeck.monthLabel(month);
     if (!storageAvailable()) return empty(label + ' Review', 'This page can’t reach Money Padel right now. Try again in a moment.');

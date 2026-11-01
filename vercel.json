@@ -4,7 +4,7 @@
   "buildCommand": "node scripts/stamp-build.js",
   "redirects": [
     {
-      "source": "/((?!assets/).+)",
+      "source": "/((?!assets/|review(?:/|$)).+)",
       "has": [
         {
           "type": "host",

@@ -22,7 +22,9 @@ test('vercel.json: on the standings host every page path goes home, the assets d
   assert.strictEqual(rule.destination, '/');
   assert.strictEqual(rule.permanent, false);
   const re = new RegExp('^' + rule.source.replace(/^\//, '/') + '$');
-  ['/review/', '/preview/', '/admin', '/index.html'].forEach((p) => assert.ok(re.test(p), `${p} is sent home`));
+  ['/preview/', '/admin', '/index.html', '/reviewer'].forEach((p) => assert.ok(re.test(p), `${p} is sent home`));
+  // The published Monthly Reviews are the Monthly tab (1 Nov): read-only decks.
+  ['/review/', '/review'].forEach((p) => assert.ok(!re.test(p), `${p} is served`));
   ['/assets/js/app.js', '/assets/css/shell.css', '/'].forEach((p) => assert.ok(!re.test(p), `${p} is served`));
 });
 
@@ -32,6 +34,7 @@ maybe('opens on the League, offers League, Power and Results only, and nothing p
     const r = await app.run(() => ({
       mode: isStandingsMode(), tab: activeTab, body: document.body.classList.contains('standings-mode'),
       subnav: [...document.querySelectorAll('#sectionSubnav [data-tab]')].map((b) => b.textContent.trim()),
+      monthlyHref: document.querySelector('#sectionSubnav a[data-tab="monthly"]').getAttribute('href'),
       nav: getComputedStyle(document.querySelector('.shell-bottom-nav')).display,
       chooser: !!document.getElementById('viewerSelectorSheet'),
       empty: getComputedStyle(document.getElementById('empty')).display,
@@ -40,7 +43,8 @@ maybe('opens on the League, offers League, Power and Results only, and nothing p
     assert.strictEqual(r.mode, true);
     assert.strictEqual(r.tab, 'summary', 'the League first');
     assert.ok(r.body);
-    assert.deepStrictEqual(r.subnav, ['League', 'Power', 'Results']);
+    assert.deepStrictEqual(r.subnav, ['League', 'Power', 'Results', 'Monthly']);
+    assert.strictEqual(r.monthlyHref, 'review/', 'Monthly opens the published reviews');
     assert.strictEqual(r.nav, 'none', 'no tab bar to the rest of the app');
     assert.strictEqual(r.chooser, false, 'no "who are you?"');
     assert.strictEqual(r.empty, 'none', 'no stray empty-list message over the League');

@@ -46,6 +46,9 @@
   // saved pack starts with it selected.
   const MODULES = [
     { id: 'overview', title: 'Month overview', on: true, options: {} },
+    // The month's honours (Shaun, 1 Nov): each tier's Monthly Champion and the
+    // club's Player of the Month.
+    { id: 'champions', title: 'Monthly Champions & Player of the Month', on: true, options: {} },
     { id: 'results_table', title: 'Monthly results table', on: true, options: {
       sort: { label: 'Order by', values: ['points', 'games', 'difficulty'], labels: { points: 'Points', games: 'Games played', difficulty: 'Hardest games' }, default: 'points' },
       split: SPLIT, tier: TIER, top: top('all') } },

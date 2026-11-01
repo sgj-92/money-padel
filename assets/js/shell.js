@@ -63,6 +63,9 @@ function enterStandingsMode(){
     { tab: 'summary', label: 'League', icon: icon('summary') },
     { tab: 'power', label: 'Power', icon: icon('power') },
     { tab: 'games', label: 'Results', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 7h14"/><path d="M5 12h14"/><path d="M5 17h9"/></svg>' },
+    // The published Monthly Reviews, each a swipeable deck (Shaun, 1 Nov). A
+    // page of its own (review/), so this item goes there, not to a tab.
+    { tab: 'monthly', label: 'Monthly', href: 'review/', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 3.5v17"/></svg>' },
   ];
   TAB_TO_SECTION.summary = 'rankings';
   TAB_TO_SECTION.games = 'rankings';
@@ -167,7 +170,7 @@ function syncHeaderSectionTitle(){
 function renderSectionSubnav(){
   const container = document.getElementById('sectionSubnav');
   // Only the screens this reader may see (canSeeTab, app.js).
-  const items = (SECTION_SUBNAV[activeSection] || []).filter(it => canSeeTab(it.tab));
+  const items = (SECTION_SUBNAV[activeSection] || []).filter(it => it.href || canSeeTab(it.tab));
   if(!items.length){ container.style.display = 'none'; container.innerHTML = ''; syncDesktopShell(); return; }
   container.style.display = 'grid';
   // minmax(0, 1fr), not plain 1fr -- a grid track's implicit min-width is
@@ -176,10 +179,11 @@ function renderSectionSubnav(){
   // than its equal share and overflow the page instead of actually
   // shrinking to let the span-level ellipsis do its job.
   container.style.gridTemplateColumns = `repeat(${items.length}, minmax(0, 1fr))`;
-  container.innerHTML = items.map(it=>
-    `<button class="section-subnav-item ${it.tab===activeTab?'active':''}" data-tab="${it.tab}">${it.icon||''}<span>${it.label}</span></button>`
+  container.innerHTML = items.map(it=> it.href
+    ? `<a class="section-subnav-item" href="${it.href}" data-tab="${it.tab}">${it.icon||''}<span>${it.label}</span></a>`
+    : `<button class="section-subnav-item ${it.tab===activeTab?'active':''}" data-tab="${it.tab}">${it.icon||''}<span>${it.label}</span></button>`
   ).join('');
-  container.querySelectorAll('.section-subnav-item').forEach(btn=>{
+  container.querySelectorAll('button.section-subnav-item').forEach(btn=>{
     btn.onclick = ()=>{ const b = legacyTabBtn(btn.dataset.tab); if(b) b.click(); };
   });
   syncDesktopShell();

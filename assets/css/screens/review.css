@@ -206,3 +206,16 @@ body.review-page{
 .deck-kings[data-count="1"] .deck-king-name{ font-size:40px; font-size:11cqw; }
 .deck-kings[data-count="1"] .deck-king-tier{ font-size:13px; font-size:3.6cqw; }
 .deck-kings[data-count="1"] .deck-king-rating{ font-size:44px; font-size:12cqw; }
+
+/* The published months (review/ with no month): the standings site's Monthly tab. */
+.review-index{ margin: 8px 16px auto; padding-bottom: 24px; font-family: var(--font-interface); }
+.review-index h1{ font-family: var(--font-prestige); font-weight: 400; font-size: 26px; color: var(--text); margin: 8px 0 4px; }
+.review-index-sub{ color: var(--text-dim); font-size: 14px; margin: 0 0 16px; }
+.review-index-row{ display: grid; grid-template-columns: 1fr auto 16px; align-items: center; gap: 10px; padding: 16px 14px;
+  margin-bottom: 10px; border: 1px solid rgba(212,175,55,0.2); border-radius: 14px; color: var(--text); text-decoration: none; }
+.review-index-month{ font-family: var(--font-prestige); font-size: 18px; }
+.review-index-count{ font-size: 13px; color: var(--text-dim); }
+.review-index-chev{ color: var(--gold-bright); }
+.review-index-back{ margin-top: 18px; text-align: center; }
+.review-index-back a{ color: var(--gold-bright); }
+.review-btn-quiet{ display: inline-flex; align-items: center; margin-right: 8px; border-color: rgba(212,175,55,0.2); color: var(--text-soft); text-decoration: none; }
