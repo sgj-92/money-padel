@@ -152,6 +152,10 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Head to head: compact rows + export — DONE (commit below), 1 Nov.** Shaun: condense the game cards, drop the amendment line, and export all head-to-head results as copy-paste text or a picture.
+- Players › Compare lists each meeting on one row (date · teams over score · "X won" / drew), as opponents and as teammates; the Admin "To correct or remove this game…" line is gone from both (the profile keeps its own).
+- **Copy results** (WhatsApp-ready text: tally, then one line per meeting) and **Share picture** (the Board Pack sheet painter, 1080 wide, all meetings) under the scoreline; both follow the month chosen. `CardPainter` lists gained `twoLine`. 983 / 983.
+
 **Monthly Reviews on the standings site + Champions in the Board Pack — DONE (`62bc53a`), 1 Nov.** Shaun asked for an Instagram-style swipeable monthly pack for members, on mpstandings; "Yes please sort that all out".
 - The Share Deck (`4af924d`) already is that: 4:5 swipeable cards at `review/?m=YYYY-MM`, and **Share all slides** sends 1080×1350 pictures (Instagram portrait) as a WhatsApp album / Instagram carousel.
 - **`review/` with no month** now lists the published, not-withdrawn months newest first (it asks for this month and the 23 before it), each opening its deck; a deck links back with **All months** (club reviews only, not private Player Packs). On the standings host the back link reads "Back to the standings".
@@ -9110,6 +9114,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 1 Nov (latest): head-to-head compact + export (commit below, 983 / 983).** Baton → Shaun.
 
 **CCode, 1 Nov (latest): Monthly Reviews on the standings site; Champions in the Board Pack (`62bc53a`, 982 / 982).** Baton → Shaun: confirm October's Champions, tick the Champions section in October's pack, Publish its Share Deck — it then appears under Monthly on mpstandings.
 

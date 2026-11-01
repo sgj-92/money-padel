@@ -347,7 +347,9 @@
           b.rows.forEach((r, i) => {
             const rankW = 64;
             font(ctx, 30); const vw = ctx.measureText(r.value || '').width;
-            const twoLines = vw > inner * 0.55;
+            // `twoLine`: the value always under the name (a head-to-head's
+            // teams want the whole width).
+            const twoLines = b.twoLine || vw > inner * 0.55;
             const h = twoLines ? 108 : 66;
             font(ctx, 30); textAt(ctx, r.rank || '', P, y + 44, { color: C.dim });
             font(ctx, 34, { weight: 600 });

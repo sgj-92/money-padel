@@ -135,29 +135,24 @@ function renderH2H(){
       <span style="color:var(--text-dim); margin:0 6px;">–</span>${h2hDraws ? `<span style="color:var(--text-dim); font-size:13px;">${h2hDraws} drawn</span><span style="color:var(--text-dim); margin:0 6px;">–</span>` : ''}
       <b style="color:${bWins>aWins?'var(--gold-bright)':'var(--text)'};">${bWins} ${h2hPlayerB}</b>
       <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">${opponentMatches.length} meeting${opponentMatches.length===1?'':'s'} as opponents</div>
+      <div class="h2h-export">
+        <button type="button" class="preset-btn" id="h2hCopy">Copy results</button>
+        <button type="button" class="preset-btn" id="h2hPicture">Share picture</button>
+      </div>
+      <div class="h2h-export-msg" id="h2hExportMsg" role="status"></div>
     </div>`;
-    opponentMatches.forEach(m=>{
-      const sidesA = MatchOutcome.sidesFor(m, h2hPlayerA);
-      const drew = sidesA.outcome === MatchOutcome.DRAW;
-      const aWon = sidesA.outcome === MatchOutcome.WIN;
-      const aPartner = sidesA.mine.filter(n=>n!==h2hPlayerA)[0];
-      const bPartner = sidesA.theirs.filter(n=>n!==h2hPlayerB)[0];
-      const adminButtons = isUnlocked
-        ? `<div class="section-sub" style="margin-top:8px; font-size:10.5px;">To correct or remove this game, open it in the Games tab.</div>`
-        : '';
-      // "X won" is not a thing that happened in a drawn match, and saying it
-      // of whichever side the record filed first is how this screen used to
-      // hand one player a win and the other a loss out of a coin toss.
-      const title = drew
-        ? `${h2hPlayerA} and ${h2hPlayerB} drew`
-        : `${aWon ? h2hPlayerA : h2hPlayerB} won`;
-      const titleColour = drew ? 'var(--text-dim)' : (aWon ? 'var(--green)' : 'var(--red)');
-      html += `<div class="callout-card">
-        <div class="cc-title" style="color:${titleColour};">${escapeHtml(title)}</div>
-        <div class="cc-detail">${m.date} · ${aPartner?`${h2hPlayerA} &amp; ${aPartner}`:h2hPlayerA} vs ${bPartner?`${h2hPlayerB} &amp; ${bPartner}`:h2hPlayerB}<br/>${m.score}</div>
-        ${adminButtons}
+    // One line per meeting, so a phone screenshot holds many (Shaun, 1 Nov).
+    // "X won" is not a thing that happened in a drawn match, and saying it
+    // of whichever side the record filed first is how this screen used to
+    // hand one player a win and the other a loss out of a coin toss.
+    html += `<div class="callout-card h2h-list">` + opponentMatches.map(m => {
+      const r = h2hOpponentRow(m, h2hPlayerA, h2hPlayerB);
+      return `<div class="h2h-row">
+        <span class="h2h-date">${escapeHtml(h2hShortDate(m.date))}</span>
+        <span class="h2h-teams"><span>${escapeHtml(r.teams)}</span><span class="h2h-score">${escapeHtml(m.score)}</span></span>
+        <span class="h2h-res" style="color:${r.drew ? 'var(--text-dim)' : (r.aWon ? 'var(--green)' : 'var(--red)')};">${escapeHtml(r.result)}</span>
       </div>`;
-    });
+    }).join('') + `</div>`;
   }
 
   html += `<div class="section-heading">🤝 As teammates${monthActive ? ` (${monthLabel(h2hMonth)})` : ''}</div>`;
@@ -171,18 +166,15 @@ function renderH2H(){
     html += `<div class="matchup-vs" style="padding:10px;">
       <b>${together.wins}-${together.losses}${together.draws ? `-${together.draws}` : ''}</b> together${together.draws ? ` <span style="color:var(--text-dim); font-size:11px;">(W-L-D)</span>` : ''}${partnership ? ` · <span class="${partnership.avg_overperf>3?'perf-pos':(partnership.avg_overperf<-3?'perf-neg':'')}">${partnership.avg_overperf>=0?'+':''}${partnership.avg_overperf}% chemistry</span>` : ''}
     </div>`;
-    teammateMatches.forEach(m=>{
+    html += `<div class="callout-card h2h-list">` + teammateMatches.map(m => {
       const sides = MatchOutcome.sidesFor(m, h2hPlayerA);
-      const oppTeam = sides.theirs;
-      const adminButtons = isUnlocked
-        ? `<div class="section-sub" style="margin-top:8px; font-size:10.5px;">To correct or remove this game, open it in the Games tab.</div>`
-        : '';
-      html += `<div class="callout-card">
-        <div class="cc-title" style="color:${sides.outcome===MatchOutcome.DRAW?'var(--text-dim)':(sides.outcome===MatchOutcome.WIN?'var(--green)':'var(--red)')};">${sides.outcome===MatchOutcome.DRAW?'DRAW':(sides.outcome===MatchOutcome.WIN?'WIN':'LOSS')}</div>
-        <div class="cc-detail">${m.date} · vs ${oppTeam.join(' &amp; ')}<br/>${m.score}</div>
-        ${adminButtons}
+      const word = sides.outcome===MatchOutcome.DRAW ? 'Draw' : (sides.outcome===MatchOutcome.WIN ? 'Won' : 'Lost');
+      return `<div class="h2h-row">
+        <span class="h2h-date">${escapeHtml(h2hShortDate(m.date))}</span>
+        <span class="h2h-teams"><span>v ${escapeHtml(sides.theirs.join(' & '))}</span><span class="h2h-score">${escapeHtml(m.score)}</span></span>
+        <span class="h2h-res" style="color:${sides.outcome===MatchOutcome.DRAW?'var(--text-dim)':(sides.outcome===MatchOutcome.WIN?'var(--green)':'var(--red)')};">${word}</span>
       </div>`;
-    });
+    }).join('') + `</div>`;
   }
 
   box.innerHTML = html;
@@ -206,6 +198,7 @@ function renderH2H(){
     };
   });
   wireH2HSelects(names);
+  wireH2HExport(opponentMatches, teammateMatches, monthActive);
 
   populateMonthSelect(document.getElementById('h2hMonthSelect'), h2hMonth);
   document.getElementById('h2hMonthSelect').addEventListener('change', e=>{
@@ -221,4 +214,96 @@ function wireH2HSelects(names){
   selB.innerHTML = names.map(n=>`<option value="${n}" ${n===h2hPlayerB?'selected':''}>${n}</option>`).join('');
   selA.addEventListener('change', e=>{ h2hPlayerA = e.target.value; renderH2H(); });
   selB.addEventListener('change', e=>{ h2hPlayerB = e.target.value; renderH2H(); });
+}
+
+// ---- One meeting, as a line ----------------------------------------------
+const H2H_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// "26 Oct", with the year only when it is not this year's.
+function h2hShortDate(date){
+  const [y, m, d] = date.split('-');
+  return `${Number(d)} ${H2H_MONTHS[Number(m) - 1]}${Number(y) !== new Date().getFullYear() ? ` ${y}` : ''}`;
+}
+
+// A meeting as opponents, from A's side: who was on each side and who won.
+function h2hOpponentRow(m, A, B){
+  const sides = MatchOutcome.sidesFor(m, A);
+  const drew = sides.outcome === MatchOutcome.DRAW;
+  const aWon = sides.outcome === MatchOutcome.WIN;
+  const aPartner = sides.mine.filter(n => n !== A)[0];
+  const bPartner = sides.theirs.filter(n => n !== B)[0];
+  const teams = `${aPartner ? `${A} & ${aPartner}` : A} v ${bPartner ? `${B} & ${bPartner}` : B}`;
+  return { teams, drew, aWon, result: drew ? 'drew' : `${aWon ? A : B} won` };
+}
+
+// ---- Export: the whole head-to-head as text or a picture (Shaun, 1 Nov) ----
+// Exactly what the screen lists, for the month chosen or all time.
+function h2hExportTitle(monthActive){
+  return `${h2hPlayerA} v ${h2hPlayerB} · ${monthActive ? monthLabel(h2hMonth) : 'All time'}`;
+}
+
+function h2hResultWord(outcome){
+  return outcome === MatchOutcome.DRAW ? 'Draw' : (outcome === MatchOutcome.WIN ? 'Won' : 'Lost');
+}
+
+function h2hExportText(opp, team, monthActive){
+  const A = h2hPlayerA, B = h2hPlayerB;
+  const t = MatchOutcome.tally(opp, A);
+  const lines = ['Money Padel · Head to head', h2hExportTitle(monthActive), ''];
+  lines.push(`As opponents: ${A} ${t.wins} – ${t.losses} ${B}${t.draws ? ` (${t.draws} drawn)` : ''} · ${opp.length} meeting${opp.length === 1 ? '' : 's'}`);
+  opp.forEach(m => { const r = h2hOpponentRow(m, A, B); lines.push(`${h2hShortDate(m.date)} · ${r.drew ? 'Drew' : r.result} · ${r.teams} · ${m.score}`); });
+  if(team.length){
+    const tt = MatchOutcome.tally(team, A);
+    lines.push('', `As teammates: ${tt.wins}W ${tt.draws ? `${tt.draws}D ` : ''}${tt.losses}L`);
+    team.forEach(m => {
+      const s = MatchOutcome.sidesFor(m, A);
+      lines.push(`${h2hShortDate(m.date)} · ${h2hResultWord(s.outcome)} · v ${s.theirs.join(' & ')} · ${m.score}`);
+    });
+  }
+  return lines.join('\n');
+}
+
+// The picture: the Board Pack's own sheet painter, so it looks like the
+// club's other shared pictures.
+function h2hExportSheet(opp, team, monthActive){
+  const A = h2hPlayerA, B = h2hPlayerB;
+  const t = MatchOutcome.tally(opp, A);
+  const stats = [{ value: String(t.wins), label: A }];
+  if(t.draws) stats.push({ value: String(t.draws), label: 'Drawn' });
+  stats.push({ value: String(t.losses), label: B });
+  const blocks = [];
+  if(opp.length){
+    blocks.push({ type: 'stats', items: stats },
+      { type: 'sub', text: `As opponents · ${opp.length} meeting${opp.length === 1 ? '' : 's'}` },
+      { type: 'list', twoLine: true, rows: opp.map(m => { const r = h2hOpponentRow(m, A, B); return { rank: String(opp.indexOf(m) + 1), name: r.teams, value: `${h2hShortDate(m.date)} · ${m.score} · ${r.drew ? 'Drew' : r.result}` }; }) });
+  }
+  if(team.length){
+    const tt = MatchOutcome.tally(team, A);
+    blocks.push({ type: 'sub', text: `As teammates · ${tt.wins}W ${tt.draws ? `${tt.draws}D ` : ''}${tt.losses}L` },
+      { type: 'list', twoLine: true, rows: team.map(m => { const s = MatchOutcome.sidesFor(m, A);
+        return { rank: String(team.indexOf(m) + 1), name: `v ${s.theirs.join(' & ')}`, value: `${h2hShortDate(m.date)} · ${m.score} · ${h2hResultWord(s.outcome)}` }; }) });
+  }
+  return { title: `${A} v ${B}`, month: monthActive ? monthLabel(h2hMonth) : 'All time', blocks };
+}
+
+function wireH2HExport(opp, team, monthActive){
+  const msg = (t) => { const el = document.getElementById('h2hExportMsg'); if(el) el.textContent = t; };
+  const copyBtn = document.getElementById('h2hCopy');
+  if(copyBtn) copyBtn.onclick = async () => {
+    const ok = await copyText(h2hExportText(opp, team, monthActive));
+    msg(ok ? 'Copied — paste it into WhatsApp.' : 'Could not copy on this device.');
+  };
+  const picBtn = document.getElementById('h2hPicture');
+  if(picBtn) picBtn.onclick = async () => {
+    picBtn.disabled = true;
+    try {
+      const brand = await CardPainter.loadImage('assets/brand/mp-mark.svg');
+      const cv = CardPainter.sheet(h2hExportSheet(opp, team, monthActive), { brand });
+      const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const file = await CardPainter.toFile(cv, `money-padel-h2h-${slug(h2hPlayerA)}-v-${slug(h2hPlayerB)}.png`);
+      const outcome = await CardPainter.share([file], { title: `Money Padel — ${h2hExportTitle(monthActive)}` });
+      msg(outcome === 'shared' ? 'Picture shared.' : outcome === 'saved' ? 'Picture saved — post it from your photos.' : outcome === 'ready' ? 'Picture ready: tap Share picture again.' : '');
+    } catch(e){ msg('Could not make the picture.'); }
+    picBtn.disabled = false;
+  };
 }
