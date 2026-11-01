@@ -152,6 +152,11 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Vs Tiers: each player's record against every tier — DONE (commit below), 1 Nov.** Shaun: "how a player faces up against his own (and other) tiers. This helps promotion and relegation checks … a summary then a breakdown by player."
+- League › View › **Vs Tiers** (after League Table; month or All time; on the standings site too). Players grouped by their own tier (today's on All time; the tier at a month's close on a month); columns v S/A/B/C with win % and W-D-L, the own-tier column highlighted. Tap a player: each opponent, grouped by tier, with their record.
+- **Counting rule (CCode, recorded for CChat/CGPT):** tiers as held on the match date; each match counts once per opponent (doubles: beating a Tier A and a Tier B player is a win against each); draws in the denominator. `domain/matches/tierRecord.js` (pure, Node-tested). Alternative if wanted later: by the opposing pair's strength (Merit's Hard / Even / Fav), which accounts for the partner.
+- 985 / 985.
+
 **Head to head: compact rows + export — DONE (`193f421`), 1 Nov.** Shaun: condense the game cards, drop the amendment line, and export all head-to-head results as copy-paste text or a picture.
 - Players › Compare lists each meeting on one row (date · teams over score · "X won" / drew), as opponents and as teammates; the Admin "To correct or remove this game…" line is gone from both (the profile keeps its own).
 - **Copy results** (WhatsApp-ready text: tally, then one line per meeting) and **Share picture** (the Board Pack sheet painter, 1080 wide, all meetings) under the scoreline; both follow the month chosen. `CardPainter` lists gained `twoLine`. 983 / 983.
@@ -9114,6 +9119,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 1 Nov (latest): Vs Tiers (commit below, 985 / 985).** Baton → Shaun.
 
 **CCode, 1 Nov (latest): head-to-head compact + export (`193f421`, 983 / 983).** Baton → Shaun.
 

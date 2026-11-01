@@ -55,6 +55,7 @@ function renderSummary(){
         <option value="race">Monthly Race</option>
         <option value="merit">Merit Table</option>
         <option value="league">League Table</option>
+        <option value="vstiers">Vs Tiers</option>
         <option value="honours">Honours</option>
         <option value="information">Information</option>
       </select>
@@ -81,12 +82,13 @@ function renderSummary(){
   const legacyExplainer = document.getElementById('explainerWrapper');
   // Merit carries its own explanation too, so the legacy per-tab block would
   // be a second one on that view as well.
-  if(legacyExplainer) legacyExplainer.style.display = (summaryMode === 'league' || summaryMode === 'merit' || summaryMode === 'race' || summaryMode === 'honours') ? 'none' : '';
+  if(legacyExplainer) legacyExplainer.style.display = (summaryMode === 'league' || summaryMode === 'merit' || summaryMode === 'race' || summaryMode === 'honours' || summaryMode === 'vstiers') ? 'none' : '';
 
   if(summaryMode === 'league') renderSummaryLeagueTable();
   else if(summaryMode === 'merit') renderMeritTable();
   else if(summaryMode === 'race') renderMonthlyRace();
   else if(summaryMode === 'honours') renderRollOfHonour();
+  else if(summaryMode === 'vstiers') renderTierRecord();
   else renderSummaryInformation();
 }
 
@@ -1042,4 +1044,87 @@ function buildWhatsAppSummaryText(month, stats, groups){
   lines.push('Player of the month….');
   lines.push(groups.playerOfMonth.state === 'confirmed' ? `${groups.playerOfMonth.text} 🏆🏆🏆` : groups.playerOfMonth.text);
   return lines.join('\n');
+}
+
+// ===================== VS TIERS =====================
+// Shaun, 1 Nov: how each player fares against their own tier and the others,
+// for promotion and relegation checks -- a summary per player, then a
+// breakdown against each opponent. The counting is TierRecord's
+// (domain/matches/tierRecord.js): tiers as held on the match date, each match
+// counted once per opponent, draws as draws. Players are grouped by their own
+// tier: today's on All time, the tier held at a month's close on a month.
+let tierRecordOpen = null;          // the player whose breakdown is open
+let tierRecordExplainerOpen = false;
+
+function tierRecordOwnTier(name, month){
+  if(month === 'all') return (PLAYERS.find(p => p.name === name) || {}).tier || null;
+  return tierAtMonthClose(name, month) || historicalTierOf(name, monthLastDay(month));
+}
+
+function tierRecordCellHtml(rec, own){
+  if(!rec || !rec.played) return `<td class="tr-cell${own ? ' is-own' : ''}"><span class="tr-none">–</span></td>`;
+  const p = TierRecord.pct(rec);
+  return `<td class="tr-cell${own ? ' is-own' : ''}"><b>${p}%</b><span class="tr-wdl">${rec.wins}-${rec.draws}-${rec.losses}</span></td>`;
+}
+
+function renderTierRecord(){
+  const content = document.getElementById('summaryContent');
+  const month = summaryMonth;
+  const label = month === 'all' ? 'All Time' : monthLabel(month);
+  const matches = matchesIncludingDraws().filter(m => month === 'all' || m.date.slice(0,7) === month);
+  const rows = TierRecord.build({ matches, tierAt: (n, d) => historicalTierOf(n, d) });
+  const shownTiers = groupedTiers();
+  const cols = shownTiers.filter(t => rows.some(r => r.vs[t] && r.vs[t].played));
+  let html = `<div class="section-heading" style="margin-top:6px;">⚖️ ${label} · Vs Tiers</div>
+    <div class="section-sub" style="margin:2px 0 0;">Each player's record against every tier. Tap a player for each opponent.</div>`;
+  html += leagueInlineFold('tierRecordExplainerToggle', 'How it counts', tierRecordExplainerOpen,
+    `<div class="section-sub" style="margin:0;">Tiers are the ones held on the day of each match. Doubles has two opponents, so a match counts once for each: beating a Tier A and a Tier B player is a win against Tier A and a win against Tier B. The percentage is wins out of results against that tier, draws included (W-D-L underneath). The player's own tier is highlighted.</div>`);
+  if(!rows.length){ content.innerHTML = html + `<div class="section-sub">No games recorded for ${label}.</div>`; wireTierRecord(content); return; }
+  const byTier = {};
+  rows.forEach(r => { const t = tierRecordOwnTier(r.player, month) || '?'; (byTier[t] = byTier[t] || []).push(r); });
+  shownTiers.concat(byTier['?'] ? ['?'] : []).forEach(tier => {
+    const list = (byTier[tier] || []).slice().sort((a, b) => b.matches - a.matches || a.player.localeCompare(b.player));
+    if(!list.length) return;
+    html += `<div class="section-heading" style="font-size:14px; margin-top:14px;">${tier === '?' ? 'Tier unknown' : `Tier ${tier}`}</div>
+      <div class="callout-card" style="padding:0;"><table class="merit-table tr-table" style="width:100%; border-collapse:collapse; font-size:12px;">
+      <colgroup><col style="width:24%;"><col style="width:9%;">${cols.map(() => `<col style="width:${(67 / cols.length).toFixed(2)}%;">`).join('')}</colgroup>
+      <thead><tr style="background:var(--bg2); text-align:left;">
+        <th style="padding:7px 4px 7px 10px;">Player</th>
+        <th style="padding:7px 4px; text-align:center;" title="Matches played">P</th>
+        ${cols.map(t => `<th class="tr-head${t === tier ? ' is-own' : ''}" style="padding:7px 4px; text-align:center;">v ${t}</th>`).join('')}
+      </tr></thead><tbody>`;
+    list.forEach(r => {
+      const open = tierRecordOpen === r.player;
+      html += `<tr class="tr-row${open ? ' is-open' : ''}" data-tr-player="${escapeHtml(r.player)}" style="border-top:1px solid var(--line); cursor:pointer;">
+        <td style="padding:7px 4px 7px 10px; font-weight:700;">${escapeHtml(r.player)} <span class="tr-chev" aria-hidden="true">${open ? '⌄' : '›'}</span></td>
+        <td style="padding:7px 4px; text-align:center;">${r.matches}</td>
+        ${cols.map(t => tierRecordCellHtml(r.vs[t], t === tier)).join('')}
+      </tr>`;
+      if(open) html += `<tr class="merit-drill"><td colspan="${2 + cols.length}" style="padding:0;">${tierRecordBreakdownHtml(r, cols, tier)}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+  content.innerHTML = html;
+  wireTierRecord(content);
+}
+
+// One player's opponents, grouped by the tier they were in when they met.
+function tierRecordBreakdownHtml(r, cols, ownTier){
+  let html = `<div class="merit-drill-body tr-break">`;
+  cols.concat(r.vs['?'] ? ['?'] : []).forEach(t => {
+    const opps = r.opponents.filter(o => o.tier === t).sort((a, b) => b.played - a.played || a.name.localeCompare(b.name));
+    if(!opps.length) return;
+    const rec = r.vs[t];
+    html += `<div class="merit-drill-head">v ${t === '?' ? 'tier unknown' : `Tier ${t}`}${t === ownTier ? ' (own tier)' : ''} · ${rec.wins}-${rec.draws}-${rec.losses} · ${TierRecord.pct(rec)}%</div>
+      ${opps.map(o => `<div class="tr-opp"><span>${escapeHtml(o.name)}</span><span class="tr-opp-rec">${o.wins}-${o.draws}-${o.losses}</span><span class="tr-opp-pct">${TierRecord.pct(o)}%</span></div>`).join('')}`;
+  });
+  return html + `</div>`;
+}
+
+function wireTierRecord(content){
+  const ex = document.getElementById('tierRecordExplainerToggle');
+  if(ex) ex.onclick = ()=>{ tierRecordExplainerOpen = !tierRecordExplainerOpen; renderTierRecord(); };
+  content.querySelectorAll('.tr-row').forEach(tr=>{
+    tr.onclick = ()=>{ const p = tr.dataset.trPlayer; tierRecordOpen = tierRecordOpen === p ? null : p; renderTierRecord(); };
+  });
 }
