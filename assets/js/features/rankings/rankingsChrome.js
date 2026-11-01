@@ -120,7 +120,13 @@ function renderRankingsPodium(){
   });
 }
 
+// Kings first, then the month's Champions under them, both above the podium.
 function renderKingsOfTiersPanel(){
+  renderKingsPanel();
+  renderMonthlyChampionsPanel();
+}
+
+function renderKingsPanel(){
   const existing = document.getElementById('kingsOfTiersPanel');
   if(existing) existing.remove();
 
@@ -144,7 +150,7 @@ function renderKingsOfTiersPanel(){
   panel.innerHTML = `
     <div class="kings-panel-header">
       <span class="kings-panel-title">Kings of Tiers</span>
-      <span class="kings-panel-period">${periodLabel}</span>
+      <span class="kings-panel-period">All-time Power · ${periodLabel}</span>
     </div>
     <div class="kings-row">
       ${groupedTiers().filter(tier=>kings[tier] || (kings._fieldSize||{})[tier]).map(tier=>{
@@ -178,6 +184,54 @@ function renderKingsOfTiersPanel(){
       else openSheet(el.dataset.player);
     };
   });
+}
+
+// Monthly Champions (Shaun, 1 Nov): each tier's Monthly Race winner, beside
+// the Kings -- who lead the All-time Power Rankings -- so the two are never
+// mistaken for one another. Month views only; "Leading" until the month is
+// over. Tapping one opens that month's Race.
+function renderMonthlyChampionsPanel(){
+  const existing = document.getElementById('monthlyChampionsPanel');
+  if(existing) existing.remove();
+  const champs = computeMonthlyChampions();
+  if(!champs) return;
+  const list = document.getElementById('list');
+  if(!list) return;
+  const mName = monthLabel(selectedMonth).split(' ')[0];
+  const tiers = groupedTiers().filter(t => champs[t]);
+  if(!tiers.length) return;
+  const panel = document.createElement('div');
+  panel.className = 'kings-panel champions-panel';
+  panel.id = 'monthlyChampionsPanel';
+  panel.innerHTML = `
+    <div class="kings-panel-header">
+      <span class="kings-panel-title">${champs._final ? `${mName} Champions` : `Leading ${mName}`}</span>
+      <span class="kings-panel-period">Monthly Race</span>
+    </div>
+    <div class="kings-row">
+      ${tiers.map(tier=>{
+        const c = champs[tier];
+        return `<div class="kings-card champ-card kings-tier-${tier.toLowerCase()}" data-player="${escapeHtml(c.name)}">
+          <div class="kings-name">${escapeHtml(c.name)}</div>
+          <div class="kings-tier-label">Tier ${tier}</div>
+          <div class="kings-rating">${raceWholePoints(c.score)}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  const anchor = document.getElementById('rankingsPodium') || document.getElementById('rankingsColumnHeader') || list;
+  anchor.parentNode.insertBefore(panel, anchor);
+  panel.querySelectorAll('.champ-card').forEach(el=>{
+    el.onclick = ()=> openMonthlyRaceFor(selectedMonth);
+  });
+}
+
+// The League screen on the Race for a month: Champions open here.
+function openMonthlyRaceFor(month){
+  const b = legacyTabBtn('summary');
+  if(b) b.click();
+  summaryMonth = month;
+  summaryMode = 'race';
+  renderSummary();
 }
 
 function buildRankingsHero(){

@@ -71,14 +71,46 @@ function defaultRankingMinGames(month){
   return month === 'all' ? 10 : 5;
 }
 
-// Kings of Tiers for any scope: each tier's highest-rated member of the pool.
-// A king of a field of one is not a king. Where only one player qualifies in
-// a tier there is nothing to have won, so no crown is awarded and the card
-// says why. This applies to every tier, not just Tier S -- the principle is
-// about the size of the field, and hardcoding it to S would make it look
-// like a rule about Manny.
-function kingsOfTiersFor(month, minGamesFloor){
-  const rows = rankingPool(month, minGamesFloor);
+// Three honours, three sources (Shaun, 1 Nov):
+//   King of a tier     the tier's leader in the All-time Power Rankings
+//   Monthly Champion   the winner of the tier's Monthly Race (championsFor)
+//   Player of the Month voted by the club
+// A King is not a month's best: Kaz can be King while Osh wins October. So
+// the King's pool is the All-time one -- Ranked, 10+ rated games -- whatever
+// month is on screen. For a finished month it is that pool as it stood at the
+// month's end (month-end rating, tier at the close, Ranked then); for the
+// current month, or All time, it is today's.
+function currentMonthKey(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function monthLastDay(month){
+  const [y, m] = month.split('-').map(Number);
+  return `${month}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`;
+}
+
+function kingPool(month){
+  if(month === 'all' || month >= currentMonthKey()) return rankingPool('all', defaultRankingMinGames('all'));
+  const last = monthLastDay(month);
+  const asOf = Date.parse(last + 'T23:59:59Z');
+  const ratings = monthEndRatings(month);
+  const rated = v3RatedMatchList().filter(m => m.date <= last);
+  return PLAYERS.filter(p => p.name in ratings)
+    .filter(p => rated.filter(m => m.players.includes(p.name)).length >= defaultRankingMinGames('all'))
+    .filter(p => { const st = playerStateOf(p.name, asOf); return !!(st && st.rankable); })
+    .map(p => ({ ...p, scopeRating: ratings[p.name], scopeTier: tierAtMonthClose(p.name, month) }))
+    .sort((a, b) => b.scopeRating - a.scopeRating);
+}
+
+// Kings of Tiers for any scope: each tier's highest-rated member of the King
+// pool. A king of a field of one is not a king. Where only one player
+// qualifies in a tier there is nothing to have won, so no crown is awarded and
+// the card says why. This applies to every tier, not just Tier S -- the
+// principle is about the size of the field, and hardcoding it to S would make
+// it look like a rule about Manny.
+function kingsOfTiersFor(month){
+  const rows = kingPool(month);
   const MIN_FIELD = 2;
   const kings = {};
   const fieldSize = {};
@@ -98,6 +130,23 @@ function kingsOfTiersFor(month, minGamesFloor){
   if(!TIER_ORDER_LIST.some(t=>kings[t])) return null;
   kings._fieldSize = fieldSize;
   return kings;
+}
+
+// Monthly Champions: each tier's Monthly Race leader among qualified runners,
+// read from the Race's own table (it is sorted qualified first, then score).
+// "Leading" while the month is still being played; "Champion" once it is
+// over. No month, no champion.
+function championsFor(month){
+  if(month === 'all') return null;
+  const table = buildMonthlyRace(month).table;
+  const champions = {};
+  TIER_ORDER_LIST.forEach(tier=>{
+    const r = table.find(x => x.tier === tier && x.qualified);
+    if(r) champions[tier] = { name: r.playerId, score: r.score, played: r.played };
+  });
+  if(!TIER_ORDER_LIST.some(t => champions[t])) return null;
+  champions._final = month < currentMonthKey();
+  return champions;
 }
 
 // ---- Rankings podium -----------------------------------------------------
@@ -121,20 +170,22 @@ function computeRankingsPodiumTop3(){
   return sorted.slice(0,3).map(p=>({ name: p.name, rating: p.scopeRating }));
 }
 
-// ---- Kings of Tiers -------------------------------------------------------
-// Three kings of their own divisions (Tier A/B/C), not 1st/2nd/3rd overall --
-// deliberately a separate concept from the podium above, which is the top 3
-// of whichever tier/month scope is currently selected. Reuses exactly the
-// same ranking data and the same gating rules as the podium (rating mode,
-// no active search, min-games still at its scope's own default) so the two
-// can never disagree, plus one extra rule of its own: only makes sense
-// when every tier is on screen at once (activeTier === 'All'), since
-// filtering to a single tier already answers "who's #1 here".
+// ---- Kings of Tiers and Monthly Champions --------------------------------
+// Kings of their own divisions (Tier A/B/C), not 1st/2nd/3rd overall, and the
+// month's Race winners beside them -- deliberately separate from the podium
+// above, which is the top 3 of whichever tier/month scope is on screen. Shown
+// with the Rating view of every tier at once, with no search: filtering to
+// one tier already answers "who's #1 here". Neither depends on the list's
+// min-games: a King is the All-time leader, a Champion the Race's.
 function computeKingsOfTiers(){
   if(activeTab !== 'power') return null;
   if(activeSortP !== 'rating') return null;
   if(query !== '') return null;
   if(activeTier !== 'All') return null;
-  if(minGames !== defaultRankingMinGames(selectedMonth)) return null;
-  return kingsOfTiersFor(selectedMonth, minGames);
+  return kingsOfTiersFor(selectedMonth);
+}
+
+function computeMonthlyChampions(){
+  if(activeTab !== 'power' || activeSortP !== 'rating' || query !== '' || activeTier !== 'All') return null;
+  return championsFor(selectedMonth);
 }

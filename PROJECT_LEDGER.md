@@ -152,6 +152,13 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**King of Tier vs Monthly Champion — DONE (commit below), 1 Nov.** Shaun saw October's Kings of Tiers crown Osh while Kaz held the higher Power Rating: the King was the best rating among players with 5+ games that month.
+- **Decision (Shaun, 1 Nov): three honours, three sources.** **King of Tier** = the tier's leader in the All-time Power Rankings. **Monthly Champion** = the winner of the tier's Monthly Race (called "Champion"). **Player of the Month** = voted by the club (existing feature). Live app and redesign.
+- `kingsOfTiersFor(month)`: the All-time pool (Ranked, 10+ rated games), whatever the month's games; for a finished month, that pool at the month's end (month-end rating, tier at the close, Ranked then); for the current month or All time, today's. Board Pack and share card follow (foot text updated).
+- `championsFor(month)`: each tier's first qualified runner in `buildMonthlyRace`; "Leading <Month>" until the month ends, then "<Month> Champions". Power Rankings shows Kings, then Champions, above the podium (month views; All time shows Kings only). A Champion opens that month's Race.
+- Live check (27 Oct snapshot): October King A Kaz 1742, Champion-so-far Osh +44 (the old rule crowned Osh); Tier B PDM both.
+- Consequence: the record's first month (June) has no Tier A/C King — nobody had 10 rated games yet. `tests/honours.test.js`. 976 / 976.
+
 **Race match details hidden until asked for — DONE (`d3a663d`), 31 Oct.** Shaun: "Can we hide the stakes and % info unless we tap a button/chevron to show it please?"
 - Each match in a Race drill-down (the Race table's score and P/W/D/L, and the Merit Table's Race column) shows date, points, result and score; a **Details ›** button under it reveals that match's stakes and par win chance. One match at a time; nothing else changes. `wireRaceStakes` in leagueScreen.js. 973 / 973.
 
@@ -9066,6 +9073,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 1 Nov (latest): King of Tier (All-time leader) and Monthly Champion (Race winner) separated (commit below, 976 / 976).** Baton → Shaun.
 
 **CCode, 31 Oct (latest): Race match details behind a Details button (`d3a663d`, 973 / 973).** Baton → Shaun.
 

@@ -141,8 +141,8 @@ function boardPackSources(){ return {
   },
 
   kings(month){
-    const minGames = defaultRankingMinGames(month);
-    const kings = kingsOfTiersFor(month, minGames);
+    const minGames = defaultRankingMinGames('all');
+    const kings = kingsOfTiersFor(month);
     // A hidden Tier S section is hidden here too (groupedTiers).
     if(kings && !tierSSectionsShown()){
       delete kings.S;
