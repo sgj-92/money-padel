@@ -4580,7 +4580,7 @@ test('Merit lives behind the View select, not a fourth segmented button', { skip
     // The Monthly Race (26 Sep trial) joined the same select rather than
     // becoming a button, for the same reason Merit did; since 31 Oct it leads
     // (Shaun: Race, then Merit, then League).
-    assert.deepStrictEqual(r.options, ['race', 'merit', 'league', 'vstiers', 'honours', 'information']);
+    assert.deepStrictEqual(r.options, ['race', 'merit', 'league', 'honours', 'information']);
     assert.ok(r.labels.includes('Merit Table'));
     assert.deepStrictEqual(r.leagueButtons, ['By tier', 'All together', 'Last 10'],
       'the League segmented control is untouched');
