@@ -152,7 +152,7 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
-**Compare › Everyone replaces League › Vs Tiers — DONE (commit below), 2 Nov.** Shaun: "I'd prefer to be able to select a player then see an overall of their head to head record against everyone … a selector first then a table. This could go in Compare. The current table of vs tiers is quite confusing."
+**Compare › Everyone replaces League › Vs Tiers — DONE (`e2a5d23`), 2 Nov.** Shaun: "I'd prefer to be able to select a player then see an overall of their head to head record against everyone … a selector first then a table. This could go in Compare. The current table of vs tiers is quite confusing."
 - Players › Compare: Player B's first option is **Everyone**, and Compare now opens on it. Shows the player's matches and W-D-L, a one-line summary per tier (v A / v B / v C), then a table per opponent tier (Opponent · P · W · D · L · Win %), most-played first; tap an opponent for the full one-on-one. Copy results / Share picture as for a pair. Follows the month picker.
 - Same counting as before (`TierRecord`: tier held on the match date, grouped by the tier the opponent held for most meetings; a match counts for both opponents). The League's Vs Tiers view is removed.
 - 985 / 985.
@@ -9125,7 +9125,7 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 
 ## 8. NEXT
 
-**CCode, 2 Nov (latest): Compare › Everyone (commit below, 985 / 985).** Baton → Shaun.
+**CCode, 2 Nov (latest): Compare › Everyone (`e2a5d23`, 985 / 985).** Baton → Shaun.
 
 **CCode, 1 Nov (latest): Vs Tiers (`7e424fa`, 985 / 985).** Baton → Shaun.
 
