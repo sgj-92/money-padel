@@ -152,6 +152,11 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Compare › Everyone replaces League › Vs Tiers — DONE (`e2a5d23`), 2 Nov.** Shaun: "I'd prefer to be able to select a player then see an overall of their head to head record against everyone … a selector first then a table. This could go in Compare. The current table of vs tiers is quite confusing."
+- Players › Compare: Player B's first option is **Everyone**, and Compare now opens on it. Shows the player's matches and W-D-L, a one-line summary per tier (v A / v B / v C), then a table per opponent tier (Opponent · P · W · D · L · Win %), most-played first; tap an opponent for the full one-on-one. Copy results / Share picture as for a pair. Follows the month picker.
+- Same counting as before (`TierRecord`: tier held on the match date, grouped by the tier the opponent held for most meetings; a match counts for both opponents). The League's Vs Tiers view is removed.
+- 985 / 985.
+
 **Vs Tiers: each player's record against every tier — DONE (`7e424fa`), 1 Nov.** Shaun: "how a player faces up against his own (and other) tiers. This helps promotion and relegation checks … a summary then a breakdown by player."
 - League › View › **Vs Tiers** (after League Table; month or All time; on the standings site too). Players grouped by their own tier (today's on All time; the tier at a month's close on a month); columns v S/A/B/C with win % and W-D-L, the own-tier column highlighted. Tap a player: each opponent, grouped by tier, with their record.
 - **Counting rule (CCode, recorded for CChat/CGPT):** tiers as held on the match date; each match counts once per opponent (doubles: beating a Tier A and a Tier B player is a win against each); draws in the denominator. `domain/matches/tierRecord.js` (pure, Node-tested). Alternative if wanted later: by the opposing pair's strength (Merit's Hard / Even / Fav), which accounts for the partner.
@@ -9119,6 +9124,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 2 Nov (latest): Compare › Everyone (`e2a5d23`, 985 / 985).** Baton → Shaun.
 
 **CCode, 1 Nov (latest): Vs Tiers (`7e424fa`, 985 / 985).** Baton → Shaun.
 

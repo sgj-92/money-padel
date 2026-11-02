@@ -38,37 +38,42 @@ test('each match counts once per opponent, under the tier they held that day; dr
   });
 });
 
-maybe('League › Vs Tiers: players grouped by tier, a column per tier, own tier marked; a tap opens each opponent', async () => {
+// Shaun, 2 Nov: in Compare -- pick a player, see their record against everyone
+// (grouped by the opponent's tier), tap one for the full head to head. The
+// League's Vs Tiers table it replaced was "quite confusing".
+maybe('Compare › Everyone: one player against every opponent, grouped by tier; a tap opens the one-on-one', async () => {
   const app = await H.open({ viewport: { width: 360, height: 800 }, mobile: true });
   try {
     const r = await app.run(() => {
-      legacyTabBtn('summary').click();
-      summaryMonth = 'all'; summaryMode = 'vstiers'; tierRecordOpen = null; renderSummary();
-      const options = [...document.querySelectorAll('#summaryModeSelect option')].map((o) => o.value);
-      const tables = [...document.querySelectorAll('#summaryContent .tr-table')];
-      const first = tables[0].querySelector('.tr-row');
-      const name = first.dataset.trPlayer;
-      const heads = [...tables[0].querySelectorAll('thead th')].map((h) => h.textContent.trim());
-      const ownCol = tables[0].querySelector('th.is-own').textContent.trim();
-      const want = TierRecord.build({ matches: matchesIncludingDraws(), tierAt: (n, d) => historicalTierOf(n, d) }).find((x) => x.player === name);
-      const cells = [...first.querySelectorAll('.tr-cell')].map((c) => c.innerText.replace(/\s+/g, ' ').trim());
-      first.click();
-      const drill = document.querySelector('#summaryContent .tr-break');
-      const oppRows = drill.querySelectorAll('.tr-opp').length;
-      const fits = { page: document.documentElement.scrollWidth > window.innerWidth + 1, cells: [...document.querySelectorAll('#summaryContent .tr-table td, #summaryContent .tr-table th')].filter((c) => c.scrollWidth > c.clientWidth + 1).length };
-      return { options, name, heads, ownCol, ownTier: tierRecordOwnTier(name, 'all'), cells, want, oppRows, fits };
+      document.querySelector('#tabrow .tab-btn[data-tab="h2h"]').click();
+      h2hPlayerA = null; h2hPlayerB = null; h2hMonth = 'all'; renderH2H();
+      const byDefault = document.getElementById('h2hSelectB').value;
+      const firstOption = document.getElementById('h2hSelectB').options[0].text;
+      const A = h2hPlayerA;
+      const want = TierRecord.build({ matches: matchesIncludingDraws().filter((m) => [...m.winners, ...m.losers].includes(A)), tierAt: (n, d) => historicalTierOf(n, d) }).find((x) => x.player === A);
+      const heads = [...document.querySelectorAll('.h2h-group-head span:first-child')].map((e) => e.textContent);
+      const rows = [...document.querySelectorAll('.h2h-all-row')].map((tr) => [...tr.children].map((c) => c.textContent.replace('›', '').trim()));
+      const fits = { page: document.documentElement.scrollWidth > window.innerWidth + 1, cells: [...document.querySelectorAll('.h2h-all td, .h2h-all th')].filter((c) => c.scrollWidth > c.clientWidth + 1).length };
+      const leagueOptions = (() => { legacyTabBtn('summary').click(); return [...document.querySelectorAll('#summaryModeSelect option')].map((o) => o.value); })();
+      document.querySelector('#tabrow .tab-btn[data-tab="h2h"]').click();
+      const target = document.querySelector('.h2h-all-row');
+      const opp = target.dataset.h2hOpp;
+      target.click();
+      return { byDefault, firstOption, A, want, heads, rows, fits, leagueOptions, opp, nowB: h2hPlayerB, oneOnOne: /meetings? as opponents/.test(document.getElementById('h2hView').textContent) };
     });
-    assert.ok(r.options.includes('vstiers'));
-    assert.strictEqual(r.heads[0], 'Player');
-    assert.strictEqual(r.ownCol, `v ${r.ownTier}`, 'the own-tier column is the one marked');
-    const cols = r.heads.slice(2).map((h) => h.replace('v ', ''));
-    cols.forEach((t, i) => {
-      const rec = r.want.vs[t];
-      const want = rec && rec.played ? `${Math.round(100 * rec.wins / rec.played)}% ${rec.wins}-${rec.draws}-${rec.losses}` : '–';
-      assert.strictEqual(r.cells[i], want, `${r.name} v ${t}`);
+    assert.strictEqual(r.byDefault, '__everyone__', 'Compare opens on a player against everyone');
+    assert.strictEqual(r.firstOption, 'Everyone');
+    assert.ok(r.heads.length >= 1 && r.heads.every((h) => /^Against Tier [SABC?]/.test(h)));
+    assert.strictEqual(r.rows.length, r.want.opponents.length, 'every opponent, once');
+    r.rows.forEach(([name, p, w, d, l, pct]) => {
+      const o = r.want.opponents.find((x) => x.name === name);
+      assert.deepStrictEqual([+p, +w, +d, +l], [o.played, o.wins, o.draws, o.losses], name);
+      assert.strictEqual(pct, `${Math.round(100 * o.wins / o.played)}%`);
     });
-    assert.strictEqual(r.oppRows, r.want.opponents.length, 'every opponent, once');
     assert.deepStrictEqual(r.fits, { page: false, cells: 0 }, 'fits a 360px phone');
+    assert.ok(!r.leagueOptions.includes('vstiers'), 'the League\'s Vs Tiers view is gone');
+    assert.strictEqual(r.nowB, r.opp);
+    assert.strictEqual(r.oneOnOne, true);
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });

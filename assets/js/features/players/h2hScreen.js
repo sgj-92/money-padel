@@ -9,14 +9,20 @@ let h2hPlayerA = null;
 
 let h2hPlayerB = null;
 
+// Player B can be "Everyone": Player A's head-to-head record against every
+// opponent at once (Shaun, 2 Nov -- for promotion and relegation checks).
+const H2H_EVERYONE = '__everyone__';
+
 function renderH2H(){
   const box = document.getElementById('h2hView');
   // The group as it is now -- plus a player already chosen (say, from an old
   // result), so a comparison opened from history still shows who it is about.
   const names = livePlayerNames();
-  [h2hPlayerA, h2hPlayerB].forEach(n => { if(n && !names.includes(n) && PLAYERS.some(p => p.name === n)) names.push(n); });
+  [h2hPlayerA, h2hPlayerB].forEach(n => { if(n && n !== H2H_EVERYONE && !names.includes(n) && PLAYERS.some(p => p.name === n)) names.push(n); });
   if(!h2hPlayerA) h2hPlayerA = names[0];
-  if(!h2hPlayerB) h2hPlayerB = names.find(n=>n!==h2hPlayerA) || names[0];
+  // Pick a player, see their record against everyone; pick a second player
+  // for the full one-on-one.
+  if(!h2hPlayerB) h2hPlayerB = H2H_EVERYONE;
 
   let html = `<div class="fg-controls">
     <div class="fg-row"><label class="fg-label">Player A</label>
@@ -29,6 +35,16 @@ function renderH2H(){
       <select id="h2hMonthSelect" class="fg-select"></select>
     </div>
   </div>`;
+
+  if(h2hPlayerB === H2H_EVERYONE){
+    html += h2hEveryoneHtml();
+    box.innerHTML = html;
+    populateMonthSelect(document.getElementById('h2hMonthSelect'), h2hMonth);
+    document.getElementById('h2hMonthSelect').addEventListener('change', e=>{ h2hMonth = e.target.value; renderH2H(); });
+    wireH2HSelects(names);
+    wireH2HEveryone(box);
+    return;
+  }
 
   if(h2hPlayerA === h2hPlayerB){
     html += `<div class="section-sub">Pick two different players to compare.</div>`;
@@ -211,7 +227,8 @@ function wireH2HSelects(names){
   const selA = document.getElementById('h2hSelectA');
   const selB = document.getElementById('h2hSelectB');
   selA.innerHTML = names.map(n=>`<option value="${n}" ${n===h2hPlayerA?'selected':''}>${n}</option>`).join('');
-  selB.innerHTML = names.map(n=>`<option value="${n}" ${n===h2hPlayerB?'selected':''}>${n}</option>`).join('');
+  selB.innerHTML = `<option value="${H2H_EVERYONE}" ${h2hPlayerB===H2H_EVERYONE?'selected':''}>Everyone</option>`
+    + names.map(n=>`<option value="${n}" ${n===h2hPlayerB?'selected':''}>${n}</option>`).join('');
   selA.addEventListener('change', e=>{ h2hPlayerA = e.target.value; renderH2H(); });
   selB.addEventListener('change', e=>{ h2hPlayerB = e.target.value; renderH2H(); });
 }
@@ -302,6 +319,99 @@ function wireH2HExport(opp, team, monthActive){
       const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       const file = await CardPainter.toFile(cv, `money-padel-h2h-${slug(h2hPlayerA)}-v-${slug(h2hPlayerB)}.png`);
       const outcome = await CardPainter.share([file], { title: `Money Padel — ${h2hExportTitle(monthActive)}` });
+      msg(outcome === 'shared' ? 'Picture shared.' : outcome === 'saved' ? 'Picture saved — post it from your photos.' : outcome === 'ready' ? 'Picture ready: tap Share picture again.' : '');
+    } catch(e){ msg('Could not make the picture.'); }
+    picBtn.disabled = false;
+  };
+}
+
+// ---- Player A against everyone ----------------------------------------------
+// Each opponent once, with A's record against them, grouped by the tier the
+// opponent was in when they met (the tier they held for most of the meetings)
+// -- TierRecord's counting: a match counts once for each of its two
+// opponents, draws as draws. A summary line per tier heads each group. Tap an
+// opponent for the full one-on-one.
+function h2hEveryoneData(){
+  const A = h2hPlayerA;
+  const inMonth = (m) => h2hMonth === 'all' || m.date.slice(0, 7) === h2hMonth;
+  const matches = matchesIncludingDraws().filter(m => inMonth(m) && [...(m.winners || []), ...(m.losers || [])].includes(A));
+  const row = TierRecord.build({ matches, tierAt: (n, d) => historicalTierOf(n, d) }).find(r => r.player === A) || null;
+  const tiers = TIER_ORDER_LIST.concat(['?']).filter(t => row && row.vs[t] && row.vs[t].played);
+  const groups = tiers.map(t => ({ tier: t, rec: row.vs[t],
+    opponents: row.opponents.filter(o => o.tier === t).sort((a, b) => b.played - a.played || a.name.localeCompare(b.name)) }));
+  return { A, matches: matches.length, overall: MatchOutcome.tally(matches, A), groups, monthActive: h2hMonth !== 'all' };
+}
+
+const h2hRec = (r) => `${r.wins}-${r.draws}-${r.losses}`;
+const h2hTierName = (t) => t === '?' ? 'Tier unknown' : `Tier ${t}`;
+
+function h2hEveryoneHtml(){
+  const d = h2hEveryoneData();
+  const when = d.monthActive ? monthLabel(h2hMonth) : 'all time';
+  if(!d.matches) return `<div class="section-sub">${escapeHtml(d.A)} has no games ${d.monthActive ? `in ${when}` : 'yet'}.</div>`;
+  let html = `<div class="section-heading" style="margin-top:6px;">⚔️ ${escapeHtml(d.A)} v everyone${d.monthActive ? ` (${monthLabel(h2hMonth)})` : ''}</div>
+    <div class="matchup-vs" style="text-align:center; padding:12px;">
+      <div style="font-size:16px; font-weight:700;">${d.matches} match${d.matches === 1 ? '' : 'es'} · ${d.overall.wins}W ${d.overall.draws}D ${d.overall.losses}L</div>
+      <div class="h2h-tier-sum">${d.groups.map(g => `<span><b>v ${g.tier === '?' ? '?' : g.tier}</b> ${h2hRec(g.rec)} · ${TierRecord.pct(g.rec)}%</span>`).join('')}</div>
+      <div style="font-size:11px; color:var(--text-dim); margin-top:6px;">Against each opponent, grouped by the tier they were in. A match counts for both opponents.</div>
+      <div class="h2h-export">
+        <button type="button" class="preset-btn" id="h2hCopy">Copy results</button>
+        <button type="button" class="preset-btn" id="h2hPicture">Share picture</button>
+      </div>
+      <div class="h2h-export-msg" id="h2hExportMsg" role="status"></div>
+    </div>`;
+  d.groups.forEach(g => {
+    html += `<div class="h2h-group-head"><span>Against ${h2hTierName(g.tier)}</span><span>${h2hRec(g.rec)} · ${TierRecord.pct(g.rec)}%</span></div>
+      <div class="callout-card" style="padding:0;"><table class="h2h-all">
+        <colgroup><col style="width:37%;"><col style="width:11%;"><col style="width:11%;"><col style="width:11%;"><col style="width:11%;"><col style="width:19%;"></colgroup>
+        <thead><tr><th>Opponent</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Win</th></tr></thead><tbody>
+        ${g.opponents.map(o => `<tr class="h2h-all-row" data-h2h-opp="${escapeHtml(o.name)}">
+          <td>${escapeHtml(o.name)} <span class="h2h-all-chev" aria-hidden="true">›</span></td><td>${o.played}</td>
+          <td class="w">${o.wins}</td><td class="d">${o.draws}</td><td class="l">${o.losses}</td><td class="p">${TierRecord.pct(o)}%</td></tr>`).join('')}
+        </tbody></table></div>`;
+  });
+  return html;
+}
+
+function h2hEveryoneText(d){
+  const lines = ['Money Padel · Head to head', `${d.A} v everyone · ${d.monthActive ? monthLabel(h2hMonth) : 'All time'}`, '',
+    `${d.matches} matches · ${d.overall.wins}W ${d.overall.draws}D ${d.overall.losses}L`];
+  d.groups.forEach(g => {
+    lines.push('', `v ${h2hTierName(g.tier)}: ${h2hRec(g.rec)} (${TierRecord.pct(g.rec)}%)`);
+    g.opponents.forEach(o => lines.push(`${o.name} · ${h2hRec(o)} · ${TierRecord.pct(o)}%`));
+  });
+  return lines.join('\n');
+}
+
+function h2hEveryoneSheet(d){
+  const blocks = [{ type: 'stats', items: [{ value: String(d.overall.wins), label: 'Won' }, { value: String(d.overall.draws), label: 'Drawn' }, { value: String(d.overall.losses), label: 'Lost' }] }];
+  d.groups.forEach(g => {
+    blocks.push({ type: 'sub', text: `v ${h2hTierName(g.tier)} · ${h2hRec(g.rec)} · ${TierRecord.pct(g.rec)}%` },
+      { type: 'list', rows: g.opponents.map(o => ({ rank: '', name: o.name, value: `${h2hRec(o)} · ${TierRecord.pct(o)}%` })) });
+  });
+  return { title: `${d.A} v everyone`, month: d.monthActive ? monthLabel(h2hMonth) : 'All time', blocks };
+}
+
+function wireH2HEveryone(box){
+  box.querySelectorAll('.h2h-all-row').forEach(tr => {
+    tr.onclick = () => { h2hPlayerB = tr.dataset.h2hOpp; renderH2H(); };
+  });
+  const d = h2hEveryoneData();
+  const msg = (t) => { const el = document.getElementById('h2hExportMsg'); if(el) el.textContent = t; };
+  const copyBtn = document.getElementById('h2hCopy');
+  if(copyBtn) copyBtn.onclick = async () => {
+    const ok = await copyText(h2hEveryoneText(d));
+    msg(ok ? 'Copied — paste it into WhatsApp.' : 'Could not copy on this device.');
+  };
+  const picBtn = document.getElementById('h2hPicture');
+  if(picBtn) picBtn.onclick = async () => {
+    picBtn.disabled = true;
+    try {
+      const brand = await CardPainter.loadImage('assets/brand/mp-mark.svg');
+      const cv = CardPainter.sheet(h2hEveryoneSheet(d), { brand });
+      const slug = String(d.A).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const file = await CardPainter.toFile(cv, `money-padel-h2h-${slug}-v-everyone.png`);
+      const outcome = await CardPainter.share([file], { title: `Money Padel — ${d.A} v everyone` });
       msg(outcome === 'shared' ? 'Picture shared.' : outcome === 'saved' ? 'Picture saved — post it from your photos.' : outcome === 'ready' ? 'Picture ready: tap Share picture again.' : '');
     } catch(e){ msg('Could not make the picture.'); }
     picBtn.disabled = false;
