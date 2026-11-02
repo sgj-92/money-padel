@@ -796,5 +796,101 @@
     }
   }
 
-  return { W, SLIDE_H, loadImage, slide, sheet, matchResult, matchup, matchups, nominees, toBlob, toFile, toPdf, share, save };
+  // ---- Head to head, as the Compare screen draws it (Shaun, 2 Nov) ---------
+  // The app's own look rather than the Board Pack sheet's: a scoreline card,
+  // then a card of rows -- date on the left, the teams with the score
+  // beneath, the result on the right in green, red or grey.
+  const TONE = { win: '#6fae6f', loss: '#c9574f', draw: C.dim };
+  function card(ctx, x, y, w, h) {
+    ctx.fillStyle = C.surface2; roundRect(ctx, x, y, w, h, 28); ctx.fill();
+    ctx.strokeStyle = C.border; ctx.lineWidth = 2; roundRect(ctx, x, y, w, h, 28); ctx.stroke();
+  }
+  // The scoreline: "Len 8 – 1 drawn – 12 Osh", the leader in gold.
+  function scoreline(ctx, s, cx, y) {
+    const parts = [[`${s.a} ${s.aWins}`, s.aWins > s.bWins ? C.bright : C.text, 60, 700], ['  –  ', C.dim, 52, 400]];
+    if (s.draws) parts.push([`${s.draws} drawn`, C.dim, 40, 400], ['  –  ', C.dim, 52, 400]);
+    parts.push([`${s.bWins} ${s.b}`, s.bWins > s.aWins ? C.bright : C.text, 60, 700]);
+    const widths = parts.map(([t, , size, weight]) => { font(ctx, size, { weight }); return ctx.measureText(t).width; });
+    let x = cx - widths.reduce((a, w) => a + w, 0) / 2;
+    parts.forEach(([t, color, size, weight], i) => { font(ctx, size, { weight }); textAt(ctx, t, x, y, { color }); x += widths[i]; });
+  }
+  function rowsCard(ctx, rows, x, y, w) {
+    const RH = 124;
+    card(ctx, x, y, w, rows.length * RH + 24);
+    rows.forEach((r, i) => {
+      const top = y + 12 + i * RH;
+      if (i) hline(ctx, x + 36, x + w - 36, top, C.hair);
+      font(ctx, 30); textAt(ctx, r.date, x + 36, top + 56, { color: C.dim });
+      font(ctx, 32, { weight: 700 }); const rw = ctx.measureText(r.result).width;
+      textAt(ctx, r.result, x + w - 36, top + 56, { color: TONE[r.tone] || C.dim, align: 'right' });
+      font(ctx, 34); textAt(ctx, fit(ctx, r.teams, w - 230 - rw - 40), x + 200, top + 56, { color: C.text });
+      font(ctx, 30); textAt(ctx, r.score, x + 200, top + 98, { color: C.dim });
+    });
+    return rows.length * RH + 24;
+  }
+  function headToHead(v, o = {}) {
+    const P = 64, inner = W - 2 * P;
+    const team = v.teammates && v.teammates.rows.length ? v.teammates : null;
+    const h = P + 56 + 40 + 76 + 30 + 200 + 30 + (v.rows.length * 124 + 24)
+      + (team ? 40 + 60 + 50 + team.rows.length * 124 + 24 : 0) + P;
+    const cv = canvas(W, h);
+    const ctx = cv.getContext('2d');
+    background(ctx, W, h);
+    let y = P;
+    brand(ctx, o.brand, v.month, P, y, 56, W - P); y += 56 + 40;
+    font(ctx, 62, { serif: true }); textAt(ctx, v.title, P, y + 56, { color: C.text }); y += 76 + 30;
+    card(ctx, P, y, inner, 200);
+    scoreline(ctx, v.score, W / 2, y + 92);
+    font(ctx, 30); textAt(ctx, `${v.score.meetings} meeting${v.score.meetings === 1 ? '' : 's'} as opponents`, W / 2, y + 150, { color: C.dim, align: 'center' });
+    y += 200 + 30;
+    y += rowsCard(ctx, v.rows, P, y, inner);
+    if (team) {
+      y += 40;
+      font(ctx, 40, { weight: 700 }); textAt(ctx, 'As teammates', P, y + 40, { color: C.text }); y += 60;
+      font(ctx, 30); textAt(ctx, team.summary, P, y + 30, { color: C.soft }); y += 50;
+      rowsCard(ctx, team.rows, P, y, inner);
+    }
+    return cv;
+  }
+
+  // One player against everyone: the summary card, then a table per tier.
+  function headToHeadAll(v, o = {}) {
+    const P = 64, inner = W - 2 * P, RH = 76;
+    const h = P + 56 + 40 + 76 + 30 + 230 + v.groups.reduce((a, g) => a + 40 + 50 + 20 + 64 + g.rows.length * RH + 16, 0) + P;
+    const cv = canvas(W, h);
+    const ctx = cv.getContext('2d');
+    background(ctx, W, h);
+    let y = P;
+    brand(ctx, o.brand, v.month, P, y, 56, W - P); y += 56 + 40;
+    font(ctx, 62, { serif: true }); textAt(ctx, v.title, P, y + 56, { color: C.text }); y += 76 + 30;
+    card(ctx, P, y, inner, 200);
+    font(ctx, 52, { weight: 700 }); textAt(ctx, v.headline, W / 2, y + 84, { color: C.text, align: 'center' });
+    font(ctx, 32); textAt(ctx, fit(ctx, v.tiers, inner - 60), W / 2, y + 146, { color: C.soft, align: 'center' });
+    y += 230;
+    const cols = [{ k: 'name', x: P + 36, align: 'left' }, { k: 'p', x: P + 430 }, { k: 'w', x: P + 530, tone: 'win' }, { k: 'd', x: P + 630, tone: 'draw' }, { k: 'l', x: P + 730, tone: 'loss' }, { k: 'pct', x: P + inner - 36, align: 'right' }];
+    v.groups.forEach((g) => {
+      y += 40;
+      font(ctx, 30, { weight: 700, spacing: 0.06 }); textAt(ctx, g.title.toUpperCase(), P + 4, y + 32, { color: C.bright });
+      font(ctx, 28); textAt(ctx, g.record, P + inner - 4, y + 32, { color: C.soft, align: 'right' });
+      y += 50 + 20;
+      const ch = 64 + g.rows.length * RH;
+      card(ctx, P, y, inner, ch);
+      ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.03)'; roundRect(ctx, P, y, inner, 64, 28); ctx.fill(); ctx.restore();
+      font(ctx, 26, { weight: 700 });
+      ['Opponent', 'P', 'W', 'D', 'L', 'Win'].forEach((t, i) => textAt(ctx, t, cols[i].x, y + 42, { color: C.dim, align: cols[i].align || 'center' }));
+      g.rows.forEach((r, i) => {
+        const top = y + 64 + i * RH;
+        hline(ctx, P + 24, P + inner - 24, top, C.hair);
+        cols.forEach((c) => {
+          font(ctx, 32, { weight: c.k === 'name' || c.k === 'pct' ? 700 : 400 });
+          const text = c.k === 'name' ? fit(ctx, r.name, 330) : String(r[c.k]);
+          textAt(ctx, text, c.x, top + 50, { color: c.tone ? TONE[c.tone] : C.text, align: c.align || 'center' });
+        });
+      });
+      y += ch + 16;
+    });
+    return cv;
+  }
+
+  return { W, SLIDE_H, loadImage, slide, sheet, matchResult, matchup, matchups, nominees, headToHead, headToHeadAll, toBlob, toFile, toPdf, share, save };
 });
