@@ -280,27 +280,26 @@ function h2hExportText(opp, team, monthActive){
   return lines.join('\n');
 }
 
-// The picture: the Board Pack's own sheet painter, so it looks like the
-// club's other shared pictures.
-function h2hExportSheet(opp, team, monthActive){
+// The picture, drawn as the screen is (CardPainter.headToHead): the
+// scoreline, then one row per meeting with the result in its colour.
+function h2hExportView(opp, team, monthActive){
   const A = h2hPlayerA, B = h2hPlayerB;
   const t = MatchOutcome.tally(opp, A);
-  const stats = [{ value: String(t.wins), label: A }];
-  if(t.draws) stats.push({ value: String(t.draws), label: 'Drawn' });
-  stats.push({ value: String(t.losses), label: B });
-  const blocks = [];
-  if(opp.length){
-    blocks.push({ type: 'stats', items: stats },
-      { type: 'sub', text: `As opponents · ${opp.length} meeting${opp.length === 1 ? '' : 's'}` },
-      { type: 'list', twoLine: true, rows: opp.map(m => { const r = h2hOpponentRow(m, A, B); return { rank: String(opp.indexOf(m) + 1), name: r.teams, value: `${h2hShortDate(m.date)} · ${m.score} · ${r.drew ? 'Drew' : r.result}` }; }) });
-  }
+  const tone = (o) => o === MatchOutcome.DRAW ? 'draw' : (o === MatchOutcome.WIN ? 'win' : 'loss');
+  const view = {
+    title: `${A} v ${B}`, month: monthActive ? monthLabel(h2hMonth) : 'All time',
+    score: { a: A, b: B, aWins: t.wins, bWins: t.losses, draws: t.draws, meetings: opp.length },
+    rows: opp.map(m => { const r = h2hOpponentRow(m, A, B);
+      return { date: h2hShortDate(m.date), teams: r.teams, score: m.score, result: r.drew ? 'Drew' : r.result, tone: r.drew ? 'draw' : (r.aWon ? 'win' : 'loss') }; }),
+    teammates: null,
+  };
   if(team.length){
     const tt = MatchOutcome.tally(team, A);
-    blocks.push({ type: 'sub', text: `As teammates · ${tt.wins}W ${tt.draws ? `${tt.draws}D ` : ''}${tt.losses}L` },
-      { type: 'list', twoLine: true, rows: team.map(m => { const s = MatchOutcome.sidesFor(m, A);
-        return { rank: String(team.indexOf(m) + 1), name: `v ${s.theirs.join(' & ')}`, value: `${h2hShortDate(m.date)} · ${m.score} · ${h2hResultWord(s.outcome)}` }; }) });
+    view.teammates = { summary: `${tt.wins}W ${tt.draws ? `${tt.draws}D ` : ''}${tt.losses}L together`,
+      rows: team.map(m => { const sd = MatchOutcome.sidesFor(m, A);
+        return { date: h2hShortDate(m.date), teams: `v ${sd.theirs.join(' & ')}`, score: m.score, result: h2hResultWord(sd.outcome), tone: tone(sd.outcome) }; }) };
   }
-  return { title: `${A} v ${B}`, month: monthActive ? monthLabel(h2hMonth) : 'All time', blocks };
+  return view;
 }
 
 function wireH2HExport(opp, team, monthActive){
@@ -315,7 +314,7 @@ function wireH2HExport(opp, team, monthActive){
     picBtn.disabled = true;
     try {
       const brand = await CardPainter.loadImage('assets/brand/mp-mark.svg');
-      const cv = CardPainter.sheet(h2hExportSheet(opp, team, monthActive), { brand });
+      const cv = CardPainter.headToHead(h2hExportView(opp, team, monthActive), { brand });
       const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       const file = await CardPainter.toFile(cv, `money-padel-h2h-${slug(h2hPlayerA)}-v-${slug(h2hPlayerB)}.png`);
       const outcome = await CardPainter.share([file], { title: `Money Padel — ${h2hExportTitle(monthActive)}` });
@@ -383,13 +382,14 @@ function h2hEveryoneText(d){
   return lines.join('\n');
 }
 
-function h2hEveryoneSheet(d){
-  const blocks = [{ type: 'stats', items: [{ value: String(d.overall.wins), label: 'Won' }, { value: String(d.overall.draws), label: 'Drawn' }, { value: String(d.overall.losses), label: 'Lost' }] }];
-  d.groups.forEach(g => {
-    blocks.push({ type: 'sub', text: `v ${h2hTierName(g.tier)} · ${h2hRec(g.rec)} · ${TierRecord.pct(g.rec)}%` },
-      { type: 'list', rows: g.opponents.map(o => ({ rank: '', name: o.name, value: `${h2hRec(o)} · ${TierRecord.pct(o)}%` })) });
-  });
-  return { title: `${d.A} v everyone`, month: d.monthActive ? monthLabel(h2hMonth) : 'All time', blocks };
+function h2hEveryoneView(d){
+  return {
+    title: `${d.A} v everyone`, month: d.monthActive ? monthLabel(h2hMonth) : 'All time',
+    headline: `${d.matches} match${d.matches === 1 ? '' : 'es'} · ${d.overall.wins}W ${d.overall.draws}D ${d.overall.losses}L`,
+    tiers: d.groups.map(g => `v ${g.tier} ${h2hRec(g.rec)} · ${TierRecord.pct(g.rec)}%`).join('    '),
+    groups: d.groups.map(g => ({ title: `Against ${h2hTierName(g.tier)}`, record: `${h2hRec(g.rec)} · ${TierRecord.pct(g.rec)}%`,
+      rows: g.opponents.map(o => ({ name: o.name, p: o.played, w: o.wins, d: o.draws, l: o.losses, pct: `${TierRecord.pct(o)}%` })) })),
+  };
 }
 
 function wireH2HEveryone(box){
@@ -408,7 +408,7 @@ function wireH2HEveryone(box){
     picBtn.disabled = true;
     try {
       const brand = await CardPainter.loadImage('assets/brand/mp-mark.svg');
-      const cv = CardPainter.sheet(h2hEveryoneSheet(d), { brand });
+      const cv = CardPainter.headToHeadAll(h2hEveryoneView(d), { brand });
       const slug = String(d.A).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       const file = await CardPainter.toFile(cv, `money-padel-h2h-${slug}-v-everyone.png`);
       const outcome = await CardPainter.share([file], { title: `Money Padel — ${d.A} v everyone` });

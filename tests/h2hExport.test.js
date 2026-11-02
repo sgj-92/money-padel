@@ -24,13 +24,13 @@ maybe('one line per meeting, no amendment note, and the export says exactly what
       const rows = [...view.querySelectorAll('.h2h-list')[0].querySelectorAll('.h2h-row')];
       const opp = h2hOpponentMatches(best.a, best.b).sort((x, y) => x.date < y.date ? 1 : -1);
       const team = h2hTeammateMatches(best.a, best.b).sort((x, y) => x.date < y.date ? 1 : -1);
-      const sheet = h2hExportSheet(opp, team, false);
+      const pic = h2hExportView(opp, team, false);
       return {
         best, rows: rows.length, rowHeight: rows[0].getBoundingClientRect().height,
         amend: /To correct or remove this game/.test(view.textContent),
         buttons: [!!document.getElementById('h2hCopy'), !!document.getElementById('h2hPicture')],
         text: h2hExportText(opp, team, false),
-        sheetRows: sheet.blocks.filter((b) => b.type === 'list')[0].rows.length,
+        sheetRows: pic.rows.length, tones: pic.rows.map((x) => x.tone),
         tally: MatchOutcome.tally(opp, best.a),
         firstTeams: h2hOpponentRow(opp[0], best.a, best.b).teams,
       };
@@ -44,6 +44,32 @@ maybe('one line per meeting, no amendment note, and the export says exactly what
     assert.strictEqual(r.text.split('\n').filter((l) => / · (\w+ won|Drew) · /.test(l)).length, r.best.n, 'the text lists every meeting');
     assert.ok(r.text.includes(r.firstTeams));
     assert.strictEqual(r.sheetRows, r.best.n, 'and so does the picture');
+    // Drawn as the screen is: each result in its colour (Shaun, 2 Nov).
+    assert.ok(r.tones.every((t) => ['win', 'loss', 'draw'].includes(t)) && r.tones.includes('win') && r.tones.includes('loss'));
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
+
+maybe('the pictures are drawn in the app\'s look, sized to their rows: a pair and a player against everyone', async () => {
+  const app = await H.open();
+  try {
+    const r = await app.run(async () => {
+      const names = PLAYERS.map((p) => p.name);
+      let best = null;
+      names.forEach((a) => names.forEach((b) => { if (a < b) { const n = h2hOpponentMatches(a, b).length; if (!best || n > best.n) best = { a, b, n }; } }));
+      h2hPlayerA = best.a; h2hPlayerB = best.b; h2hMonth = 'all';
+      const opp = h2hOpponentMatches(best.a, best.b);
+      const pair = CardPainter.headToHead(h2hExportView(opp, h2hTeammateMatches(best.a, best.b), false), {});
+      h2hPlayerB = H2H_EVERYONE;
+      const d = h2hEveryoneData();
+      const all = CardPainter.headToHeadAll(h2hEveryoneView(d), {});
+      const opponents = d.groups.reduce((n, g) => n + g.opponents.length, 0);
+      return { n: best.n, pair: [pair.width, pair.height], all: [all.width, all.height], opponents };
+    });
+    assert.strictEqual(r.pair[0], 1080);
+    assert.ok(r.pair[1] > 600 + r.n * 100, `tall enough for ${r.n} meetings (${r.pair[1]}px)`);
+    assert.strictEqual(r.all[0], 1080);
+    assert.ok(r.all[1] > 500 + r.opponents * 70, `tall enough for ${r.opponents} opponents (${r.all[1]}px)`);
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
