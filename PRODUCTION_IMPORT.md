@@ -1,6 +1,6 @@
 # Production match-facts import — 18 Sep 2026
 
-Applied by `scripts/import-production-matches.js` against the live beta, after
+Applied by `scripts/moneypadel/import-production-matches.js` against the live beta, after
 the dry run below was reviewed and approved by Shaun.
 
 **Match facts only.** Production ratings, rankings, tiers and reliability were

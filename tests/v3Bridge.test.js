@@ -10,7 +10,7 @@ const D = require('./helpers/dataset.js');
 const ROOT = path.join(__dirname, '..');
 
 function loadSnapshot() {
-  const src = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'productionSnapshot.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'clubs', 'moneypadel', 'productionSnapshot.js'), 'utf8');
   return new Function(src + '; return PRODUCTION_SNAPSHOT;')();
 }
 
@@ -129,7 +129,7 @@ test('the snapshot is structurally excluded from every calculation', () => {
     const src = fs.readFileSync(path.join(ROOT, 'assets', 'js', f), 'utf8');
     assert.ok(!src.includes('PRODUCTION_SNAPSHOT'), f + ' must not reference the production snapshot');
   });
-  const seed = strip(fs.readFileSync(path.join(ROOT, 'scripts', 'seed-beta.js'), 'utf8'));
+  const seed = strip(fs.readFileSync(path.join(ROOT, 'scripts', 'moneypadel', 'seed-beta.js'), 'utf8'));
   assert.ok(!seed.includes('PRODUCTION_SNAPSHOT'), 'the seed script must not read the snapshot');
 
   // In app.js it may only be indexed for display, never fed to the engine.
@@ -263,7 +263,7 @@ test('the application reads v3 match history, not the pre-v3 base layer', () => 
 test('every player record reconciles with the evidence behind their rating', () => {
   // wins + losses + draws must equal lifetimeMatches for all 34 players, which
   // is the whole point of sourcing both from the same 150-match history.
-  const { replay } = require('../scripts/seed-beta.js').buildBackfill();
+  const { replay } = require('../scripts/moneypadel/seed-beta.js').buildBackfill();
   const matches = D.loadAllMatches();
   const tally = {};
   matches.forEach((m) => {

@@ -190,8 +190,10 @@
 <script src="assets/js/healthReport.js"></script>
 <script src="assets/js/historicalAdjustment.js"></script>
 <script src="assets/js/v3Bridge.js"></script>
-<script src="assets/js/productionSnapshot.js"></script>
-<script src="assets/js/historicalDisplayMatches.js"></script>
+<!-- The community's own record (config/club.js dataScripts): written in here,
+     in order, so they load exactly like the tags around them -- and another
+     community's page never fetches them. -->
+<script>(CLUB.dataScripts || []).forEach(function (src) { document.write('<script src="' + src + '"><\/script>'); });</script>
 <!-- Domain and view-model modules extracted from app.js (docs/architecture/PARALLEL_DEVELOPMENT_SPLIT.md).
      They only declare; app.js boots after them. -->
 <script src="assets/js/data/firebaseData.js"></script>

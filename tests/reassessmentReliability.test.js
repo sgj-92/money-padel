@@ -9,12 +9,12 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const Engine = require('../assets/js/ratingEngine.js');
-const M = require('../scripts/model-reassessment-reliability.js');
+const M = require('../scripts/moneypadel/model-reassessment-reliability.js');
 
 const rel = (e) => Engine.reliability(e);
 
 // The three decisions the club has actually made, read out of the live record
-// with `scripts/model-reassessment-reliability.js`.
+// with `scripts/moneypadel/model-reassessment-reliability.js`.
 //
 // Updated 20 Sep 2026: Shaun corrected Tom's and Fatch's anchors from their
 // comparator values to the Tier B baseline of 1400 and reopened both at 20%,

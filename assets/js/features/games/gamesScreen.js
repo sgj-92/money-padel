@@ -174,7 +174,7 @@ function closeGameEditor(id, fn){
 // "Submitted by Tom", "Historical record", "Approved by Shaun"... for a rated game.
 function matchAttributionLine(m){
   if(m.submittedBy) return `Submitted by ${m.submittedBy}`;
-  return MatchAttribution.describe(m.id, { stored: matchAttributionState, journey: V3_JOURNEY }).text;
+  return MatchAttribution.describe(m.id, { stored: matchAttributionState, history: MATCH_SUBMITTER_HISTORY, journey: V3_JOURNEY }).text;
 }
 
 function gameEditFormHtml(id){

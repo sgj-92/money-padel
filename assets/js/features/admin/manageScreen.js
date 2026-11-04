@@ -106,7 +106,7 @@ function renderManage(){
   html += adminSection('boardpack', 'Monthly Board Pack', adminOpenSections.boardpack ? buildBoardPackSectionHtml() : '');
   html += adminSection('historical', 'Historical club adjustment', buildHistoricalAdjustmentHtml());
   // Off the main More list (Shaun, 4 Oct), kept here for Admin.
-  html += adminSection('northsouth', 'North vs South',
+  if(NORTH_SOUTH_EVENT) html += adminSection('northsouth', 'North vs South',
     `<div class="section-sub">The North vs South exhibition. It is no longer on the More menu; open it from here.</div>`
     + `<div class="fg-row"><button class="preset-btn" id="openNorthSouthBtn" style="width:100%;">Open North vs South</button></div>`);
   html += adminSection('diagnostics', 'Beta diagnostics', buildDiagnosticsSectionHtml());

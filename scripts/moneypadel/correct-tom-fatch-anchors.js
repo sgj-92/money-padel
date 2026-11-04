@@ -3,8 +3,8 @@
 // baseline of 1400, superseding the comparator-based anchors applied on
 // 18 Sep 2026.
 //
-//   node scripts/correct-tom-fatch-anchors.js            # preview (default)
-//   node scripts/correct-tom-fatch-anchors.js --write    # apply to the beta
+//   node scripts/moneypadel/correct-tom-fatch-anchors.js            # preview (default)
+//   node scripts/moneypadel/correct-tom-fatch-anchors.js --write    # apply to the beta
 //
 // Board decision, Shaun, 20 Sep 2026: anchoring a promoted player to one
 // individual B with a genuinely poor record distorted how far they sat from
@@ -20,12 +20,12 @@
 // first -- the corrected record can be built in memory and reported on in full
 // before anything is committed.
 
-const Store = require('../assets/js/ratingStore.js');
-const Review = require('../assets/js/monthlyReview.js');
-const HA = require('../assets/js/historicalAdjustment.js');
-const RF = require('../assets/js/replayForward.js');
-const BD = require('../assets/js/betaDiagnostics.js');
-const Engine = require('../assets/js/ratingEngine.js');
+const Store = require('../../assets/js/ratingStore.js');
+const Review = require('../../assets/js/monthlyReview.js');
+const HA = require('../../assets/js/historicalAdjustment.js');
+const RF = require('../../assets/js/replayForward.js');
+const BD = require('../../assets/js/betaDiagnostics.js');
+const Engine = require('../../assets/js/ratingEngine.js');
 const { PROJECT_ID } = require('./seed-beta.js');
 
 const BASELINE = 1400;            // standard Tier B baseline
@@ -110,7 +110,7 @@ async function main() {
   console.log(`  replays to itself: ${noop.identical ? 'yes' : 'NO — ' + noop.count + ' differences'}`);
   if (!noop.identical) {
     console.error('\nThe record does not replay to itself, so no correction can be planned on it.');
-    console.error('Run scripts/repair-replay-divergence.js first.');
+    console.error('Run scripts/moneypadel/repair-replay-divergence.js first.');
     process.exitCode = 1;
     return;
   }

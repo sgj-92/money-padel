@@ -15,7 +15,7 @@ const path = require('node:path');
 const MV = require('../assets/js/monthlyViews.js');
 const TH = require('../assets/js/tierHistory.js');
 const D = require('./helpers/dataset.js');
-const { buildBackfill } = require('../scripts/seed-beta.js');
+const { buildBackfill } = require('../scripts/moneypadel/seed-beta.js');
 
 const ROOT = path.join(__dirname, '..');
 

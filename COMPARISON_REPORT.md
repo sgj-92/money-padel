@@ -1,6 +1,6 @@
 # Money Padel Prestige v3 — comparison report
 
-Generated 2026-09-18 by `scripts/comparison-report.js`. Regenerate rather than edit.
+Generated 2026-09-18 by `scripts/moneypadel/comparison-report.js`. Regenerate rather than edit.
 
 **Basis: the live beta record**, including every club decision the board has recorded.
 

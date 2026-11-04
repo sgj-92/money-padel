@@ -14,7 +14,7 @@ const Store = require('../assets/js/ratingStore.js');
 const RF = require('../assets/js/replayForward.js');
 const HA = require('../assets/js/historicalAdjustment.js');
 const BD = require('../assets/js/betaDiagnostics.js');
-const { buildBackfill } = require('../scripts/seed-beta.js');
+const { buildBackfill } = require('../scripts/moneypadel/seed-beta.js');
 
 let cached = null;
 function record() {

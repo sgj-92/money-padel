@@ -3,7 +3,7 @@
 // the board's corrected account of them. Writes NOTHING, ever. There is no
 // --write flag and no backend call in this file.
 //
-//   node scripts/historical-review-dryrun.js
+//   node scripts/moneypadel/historical-review-dryrun.js
 //
 // The board's factual position (PROJECT_LEDGER.md Open Question 17):
 //   * Shaun, 1 Jul 2026 — he entered Tier C only because his level was unknown.
@@ -19,10 +19,10 @@
 // date, so Shaun's correction on 1 July cannot change what Tom is offered on
 // the same day.
 
-const Engine = require('../assets/js/ratingEngine.js');
-const Store = require('../assets/js/ratingStore.js');
-const MR = require('../assets/js/monthlyReview.js');
-const RF = require('../assets/js/replayForward.js');
+const Engine = require('../../assets/js/ratingEngine.js');
+const Store = require('../../assets/js/ratingStore.js');
+const MR = require('../../assets/js/monthlyReview.js');
+const RF = require('../../assets/js/replayForward.js');
 const { buildBackfill } = require('./seed-beta.js');
 
 const NORMAL_B_BASELINE = 1400;
@@ -84,7 +84,7 @@ function run() {
   lines.push('**Nothing here has been written.** These are the numbers Shaun asked to see before any');
   lines.push('historical event is recorded. This script has no write path.');
   lines.push('');
-  lines.push(`Engine \`${Engine.RATING_MODEL_VERSION}\`, recommendation method \`${require('../assets/js/reassessment.js').RECOMMENDATION_METHOD_VERSION}\`.`);
+  lines.push(`Engine \`${Engine.RATING_MODEL_VERSION}\`, recommendation method \`${require('../../assets/js/reassessment.js').RECOMMENDATION_METHOD_VERSION}\`.`);
   lines.push('');
   lines.push('## What this dry run found');
   lines.push('');

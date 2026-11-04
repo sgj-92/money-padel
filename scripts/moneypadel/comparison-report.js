@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Generate COMPARISON_REPORT.md: v3 beta against the frozen production snapshot.
 //
-//   node scripts/comparison-report.js                  # from the seeded baseline
-//   node scripts/comparison-report.js --live           # from the live beta record
-//   node scripts/comparison-report.js --live --write   # ... and write the file
+//   node scripts/moneypadel/comparison-report.js                  # from the seeded baseline
+//   node scripts/moneypadel/comparison-report.js --live           # from the live beta record
+//   node scripts/moneypadel/comparison-report.js --live --write   # ... and write the file
 //
 // The BASIS matters and is printed in the report. The seeded baseline is the
 // CSV replayed with no club decisions; the live record includes every decision
@@ -22,12 +22,12 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const Engine = require('../assets/js/ratingEngine.js');
-const Store = require('../assets/js/ratingStore.js');
-const { PRODUCTION_SNAPSHOT } = require('../assets/js/productionSnapshot.js');
+const Engine = require('../../assets/js/ratingEngine.js');
+const Store = require('../../assets/js/ratingStore.js');
+const { PRODUCTION_SNAPSHOT } = require('../../assets/js/clubs/moneypadel/productionSnapshot.js');
 const { buildBackfill } = require('./seed-beta.js');
 
-const ROOT = path.join(__dirname, '..');
+const ROOT = path.join(__dirname, '..', '..');
 
 function f1(v) { return (Math.round(v * 10) / 10).toFixed(1); }
 function signed(v) { const r = Math.round(v * 10) / 10; return (r > 0 ? '+' : '') + r.toFixed(1); }
@@ -90,7 +90,7 @@ function report(record) {
 
   L.push('# Money Padel Prestige v3 — comparison report');
   L.push('');
-  L.push(`Generated ${today} by \`scripts/comparison-report.js\`. Regenerate rather than edit.`);
+  L.push(`Generated ${today} by \`scripts/moneypadel/comparison-report.js\`. Regenerate rather than edit.`);
   L.push('');
   L.push(d.basis === 'live'
     ? '**Basis: the live beta record**, including every club decision the board has recorded.'
@@ -188,7 +188,7 @@ function report(record) {
 }
 
 async function liveRecord() {
-  const Store = require('../assets/js/ratingStore.js');
+  const Store = require('../../assets/js/ratingStore.js');
   const { PROJECT_ID } = require('./seed-beta.js');
   const backend = Store.firestoreRestBackend({ projectId: PROJECT_ID });
   const [players, matches] = await Promise.all([

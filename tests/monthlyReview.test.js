@@ -15,7 +15,7 @@ const Engine = require('../assets/js/ratingEngine.js');
 const TH = require('../assets/js/tierHistory.js');
 const MR = require('../assets/js/monthlyReview.js');
 const CD = require('../assets/js/clubDecision.js');
-const { buildBackfill } = require('../scripts/seed-beta.js');
+const { buildBackfill } = require('../scripts/moneypadel/seed-beta.js');
 
 const TODAY = '2026-09-18';
 let cached = null;

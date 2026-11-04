@@ -46,6 +46,14 @@ const CLUBS = {
     // needs its redirect rule in vercel.json (tests/club.test.js checks).
     standingsHosts: [/^mpstandings\./i],
     standingsDomain: 'mpstandings.sgj.luxe',
+    // Its own record, loaded only for this community (index.html): the
+    // pre-v3 base layer, the April/May display-only games, the old app's
+    // ratings snapshot, who submitted the early games, the Box Office Cup.
+    dataScripts: [
+      'assets/js/clubs/moneypadel/history.js',
+      'assets/js/clubs/moneypadel/productionSnapshot.js',
+      'assets/js/clubs/moneypadel/historicalDisplayMatches.js',
+    ],
     firebase: {
       apiKey: 'AIzaSyDIiA5NVo3jKCkr_Kzi8y1fJhzXsWNuVmY',
       authDomain: 'mp-dashboard-beta-v3.firebaseapp.com',
@@ -76,6 +84,7 @@ const CLUBS = {
     hosts: [],
     standingsHosts: [],
     standingsDomain: null,
+    dataScripts: [],
     firebase: null,
   },
 };

@@ -54,13 +54,10 @@ function loadAllMatches() {
   return parseCsv(csv).map(toMatch);
 }
 
-// BASE_TIERS is read out of app.js rather than copied, so there is exactly one
-// source of truth for current tiers.
+// BASE_TIERS is read out of Money Padel's own record (the file the app loads
+// for it) rather than copied, so there is exactly one source of truth.
 function loadBaseTiers() {
-  const src = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'app.js'), 'utf8');
-  const m = src.match(/const BASE_TIERS\s*=\s*(\{[\s\S]*?\});/);
-  if (!m) throw new Error('BASE_TIERS not found in app.js');
-  return JSON.parse(m[1]);
+  return { ...require('../../assets/js/clubs/moneypadel/history.js').CLUB_HISTORY.baseTiers };
 }
 
 // Experiments 11 and 12 ran against the export as it stood on 2026-09-11,

@@ -14,7 +14,7 @@ const PlayerState = require('../assets/js/playerState.js');
 const Engine = require('../assets/js/ratingEngine.js');
 const Store = require('../assets/js/ratingStore.js');
 const RF = require('../assets/js/replayForward.js');
-const { buildBackfill } = require('../scripts/seed-beta.js');
+const { buildBackfill } = require('../scripts/moneypadel/seed-beta.js');
 const H = require('./helpers/uiHarness.js');
 
 const ROOT = path.join(__dirname, '..');
