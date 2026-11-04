@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Bring the record back into agreement with its own history.
 //
-//   node scripts/repair-replay-divergence.js            # dry run
-//   node scripts/repair-replay-divergence.js --write
+//   node scripts/moneypadel/repair-replay-divergence.js            # dry run
+//   node scripts/moneypadel/repair-replay-divergence.js --write
 //
 // Dry run is the default and writes nothing.
 //
@@ -27,9 +27,9 @@
 //
 // Idempotent. Run it on a healthy record and it reports nothing to do.
 
-const Store = require('../assets/js/ratingStore.js');
-const Replay = require('../assets/js/replayForward.js');
-const Diagnostics = require('../assets/js/betaDiagnostics.js');
+const Store = require('../../assets/js/ratingStore.js');
+const Replay = require('../../assets/js/replayForward.js');
+const Diagnostics = require('../../assets/js/betaDiagnostics.js');
 const { PROJECT_ID } = require('./seed-beta.js');
 
 const WRITE = process.argv.includes('--write');

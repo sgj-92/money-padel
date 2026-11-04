@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Return the beta project to the seeded baseline.
 //
-//   node scripts/reset-beta.js                          # dry run (default)
-//   node scripts/reset-beta.js --write --i-mean-it      # actually do it
+//   node scripts/moneypadel/reset-beta.js                          # dry run (default)
+//   node scripts/moneypadel/reset-beta.js --write --i-mean-it      # actually do it
 //
 // WHAT THIS IS FOR. The seed overwrites documents by deterministic id, so
 // re-running it restores anything it owns. What it CANNOT do is remove
@@ -24,9 +24,9 @@
 // from the seed script. There is no flag to point it anywhere else, and no
 // production credentials exist in this repository.
 
-const Engine = require('../assets/js/ratingEngine.js');
-const Store = require('../assets/js/ratingStore.js');
-const Diagnostics = require('../assets/js/betaDiagnostics.js');
+const Engine = require('../../assets/js/ratingEngine.js');
+const Store = require('../../assets/js/ratingStore.js');
+const Diagnostics = require('../../assets/js/betaDiagnostics.js');
 const { buildBackfill, PROJECT_ID } = require('./seed-beta.js');
 
 function plannedIds() {
@@ -100,7 +100,7 @@ async function main() {
   if (!write || !confirmed) {
     console.log('\nNothing was changed.');
     if (write && !confirmed) console.log('--write was given without --i-mean-it. Both are required.');
-    else console.log('To apply: node scripts/reset-beta.js --write --i-mean-it');
+    else console.log('To apply: node scripts/moneypadel/reset-beta.js --write --i-mean-it');
     return;
   }
 

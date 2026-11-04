@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Import a production match-facts export into the v3 record.
 //
-//   node scripts/import-production-matches.js --file export.json            # dry run
-//   node scripts/import-production-matches.js --file export.json --report r.md
-//   node scripts/import-production-matches.js --file export.json --write
+//   node scripts/moneypadel/import-production-matches.js --file export.json            # dry run
+//   node scripts/moneypadel/import-production-matches.js --file export.json --report r.md
+//   node scripts/moneypadel/import-production-matches.js --file export.json --write
 //
 // Dry run is the default and writes nothing. It is exhaustive on purpose: the
 // whole plan -- what already exists, what is genuinely new, what conflicts,
@@ -28,9 +28,9 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const Engine = require('../assets/js/ratingEngine.js');
-const Store = require('../assets/js/ratingStore.js');
-const Replay = require('../assets/js/replayForward.js');
+const Engine = require('../../assets/js/ratingEngine.js');
+const Store = require('../../assets/js/ratingStore.js');
+const Replay = require('../../assets/js/replayForward.js');
 const { PROJECT_ID } = require('./seed-beta.js');
 
 // The v3 rating record starts here. Anything earlier is display-only, by a
@@ -233,7 +233,7 @@ function main() {
   const write = args.includes('--write');
   const file = args.includes('--file') ? args[args.indexOf('--file') + 1] : null;
   const reportAt = args.includes('--report') ? args[args.indexOf('--report') + 1] : null;
-  if (!file) { console.error('Usage: node scripts/import-production-matches.js --file <export.json> [--report out.md] [--write]'); process.exitCode = 1; return; }
+  if (!file) { console.error('Usage: node scripts/moneypadel/import-production-matches.js --file <export.json> [--report out.md] [--write]'); process.exitCode = 1; return; }
 
   const lines = [];
   const say = (s = '') => { lines.push(s); console.log(s); };

@@ -6,7 +6,7 @@ const Engine = require('../assets/js/ratingEngine.js');
 const Store = require('../assets/js/ratingStore.js');
 const TierHistory = require('../assets/js/tierHistory.js');
 const D = require('./helpers/dataset.js');
-const { buildBackfill } = require('../scripts/seed-beta.js');
+const { buildBackfill } = require('../scripts/moneypadel/seed-beta.js');
 
 const ROOT = path.join(__dirname, '..');
 
@@ -48,13 +48,12 @@ test('the authoritative history is exactly the three §5.3 changes', () => {
 // ---------- the April/May block is structurally separated ----------
 
 function loadHistoricalDisplayMatches() {
-  const src = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'historicalDisplayMatches.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'clubs', 'moneypadel', 'historicalDisplayMatches.js'), 'utf8');
   return new Function(src + '; return HISTORICAL_DISPLAY_MATCHES;')();
 }
 
 test('the April/May block lives outside BASE_MATCHES entirely', () => {
-  const app = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'app.js'), 'utf8');
-  const base = JSON.parse(app.match(/const BASE_MATCHES\s*=\s*(\[[\s\S]*?\]);/)[1]);
+  const base = require('../assets/js/clubs/moneypadel/history.js').CLUB_HISTORY.baseMatches;
   assert.strictEqual(base.length, 127);
   assert.ok(base.every((m) => m.date >= '2026-06-01'), 'no April/May match may remain in BASE_MATCHES');
   assert.ok(base.every((m) => m.verified !== false), 'no unverified match may remain in BASE_MATCHES');
@@ -67,7 +66,7 @@ test('the April/May block lives outside BASE_MATCHES entirely', () => {
 test('no calculation path can reach the display-only block', () => {
   const stripComments = (s) => s.replace(/^\s*\/\/.*$/gm, '');
   const app = fs.readFileSync(path.join(ROOT, 'assets', 'js', 'app.js'), 'utf8');
-  const uses = [...stripComments(app).matchAll(/HISTORICAL_DISPLAY_MATCHES/g)].length;
+  const uses = stripComments(app).split('\n').filter((l) => /HISTORICAL_DISPLAY_MATCHES/.test(l)).length;
   assert.strictEqual(uses, 1, 'it may be referenced by exactly one line of code, in getDisplayMatches');
   const inDisplayFn = /function getDisplayMatches\(\)\{[\s\S]*?HISTORICAL_DISPLAY_MATCHES[\s\S]*?\n\}/.test(app);
   assert.ok(inDisplayFn, 'the only reference must be inside getDisplayMatches');
@@ -77,7 +76,7 @@ test('no calculation path can reach the display-only block', () => {
     const src = fs.readFileSync(path.join(ROOT, 'assets', 'js', f), 'utf8');
     assert.ok(!src.includes('HISTORICAL_DISPLAY_MATCHES'), f + ' must not reference display-only data');
   });
-  const seed = stripComments(fs.readFileSync(path.join(ROOT, 'scripts', 'seed-beta.js'), 'utf8'));
+  const seed = stripComments(fs.readFileSync(path.join(ROOT, 'scripts', 'moneypadel', 'seed-beta.js'), 'utf8'));
   assert.ok(!seed.includes('HISTORICAL_DISPLAY_MATCHES'),
     'the seed script must not read display-only data');
 });

@@ -10,7 +10,7 @@ const Engine = require('../assets/js/ratingEngine.js');
 const Store = require('../assets/js/ratingStore.js');
 const CD = require('../assets/js/clubDecision.js');
 const R = require('../assets/js/reassessment.js');
-const { buildBackfill } = require('../scripts/seed-beta.js');
+const { buildBackfill } = require('../scripts/moneypadel/seed-beta.js');
 
 const TODAY = '2026-09-18';
 const RECORDED = '2026-09-18T00:00:00Z';

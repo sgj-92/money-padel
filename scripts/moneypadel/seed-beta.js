@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Backfill the beta project from the authoritative match export.
 //
-//   node scripts/seed-beta.js                 # dry run, writes nothing
-//   node scripts/seed-beta.js --manifest out.json
-//   node scripts/seed-beta.js --limit 10      # preview a 10-document sample
-//   node scripts/seed-beta.js --limit 10 --write   # smoke test: write only those 10
-//   node scripts/seed-beta.js --write         # the full backfill
+//   node scripts/moneypadel/seed-beta.js                 # dry run, writes nothing
+//   node scripts/moneypadel/seed-beta.js --manifest out.json
+//   node scripts/moneypadel/seed-beta.js --limit 10      # preview a 10-document sample
+//   node scripts/moneypadel/seed-beta.js --limit 10 --write   # smoke test: write only those 10
+//   node scripts/moneypadel/seed-beta.js --write         # the full backfill
 //
 // Dry run is the default and is exhaustive: it prints every collection, every
 // document count, and a sample document per collection, so what the write path
@@ -16,12 +16,14 @@
 
 const path = require('node:path');
 const fs = require('node:fs');
-const Engine = require('../assets/js/ratingEngine.js');
-const Store = require('../assets/js/ratingStore.js');
-const TierHistory = require('../assets/js/tierHistory.js');
-const D = require('../tests/helpers/dataset.js');
+const Engine = require('../../assets/js/ratingEngine.js');
+const Store = require('../../assets/js/ratingStore.js');
+const TierHistory = require('../../assets/js/tierHistory.js');
+const D = require('../../tests/helpers/dataset.js');
 
-const PROJECT_ID = 'mp-dashboard-beta-v3';
+// Money Padel's own project, from its settings (config/club.js): these scripts
+// are Money Padel's and never write to another community.
+const PROJECT_ID = require('../../assets/js/config/club.js').CLUBS.moneypadel.firebase.projectId;
 
 function buildBackfill() {
   // Live v3 replay: the full export in canonical Match ID order, with the §5.3

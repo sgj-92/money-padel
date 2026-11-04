@@ -36,6 +36,27 @@ test('every community says what the screens need', () => {
   });
 });
 
+test('a community\'s own record is its own: Money Padel\'s files exist, the shared app holds none of it', () => {
+  Object.values(C.CLUBS).forEach((c) => {
+    assert.ok(Array.isArray(c.dataScripts), `${c.id}: dataScripts`);
+    c.dataScripts.forEach((f) => {
+      assert.ok(fs.existsSync(path.join(ROOT, f)), `${c.id}: ${f} exists`);
+      assert.ok(f.startsWith(`assets/js/clubs/${c.id}/`), `${c.id}: ${f} is in its own folder`);
+    });
+  });
+  const { CLUB_HISTORY } = require('../assets/js/clubs/moneypadel/history.js');
+  assert.strictEqual(CLUB_HISTORY.baseMatches.length, 127);
+  assert.strictEqual(CLUB_HISTORY.northSouth.event.name, 'Box Office Cup');
+  // The shared app names no player of any community: no rosters, tiers or
+  // games written into it.
+  const app = fs.readFileSync(path.join(ROOT, 'assets/js/app.js'), 'utf8');
+  assert.doesNotMatch(app, /const (BASE_MATCHES|BASE_TIERS|BASE_ACTIVE) = [[{]"/);
+  assert.doesNotMatch(app, /'Kaz'|"Kaz"/);
+  assert.doesNotMatch(fs.readFileSync(path.join(ROOT, 'assets/js/domain/matches/matchAttribution.js'), 'utf8'), /'2026-\d\d-\d\d-\d+'/);
+  assert.ok(!fs.existsSync(path.join(ROOT, 'assets/js/productionSnapshot.js')));
+  assert.ok(!fs.existsSync(path.join(ROOT, 'assets/js/historicalDisplayMatches.js')));
+});
+
 test('every standings domain has its redirect rule in vercel.json', () => {
   const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
   Object.values(C.CLUBS).filter((c) => c.standingsDomain).forEach((c) => {
@@ -66,8 +87,11 @@ maybe('Money Padel looks exactly as before', async () => {
       title: document.title, wordmark: document.querySelector('.brand-wordmark').innerHTML,
       logo: document.querySelector('.brand-mark img').getAttribute('src'),
       apple: document.querySelector('meta[name="apple-mobile-web-app-title"]').content,
+      record: performance.getEntriesByType('resource').filter((e) => /\/clubs\/moneypadel\//.test(e.name)).length,
+      base: Object.keys(BASE_TIERS).length, event: NORTH_SOUTH_EVENT && NORTH_SOUTH_EVENT.name,
     }));
-    assert.deepStrictEqual(r, { title: 'MP Beta', wordmark: 'Money <b>Padel</b>', logo: 'assets/brand/mp-mark.svg', apple: 'MP Beta v3' });
+    assert.deepStrictEqual(r, { title: 'MP Beta', wordmark: 'Money <b>Padel</b>', logo: 'assets/brand/mp-mark.svg', apple: 'MP Beta v3',
+      record: 3, base: 41, event: 'Box Office Cup' });
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
@@ -82,6 +106,8 @@ maybe('another community: its own name, wordmark, logo and file names, and no Mo
         logo: document.querySelector('.brand-mark img').getAttribute('src'),
         apple: document.querySelector('meta[name="apple-mobile-web-app-title"]').content,
         moneyPadel: /money padel/i.test(shown),
+        record: performance.getEntriesByType('resource').filter((e) => /\/clubs\//.test(e.name)).map((e) => e.name),
+        base: [Object.keys(BASE_TIERS).length, BASE_MATCHES.length, NORTH_SOUTH_EVENT, getDisplayMatches().filter((m) => m._displayOnly).length],
         h2hText: (() => { h2hPlayerA = PLAYERS[0].name; h2hPlayerB = PLAYERS[1].name; h2hMonth = 'all'; return h2hExportText([], [], false).split('\n')[0]; })(),
       };
     });
@@ -91,6 +117,8 @@ maybe('another community: its own name, wordmark, logo and file names, and no Mo
     assert.strictEqual(r.logo, 'assets/brand/pc-mark.svg');
     assert.strictEqual(r.apple, 'Padel Champs');
     assert.strictEqual(r.moneyPadel, false, 'no Money Padel on its screens');
+    assert.deepStrictEqual(r.record, [], 'it never fetches Money Padel\'s record');
+    assert.deepStrictEqual(r.base, [0, 0, null, 0], 'and starts with none of it');
     assert.strictEqual(r.h2hText, 'Padel Championships · Head to head');
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }

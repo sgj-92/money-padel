@@ -11,7 +11,7 @@ const path = require('node:path');
 const Engine = require('../assets/js/ratingEngine.js');
 const MF = require('../assets/js/matchFacts.js');
 const SC = require('../assets/js/domain/matches/matchScorecard.js');
-const { buildBackfill } = require('../scripts/seed-beta.js');
+const { buildBackfill } = require('../scripts/moneypadel/seed-beta.js');
 const H = require('./helpers/uiHarness.js');
 
 const ROOT = path.join(__dirname, '..');

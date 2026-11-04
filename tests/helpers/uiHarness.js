@@ -43,12 +43,12 @@ function getPlaywright() {
 
 function available() { return !!getPlaywright(); }
 
-// The documents the seed would write. Same source as scripts/seed-beta.js, so
+// The documents the seed would write. Same source as scripts/moneypadel/seed-beta.js, so
 // the browser sees exactly what the beta holds.
 let fixtureCache = null;
 function fixture() {
   if (!fixtureCache) {
-    const { buildBackfill } = require('../../scripts/seed-beta.js');
+    const { buildBackfill } = require('../../scripts/moneypadel/seed-beta.js');
     const b = buildBackfill();
     const plan = Store.buildWritePlan({
       matches: b.matches, journey: b.replay.journey, state: b.replay.state, provenance: b.provenance,

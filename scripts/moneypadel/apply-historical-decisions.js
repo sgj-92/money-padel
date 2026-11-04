@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Apply the three historical club decisions Shaun authorised on 18 Sep 2026.
 //
-//   node scripts/apply-historical-decisions.js            # dry run (default)
-//   node scripts/apply-historical-decisions.js --write    # apply to the beta
+//   node scripts/moneypadel/apply-historical-decisions.js            # dry run (default)
+//   node scripts/moneypadel/apply-historical-decisions.js --write    # apply to the beta
 //
 // Two of the three anchors are not literals — they are resolved from the record
 // at a specific moment, and the moment matters:
@@ -22,11 +22,11 @@
 // through the audited Historical Club Adjustment path: nothing is deleted, and
 // each decision supersedes the one it replaces.
 
-const Store = require('../assets/js/ratingStore.js');
-const Review = require('../assets/js/monthlyReview.js');
-const HA = require('../assets/js/historicalAdjustment.js');
-const RF = require('../assets/js/replayForward.js');
-const BD = require('../assets/js/betaDiagnostics.js');
+const Store = require('../../assets/js/ratingStore.js');
+const Review = require('../../assets/js/monthlyReview.js');
+const HA = require('../../assets/js/historicalAdjustment.js');
+const RF = require('../../assets/js/replayForward.js');
+const BD = require('../../assets/js/betaDiagnostics.js');
 const { PROJECT_ID } = require('./seed-beta.js');
 
 const RELIABILITY = 0.10; // board decision: reopen all three so the model can move them quickly
@@ -59,7 +59,7 @@ function planFor(stored, adjustment, provenance) {
 
 // SUPERSEDED, 20 Sep 2026. Tom's and Fatch's anchors here were replaced by the
 // Tier B baseline of 1400 at 20% (`4bbda90`, via
-// scripts/correct-tom-fatch-anchors.js). Running this with --write would
+// scripts/moneypadel/correct-tom-fatch-anchors.js). Running this with --write would
 // re-apply the comparator anchors the board has since rejected, and because it
 // plans against whatever is in the record it would do so without complaint.
 //
@@ -70,7 +70,7 @@ const SUPERSEDED_NOTE =
   'This script applies the 18 Sep 2026 anchors, two of which the board has since superseded:\n'
   + '  Tom   1 Jul — was Jords\' rating (1352.5) @ 10%, now the Tier B baseline 1400 @ 20%\n'
   + '  Fatch 1 Aug — was Tom\'s rating (1358.6) @ 10%, now the Tier B baseline 1400 @ 20%\n'
-  + 'Applying it would undo that correction. Use scripts/correct-tom-fatch-anchors.js instead.\n'
+  + 'Applying it would undo that correction. Use scripts/moneypadel/correct-tom-fatch-anchors.js instead.\n'
   + 'Dry run still works, as a record of what was done.';
 
 async function main() {

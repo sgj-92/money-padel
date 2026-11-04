@@ -9,8 +9,8 @@ const path = require('node:path');
 const Engine = require('../assets/js/ratingEngine.js');
 const Store = require('../assets/js/ratingStore.js');
 const BD = require('../assets/js/betaDiagnostics.js');
-const { buildBackfill } = require('../scripts/seed-beta.js');
-const { survey, plannedIds } = require('../scripts/reset-beta.js');
+const { buildBackfill } = require('../scripts/moneypadel/seed-beta.js');
+const { survey, plannedIds } = require('../scripts/moneypadel/reset-beta.js');
 
 const ROOT = path.join(__dirname, '..');
 
@@ -176,12 +176,12 @@ test('every backend offers remove, and nothing in the UI calls it', async () => 
   const deletesADocument = /\.remove\(\s*(RatingStore\.COLLECTIONS|['"`](players|matches|ratingJourney)['"`])/;
   assert.ok(!deletesADocument.test(appSrc), 'no screen may delete a document');
   // And the reset script, which may, does.
-  const reset = fs.readFileSync(path.join(ROOT, 'scripts', 'reset-beta.js'), 'utf8');
+  const reset = fs.readFileSync(path.join(ROOT, 'scripts', 'moneypadel', 'reset-beta.js'), 'utf8');
   assert.ok(/backend\.remove\(/.test(reset));
 });
 
 test('the reset script cannot be pointed anywhere but the beta project', () => {
-  const src = fs.readFileSync(path.join(ROOT, 'scripts', 'reset-beta.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'scripts', 'moneypadel', 'reset-beta.js'), 'utf8');
   const code = src.replace(/\/\*[\s\S]*?\*\//g, '').split('\n')
     .filter((l) => !l.trim().startsWith('//')).join('\n');
   assert.ok(/PROJECT_ID/.test(code), 'it must use the beta project constant');
@@ -198,7 +198,7 @@ test('the reset script cannot be pointed anywhere but the beta project', () => {
 // engines, and presenting the differences as errors would be the most
 // misleading thing in the repository.
 test('the comparison report is truthful and still matches its generator', () => {
-  const { build, report } = require('../scripts/comparison-report.js');
+  const { build, report } = require('../scripts/moneypadel/comparison-report.js');
   const d = build();
   const text = report();
 
@@ -217,7 +217,7 @@ test('the comparison report is truthful and still matches its generator', () => 
     'the reseeded players should be the largest differences, which is the report\'s central claim');
 
   // Production figures are never an input.
-  const src = fs.readFileSync(path.join(ROOT, 'scripts', 'comparison-report.js'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'scripts', 'moneypadel', 'comparison-report.js'), 'utf8');
   assert.ok(!/PRODUCTION_SNAPSHOT[\s\S]{0,200}buildWritePlan/.test(src));
 
   // The committed report is generated from the LIVE beta, which these tests

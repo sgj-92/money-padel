@@ -4,7 +4,7 @@
 has changed.** The Ledger requires candidate rules to be validated against the
 club's own decisions before a formula is chosen; this is that validation.
 
-Reproduce with `node scripts/model-reassessment-reliability.js` (read-only).
+Reproduce with `node scripts/moneypadel/model-reassessment-reliability.js` (read-only).
 Findings are pinned in `tests/reassessmentReliability.test.js`.
 
 ---
@@ -37,7 +37,7 @@ Three decisions, all of them in the record:
 > Fatch to Tom (1358.6), all three at 10%. Shaun then corrected both anchors to
 > the Tier B baseline of 1400 and reopened them at 20%. **The table and the
 > conclusions that follow have been re-derived against the corrected record.**
-> Reproduce with `node scripts/model-reassessment-reliability.js`.
+> Reproduce with `node scripts/moneypadel/model-reassessment-reliability.js`.
 
 | Player | Date | Anchor move | Prior evidence | Prior reliability | Chose | Afterwards |
 |---|---|---|---|---|---|---|

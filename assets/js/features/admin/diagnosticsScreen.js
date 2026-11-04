@@ -13,7 +13,7 @@
 //
 // Read-only. It reports and never repairs — a diagnostic that quietly fixed
 // things would destroy the evidence of what went wrong. The one destructive
-// operation, the beta reset, lives in scripts/reset-beta.js and cannot be
+// operation, the beta reset, lives in scripts/moneypadel/reset-beta.js and cannot be
 // triggered from here.
 
 let diagnosticsReport = null;
@@ -132,6 +132,6 @@ function buildDiagnosticsSectionHtml(){
   </div>`;
 
   html += `<div class="section-heading" style="margin-top:12px;">Beta reset</div>`;
-  html += `<div class="section-sub">Returning the beta to its seeded baseline deletes every club decision ever recorded, and cannot be undone from inside the app — the record is forward-only and has no delete. It is deliberately not a button: run <code>node scripts/reset-beta.js</code> for a dry run that lists exactly what would go, then <code>--write --i-mean-it</code> to apply it.</div>`;
+  html += `<div class="section-sub">Returning the beta to its seeded baseline deletes every club decision ever recorded, and cannot be undone from inside the app — the record is forward-only and has no delete. It is deliberately not a button: run <code>node scripts/moneypadel/reset-beta.js</code> for a dry run that lists exactly what would go, then <code>--write --i-mean-it</code> to apply it.</div>`;
   return html;
 }

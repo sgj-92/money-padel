@@ -14,24 +14,26 @@ const MA = require('../assets/js/domain/matches/matchAttribution.js');
 
 const maybe = H.available() ? test : test.skip;
 const CSV = path.join(__dirname, 'fixtures', 'money_padel_matches_2026-09-16.csv');
+// Money Padel's own record of who submitted its early games (clubs/moneypadel).
+const HISTORY = MA.historyMap(require('../assets/js/clubs/moneypadel/history.js').CLUB_HISTORY.submitters);
 
 test('the historical table is exactly the 16 Sep export\'s "Submitted By" column', () => {
   const lines = fs.readFileSync(CSV, 'utf8').trim().split(/\r?\n/).slice(1);
   const fromCsv = {};
   // Match ID is the first column and Submitted By the last; neither is quoted.
   lines.forEach((l) => { fromCsv[l.slice(0, l.indexOf(','))] = l.slice(l.lastIndexOf(',') + 1); });
-  const table = Object.fromEntries(Object.entries(MA.HISTORY).map(([id, who]) => [id, who === null ? '' : who]));
+  const table = Object.fromEntries(Object.entries(HISTORY).map(([id, who]) => [id, who === null ? '' : who]));
   assert.deepStrictEqual(table, fromCsv);
   assert.strictEqual(Object.keys(table).length, 150);
 });
 
 test('a seeded game says what the Games log said before the move', () => {
-  assert.deepStrictEqual(MA.describe('2026-09-02-3'), { kind: 'submitted', name: 'Tom', text: 'Submitted by Tom' });
-  assert.strictEqual(MA.describe('2026-06-02-1').text, 'Historical record');
-  const shaun = Object.keys(MA.HISTORY).find((id) => MA.HISTORY[id] === 'Shaun');
-  assert.strictEqual(MA.describe(shaun).text, 'Submitted by Shaun');
+  assert.deepStrictEqual(MA.describe('2026-09-02-3', { history: HISTORY }), { kind: 'submitted', name: 'Tom', text: 'Submitted by Tom' });
+  assert.strictEqual(MA.describe('2026-06-02-1', { history: HISTORY }).text, 'Historical record');
+  const shaun = Object.keys(HISTORY).find((id) => HISTORY[id] === 'Shaun');
+  assert.strictEqual(MA.describe(shaun, { history: HISTORY }).text, 'Submitted by Shaun');
   // The export itself had no name for this one.
-  assert.strictEqual(MA.describe('2026-07-20-3').kind, 'unknown');
+  assert.strictEqual(MA.describe('2026-07-20-3', { history: HISTORY }).kind, 'unknown');
 });
 
 test('a stored submitter wins; then the journey says who approved or that it was imported; never "unknown"', () => {
@@ -47,7 +49,7 @@ test('a stored submitter wins; then the journey says who approved or that it was
   assert.strictEqual(MA.describe('2026-09-16-2', { stored, journey }).text, 'Added from the old app');
   assert.strictEqual(MA.describe('2026-10-02-1', { stored, journey }).text, 'Submitter not recorded');
   // A stored entry beats the historical table too.
-  assert.strictEqual(MA.describe('2026-06-02-1', { stored: { '2026-06-02-1': { submittedBy: 'Len' } } }).text, 'Submitted by Len');
+  assert.strictEqual(MA.describe('2026-06-02-1', { stored: { '2026-06-02-1': { submittedBy: 'Len' } }, history: HISTORY }).text, 'Submitted by Len');
 });
 
 test('the entry kept at approval names the submitter and the approver', () => {

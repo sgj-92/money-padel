@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Model the Recommended Reliability for a club reassessment.
 //
-//   node scripts/model-reassessment-reliability.js            # reads the live beta
-//   node scripts/model-reassessment-reliability.js --file r.json
+//   node scripts/moneypadel/model-reassessment-reliability.js            # reads the live beta
+//   node scripts/moneypadel/model-reassessment-reliability.js --file r.json
 //
 // READ-ONLY. It writes nothing, changes no engine behaviour, and recommends no
 // decision. It answers one question: what do the club's own past decisions
@@ -13,8 +13,8 @@
 // implemented. This is that validation.
 
 const fs = require('node:fs');
-const Engine = require('../assets/js/ratingEngine.js');
-const Store = require('../assets/js/ratingStore.js');
+const Engine = require('../../assets/js/ratingEngine.js');
+const Store = require('../../assets/js/ratingStore.js');
 const { PROJECT_ID } = require('./seed-beta.js');
 
 // A club reassessment replaces the rating with an anchor the board chose. The
@@ -206,7 +206,7 @@ function report(record) {
   // now that one has been chosen.
   console.log('THE RULE NOW IN USE');
   console.log('');
-  const Reassessment = require('../assets/js/reassessment.js');
+  const Reassessment = require('../../assets/js/reassessment.js');
   decisions.forEach((d) => {
     const got = Reassessment.recommendReliability({
       currentReliability: d.reliabilityBefore, ratingMove: d.ratingMove,

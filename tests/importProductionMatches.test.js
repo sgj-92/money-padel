@@ -9,7 +9,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const I = require('../scripts/import-production-matches.js');
+const I = require('../scripts/moneypadel/import-production-matches.js');
 const Store = require('../assets/js/ratingStore.js');
 const Engine = require('../assets/js/ratingEngine.js');
 const D = require('./helpers/dataset.js');
