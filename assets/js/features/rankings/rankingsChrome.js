@@ -106,7 +106,7 @@ function renderRankingsPodium(){
         </div>
       `).join('')}
     </div>
-    <div class="podium-caption">Money Padel · ${scopeLabel}</div>
+    <div class="podium-caption">${escapeHtml(CLUB.name)} · ${scopeLabel}</div>
   `;
   // Insert before the column header (if built) rather than before #list directly,
   // so the order is always: podium, then "# Player Rating Δ", then the rows.
@@ -239,7 +239,7 @@ function buildRankingsHero(){
   hero.id = 'rankingsHero';
   hero.style.cssText = 'display:none; padding: var(--space-4) var(--space-4) 0;';
   hero.innerHTML = `
-    <div class="mp-section-label">Money Padel · Results Only</div>
+    <div class="mp-section-label">${escapeHtml(CLUB.name)} · ${escapeHtml(CLUB.resultsGroup)}</div>
     <div class="mp-display-title" style="font-size:28px; margin-top:4px;">Power Rankings</div>
     <div style="font-family:var(--font-interface); font-size:12px; color:var(--text-dim); margin-top:4px; line-height:1.4; max-width:32ch;">A tier-anchored rating. Scoreline counts, not just who won.</div>
   `;

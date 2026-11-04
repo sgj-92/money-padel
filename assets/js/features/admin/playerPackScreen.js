@@ -255,7 +255,7 @@ function buildPlayerPacksHtml(){
     </div>`;
     if(ppPreviewMode === 'deck'){
       const shown = ShareDeck.visibleSlides(liveDeck, boardPackPlayerCanSee);
-      html += `<div id="ppPreview" data-mode="deck"><div class="bp-deck-frame" id="ppDeckFrame">${DeckView.html(liveDeck, shown, { brandSrc: 'assets/brand/mp-mark.svg', crownSrc: 'assets/rankings/podium-crown-laurel.png', appLink: '' })}</div>
+      html += `<div id="ppPreview" data-mode="deck"><div class="bp-deck-frame" id="ppDeckFrame">${DeckView.html(liveDeck, shown, { brandSrc: CLUB.logo, crownSrc: 'assets/rankings/podium-crown-laurel.png', appLink: '' })}</div>
         <div class="bp-share-row bp-deck-share">
           <button type="button" class="preset-btn" id="ppShareSlide">Share this slide</button>
           <button type="button" class="preset-btn" id="ppShareSlides">Share all slides</button>
@@ -347,11 +347,11 @@ function wirePlayerPacks(box){
   on('ppShareSlide', () => {
     const { cards } = ppDeckPictures(name, month);
     const i = Math.min(ppDeckCtl ? ppDeckCtl.index() : 0, cards.length - 1);
-    boardPackShare(images => [[CardPainter.slide(cards[i], { brand: images.brand, crown: images.crown, month: monthLabel(month) }), `money-padel-${month}-${slug}-${String(i + 1).padStart(2, '0')}-${bpSlug(cards[i].id)}.png`]], 'Slide picture', title);
+    boardPackShare(images => [[CardPainter.slide(cards[i], { brand: images.brand, crown: images.crown, month: monthLabel(month) }), `${CLUB.fileSlug}-${month}-${slug}-${String(i + 1).padStart(2, '0')}-${bpSlug(cards[i].id)}.png`]], 'Slide picture', title);
   });
   on('ppShareSlides', () => {
     const { cards } = ppDeckPictures(name, month);
-    boardPackShare(images => cards.map((c, i) => [CardPainter.slide(c, { brand: images.brand, crown: images.crown, month: monthLabel(month) }), `money-padel-${month}-${slug}-${String(i + 1).padStart(2, '0')}-${bpSlug(c.id)}.png`]), `${cards.length} slide pictures`, title);
+    boardPackShare(images => cards.map((c, i) => [CardPainter.slide(c, { brand: images.brand, crown: images.crown, month: monthLabel(month) }), `${CLUB.fileSlug}-${month}-${slug}-${String(i + 1).padStart(2, '0')}-${bpSlug(c.id)}.png`]), `${cards.length} slide pictures`, title);
   });
   // The whole pack at once: a contents page and every module, as one PDF or
   // as pictures; or every slide as one PDF.
@@ -366,16 +366,16 @@ function wirePlayerPacks(box){
   whole('ppPackPdf', () => {
     const { sheets, contents } = allSheets();
     boardPackShareFiles(async images => [await CardPainter.toPdf([contents].concat(sheets.map(x => x.sheet)).map(sh => CardPainter.sheet(sh, images)),
-      `money-padel-${month}-${slug}-pack.pdf`, `${title} Monthly Pack`)], 'Pack PDF', title);
+      `${CLUB.fileSlug}-${month}-${slug}-pack.pdf`, `${title} Monthly Pack`)], 'Pack PDF', title);
   });
   whole('ppSlidesPdf', () => {
     const { cards } = ppDeckPictures(name, month);
     boardPackShareFiles(async images => [await CardPainter.toPdf(cards.map(c => CardPainter.slide(c, { brand: images.brand, crown: images.crown, month: monthLabel(month) })),
-      `money-padel-${month}-${slug}-slides.pdf`, `${title} slides`)], 'Slides PDF', title);
+      `${CLUB.fileSlug}-${month}-${slug}-slides.pdf`, `${title} slides`)], 'Slides PDF', title);
   });
   whole('ppPackPictures', () => {
     const { sheets } = allSheets();
-    boardPackShare(images => sheets.map(x => [CardPainter.sheet(x.sheet, images), `money-padel-${month}-${slug}-${bpSlug(x.item.kind === 'note' ? 'note' : x.item.id)}.png`]), `${sheets.length} pack pictures`, title);
+    boardPackShare(images => sheets.map(x => [CardPainter.sheet(x.sheet, images), `${CLUB.fileSlug}-${month}-${slug}-${bpSlug(x.item.kind === 'note' ? 'note' : x.item.id)}.png`]), `${sheets.length} pack pictures`, title);
   });
 
   box.querySelectorAll('[data-pp-share-item]').forEach(el => {
@@ -386,7 +386,7 @@ function wirePlayerPacks(box){
       if(!item) return;
       el.disabled = true;
       const sheet = playerPackSheet(item, playerMonthlyPack(name, month), config);
-      boardPackShare(images => [[CardPainter.sheet(sheet, images), `money-padel-${month}-${slug}-${bpSlug(item.kind === 'note' ? 'note' : item.id)}.png`]], `${sheet.title} picture`, title);
+      boardPackShare(images => [[CardPainter.sheet(sheet, images), `${CLUB.fileSlug}-${month}-${slug}-${bpSlug(item.kind === 'note' ? 'note' : item.id)}.png`]], `${sheet.title} picture`, title);
     };
   });
 }

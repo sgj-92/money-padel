@@ -14,10 +14,13 @@
 //
 // Loads before app.js; declarations only.
 
-const STANDINGS_HOST = /^mpstandings\./i;
+// The community's standings addresses come from config/club.js.
+function isStandingsHost(host){
+  return (CLUB.standingsHosts || []).some(re => re.test(String(host || '')));
+}
 
 function isStandingsMode(){
   if(typeof location === 'undefined') return false;
-  return STANDINGS_HOST.test(location.hostname || '')
+  return isStandingsHost(location.hostname)
     || /(?:^|&)standings(?:=[^&]*)?(?:&|$)/.test(String(location.search || '').replace(/^\?/, ''));
 }

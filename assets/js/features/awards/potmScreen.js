@@ -67,7 +67,7 @@ function potmNomineesView(month, cards){
     month: monthLabel(month),
     title: `${monthName} nominees`,
     sub: 'In no particular order. Cast your vote in the group!',
-    foot: 'Money Padel recommends · the group chooses',
+    foot: CLUB.name + ' recommends · the group chooses',
     cards: cards.map(c => ({
       name: potmNameOf(c.playerId) || c.name,
       tier: c.tier || null,
@@ -99,10 +99,10 @@ async function sharePotmNominees(month, redraw){
       const cards = potmShareCards(month);
       if(!cards.length) return;
       const view = potmNomineesView(month, cards);
-      const brand = await CardPainter.loadImage('assets/brand/mp-mark.svg');
+      const brand = await CardPainter.loadImage(CLUB.logo);
       const cv = CardPainter.nominees(view, { brand });
       pending = {
-        files: [await CardPainter.toFile(cv, `money-padel-player-of-the-month-${month}-nominees.png`)],
+        files: [await CardPainter.toFile(cv, `${CLUB.fileSlug}-player-of-the-month-${month}-nominees.png`)],
         meta: { title: `${view.month} Player of the Month nominees`,
           text: `Player of the Month — ${view.title}: ${view.cards.map(c => c.name).join(', ')}. Cast your vote!` },
       };
@@ -151,7 +151,7 @@ function potmDraftFor(month, rec){
 
 function buildPotmSectionHtml(){
   const months = potmMonths();
-  let html = `<div class="section-sub">Money Padel suggests the month's strongest cases; the group chooses the winner. Each candidate is here for a reason you can read — they are listed by name, not ranked. Players need ${PlayerOfMonth.MIN_MATCHES} matches in the month to be considered.</div>`;
+  let html = `<div class="section-sub">${CLUB.name} suggests the month's strongest cases; the group chooses the winner. Each candidate is here for a reason you can read — they are listed by name, not ranked. Players need ${PlayerOfMonth.MIN_MATCHES} matches in the month to be considered.</div>`;
   if(!months.length) return html + `<div class="section-sub">No rated months yet.</div>`;
   if(!potmMonth || !months.includes(potmMonth)) potmOpenMonth(months.find(potmMonthComplete) || months[0]);
   const month = potmMonth;

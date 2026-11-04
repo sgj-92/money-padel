@@ -56,6 +56,16 @@ let activeSection = 'rankings'; // matches legacy default activeTab === 'power'
 // The standings site (siteMode.js): Rankings is the whole app -- League, then
 // Power, then Results (the Games log, read-only) -- with no bottom nav, no
 // player chooser and no profiles. Set up before the shell builds itself.
+// The page's own name and labels for the community (config/club.js) -- the
+// static HTML carries Money Padel's for the very first paint.
+function applyClubIdentity(){
+  document.title = CLUB.appTitle;
+  const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+  if(appleTitle) appleTitle.setAttribute('content', CLUB.homeScreenTitle);
+  const tag = document.querySelector('#legacyHeader .tag');
+  if(tag) tag.textContent = `${CLUB.name} · ${CLUB.resultsGroup}`;
+}
+
 function enterStandingsMode(){
   document.body.classList.add('standings-mode');
   const icon = (tab) => ((SECTION_SUBNAV.rankings || []).find(it => it.tab === tab) || {}).icon;
@@ -69,7 +79,7 @@ function enterStandingsMode(){
   ];
   TAB_TO_SECTION.summary = 'rankings';
   TAB_TO_SECTION.games = 'rankings';
-  document.title = 'Money Padel · Standings';
+  document.title = CLUB.name + ' · Standings';
   // Names stay names here: a profile is the full app's.
   window.openSheet = function(){};
 }
@@ -221,8 +231,8 @@ function buildShellDom(){
   const header = document.createElement('div');
   header.className = 'shell-header';
   header.innerHTML = `
-    <div class="brand-mark"><img src="assets/brand/mp-mark.svg" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'nav-icon-fallback',textContent:'MP'}))"></div>
-    <div class="brand-wordmark">Money <b>Padel</b></div>
+    <div class="brand-mark"><img src="${CLUB.logo}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'nav-icon-fallback',textContent:${escapeHtml(JSON.stringify(CLUB.monogram))}}))"></div>
+    <div class="brand-wordmark">${clubWordmarkHtml()}</div>
     <div class="shell-section-title" id="shellSectionTitle">Rankings</div>
   `;
   document.body.insertBefore(header, document.body.firstChild);
@@ -243,7 +253,7 @@ function buildShellDom(){
   playHeading.style.display = 'none';
   playHeading.innerHTML = `
     <svg class="play-heading-motif" viewBox="0 0 100 40" preserveAspectRatio="none"><line x1="0" y1="20" x2="100" y2="20"/><line x1="50" y1="0" x2="50" y2="40"/><rect x="2" y="8" width="96" height="24" rx="2"/></svg>
-    <div class="mp-section-label">Money Padel</div>
+    <div class="mp-section-label">${escapeHtml(CLUB.name)}</div>
     <div class="mp-display-title" style="font-size:24px; margin-top:2px;">Play</div>
     <div class="play-heading-sub">Find the right game. Get it booked. Get on court.</div>
   `;
@@ -503,7 +513,7 @@ function buildViewerSelector(){
   const panel = document.createElement('div');
   panel.className = 'shell-more-panel viewer-selector-panel';
   panel.innerHTML = `
-    <div class="mp-section-label" style="text-align:center;">Welcome to Money Padel</div>
+    <div class="mp-section-label" style="text-align:center;">Welcome to ${escapeHtml(CLUB.name)}</div>
     <div class="mp-display-title viewer-selector-title">Who are you?</div>
     <div class="viewer-selector-sub">Choose your player to personalise your experience.</div>
     <input type="text" id="viewerSearchInput" class="viewer-search" placeholder="Search players…">
@@ -604,6 +614,7 @@ function openMatchInGames(matchId){
 
 
 document.addEventListener('DOMContentLoaded', ()=>{
+  applyClubIdentity();
   const standings = isStandingsMode();
   if(standings) enterStandingsMode();
   buildShellDom();

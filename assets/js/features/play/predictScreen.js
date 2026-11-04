@@ -138,16 +138,16 @@ function wirePredictActions(){
 }
 
 async function predictPicture(subject){
-  const brand = await CardPainter.loadImage('assets/brand/mp-mark.svg');
+  const brand = await CardPainter.loadImage(CLUB.logo);
   const slug = (team) => team.join('-').replace(/[^A-Za-z0-9-]+/g, '');
   if(subject.kind === 'many'){
     const view = MatchupCard.buildMany(subject.preds.map(matchupCardFor));
-    return { cv: CardPainter.matchups(view, { brand }), name: `money-padel-predictions-${view.matches.length}-matches.png`,
+    return { cv: CardPainter.matchups(view, { brand }), name: `${CLUB.fileSlug}-predictions-${view.matches.length}-matches.png`,
       title: view.title, text: MatchupCard.summaryTextMany(view) };
   }
   const pred = subject.preds[0];
   const card = matchupCardFor(pred);
-  return { cv: CardPainter.matchup(card, { brand }), name: `money-padel-matchup-${slug(pred.teamA)}-vs-${slug(pred.teamB)}.png`,
+  return { cv: CardPainter.matchup(card, { brand }), name: `${CLUB.fileSlug}-matchup-${slug(pred.teamA)}-vs-${slug(pred.teamB)}.png`,
     title: 'Predicted matchup', text: MatchupCard.summaryText(card) };
 }
 

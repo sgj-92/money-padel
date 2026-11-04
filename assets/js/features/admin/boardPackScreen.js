@@ -277,7 +277,7 @@ function boardPackHtml(config){
       <button type="button" class="preset-btn bp-share-img" data-bp-share-item="${it.id}">Share image</button></section>`;
   });
   return `<div class="bp-pack">
-    <div class="bp-pack-head">Money Padel · ${escapeHtml(monthLabel(month))} Board Pack</div>
+    <div class="bp-pack-head">${escapeHtml(CLUB.name)} · ${escapeHtml(monthLabel(month))} Board Pack</div>
     ${parts.length ? parts.join('') : bpBlocksHtml([bpEmpty('Nothing selected yet.')])}
   </div>`;
 }
@@ -424,7 +424,7 @@ function boardPackDeckPreviewHtml(liveDeck){
   const pub = boardPackPublished[boardPackMonth];
   const when = !ShareDeck.isLive(pub) ? 'will see when you publish' : ShareDeck.sameDeck(pub.deck, liveDeck) ? 'see on the review link' : 'will see once you republish';
   return `<div class="section-sub bp-deck-note">What players ${when}: one card per selected module, in the pack's order. Empty modules are left out.${hidden.length ? ` Left out because the section is Admin only: ${hidden.map(sl => escapeHtml(sl.title)).join(', ')}.` : ''}</div>
-    <div class="bp-deck-frame" id="bpDeckFrame">${DeckView.html(liveDeck, shown, { brandSrc: 'assets/brand/mp-mark.svg', crownSrc: 'assets/rankings/podium-crown-laurel.png', appLink: '' })}</div>
+    <div class="bp-deck-frame" id="bpDeckFrame">${DeckView.html(liveDeck, shown, { brandSrc: CLUB.logo, crownSrc: 'assets/rankings/podium-crown-laurel.png', appLink: '' })}</div>
     <div class="bp-share-row bp-deck-share">
       <button type="button" class="preset-btn" id="bpShareSlide">Share this slide</button>
       <button type="button" class="preset-btn" id="bpShareSlides">Share all slides</button>
@@ -631,7 +631,7 @@ function wireBoardPackSection(){
   const pub = boardPackPublished[month];
   const share = document.getElementById('bpShare');
   if(share && pub) share.onclick = () => {
-    navigator.share({ title: `Money Padel — ${pub.deck.title}`, text: boardPackReviewSummary(pub) }).catch(() => {});
+    navigator.share({ title: `${CLUB.name} — ${pub.deck.title}`, text: boardPackReviewSummary(pub) }).catch(() => {});
   };
   const copyLink = document.getElementById('bpCopyLink');
   if(copyLink && pub) copyLink.onclick = () => copyText(boardPackReviewUrl(month)).then(ok => say(ok ? 'Link copied.' : 'Could not copy — the link is shown below.'));
@@ -641,7 +641,7 @@ function wireBoardPackSection(){
 
 // ---- Pictures: a module, a slide, or the whole deck ----------------------
 
-const BOARD_PACK_IMAGES = { brand: 'assets/brand/mp-mark.svg', crown: 'assets/rankings/podium-crown-laurel.png' };
+const BOARD_PACK_IMAGES = { brand: CLUB.logo, crown: 'assets/rankings/podium-crown-laurel.png' };
 
 async function boardPackImages(){
   const [brand, crown] = await Promise.all([CardPainter.loadImage(BOARD_PACK_IMAGES.brand), CardPainter.loadImage(BOARD_PACK_IMAGES.crown)]);
@@ -655,7 +655,7 @@ function boardPackDeckPictures(){
   const deck = boardPackDeck(boardPackDraft);
   const shown = ShareDeck.visibleSlides(deck, boardPackPlayerCanSee);
   const label = monthLabel(deck.month);
-  const end = { id: 'end', kind: 'note', eyebrow: '', title: `That’s ${label.split(' ')[0]}.`, body: 'Every table, every game and your own month are in Money Padel.', foot: '' };
+  const end = { id: 'end', kind: 'note', eyebrow: '', title: `That’s ${label.split(' ')[0]}.`, body: 'Every table, every game and your own month are in ' + CLUB.name + '.', foot: '' };
   return { deck, label, cards: [{ id: 'cover', kind: 'cover', title: label }].concat(shown, [end]) };
 }
 
@@ -668,7 +668,7 @@ async function boardPackShare(makeCanvases, label, title){
 async function boardPackShareFiles(makeFiles, label, title){
   const images = await boardPackImages();
   const files = await makeFiles(images);
-  const meta = { title: title || `Money Padel — ${monthLabel(boardPackMonth)}` };
+  const meta = { title: title || `${CLUB.name} — ${monthLabel(boardPackMonth)}` };
   const outcome = await CardPainter.share(files, meta);
   const pdf = files.every(f => f.type === 'application/pdf');
   boardPackShareReady = outcome === 'ready' ? { files, meta, label } : null;
@@ -697,17 +697,17 @@ const bpItemSlug = (it) => bpSlug(it.kind === 'note' ? (it.title || 'commentary'
 function boardPackPackPdf(config){
   const { month, sheets, contents } = boardPackAllSheets(config);
   return boardPackShareFiles(async images => [await CardPainter.toPdf([contents].concat(sheets.map(x => x.sheet)).map(sh => CardPainter.sheet(sh, images)),
-    `money-padel-${month}-board-pack.pdf`, `Money Padel — ${monthLabel(month)} Board Pack`)], 'Board Pack PDF');
+    `${CLUB.fileSlug}-${month}-board-pack.pdf`, `${CLUB.name} — ${monthLabel(month)} Board Pack`)], 'Board Pack PDF');
 }
 function boardPackPackPictures(config){
   const { month, sheets } = boardPackAllSheets(config);
-  return boardPackShare(images => sheets.map(x => [CardPainter.sheet(x.sheet, images), `money-padel-${month}-board-pack-${bpItemSlug(x.item)}.png`]), `${sheets.length} Board Pack pictures`);
+  return boardPackShare(images => sheets.map(x => [CardPainter.sheet(x.sheet, images), `${CLUB.fileSlug}-${month}-board-pack-${bpItemSlug(x.item)}.png`]), `${sheets.length} Board Pack pictures`);
 }
 function boardPackSlidesPdf(){
   const { cards, label } = boardPackDeckPictures();
   const month = boardPackMonth;
   return boardPackShareFiles(async images => [await CardPainter.toPdf(cards.map(c => CardPainter.slide(c, { brand: images.brand, crown: images.crown, month: label })),
-    `money-padel-${month}-review-slides.pdf`, `Money Padel — ${label} Review`)], 'Slides PDF');
+    `${CLUB.fileSlug}-${month}-review-slides.pdf`, `${CLUB.name} — ${label} Review`)], 'Slides PDF');
 }
 
 // The "save the whole pack" row, for the club pack or a player's.
@@ -731,7 +731,7 @@ function wireBoardPackPictures(box){
       if(!item) return;
       const sheet = boardPackSheet(item, month);
       el.disabled = true;
-      boardPackShare(images => [[CardPainter.sheet(sheet, images), `money-padel-${month}-board-pack-${bpSlug(item.kind === 'note' ? (item.title || 'commentary') : item.id)}.png`]], `${sheet.title} picture`);
+      boardPackShare(images => [[CardPainter.sheet(sheet, images), `${CLUB.fileSlug}-${month}-board-pack-${bpSlug(item.kind === 'note' ? (item.title || 'commentary') : item.id)}.png`]], `${sheet.title} picture`);
     };
   });
   const one = document.getElementById('bpShareSlide');
@@ -739,13 +739,13 @@ function wireBoardPackPictures(box){
     const { cards } = boardPackDeckPictures();
     const i = Math.min(boardPackDeckCtl ? boardPackDeckCtl.index() : 0, cards.length - 1);
     one.disabled = true;
-    boardPackShare(images => [[CardPainter.slide(cards[i], { brand: images.brand, crown: images.crown, month: monthLabel(month) }), `money-padel-${month}-review-${String(i + 1).padStart(2, '0')}-${bpSlug(cards[i].id)}.png`]], 'Slide picture');
+    boardPackShare(images => [[CardPainter.slide(cards[i], { brand: images.brand, crown: images.crown, month: monthLabel(month) }), `${CLUB.fileSlug}-${month}-review-${String(i + 1).padStart(2, '0')}-${bpSlug(cards[i].id)}.png`]], 'Slide picture');
   };
   const all = document.getElementById('bpShareSlides');
   if(all) all.onclick = () => {
     const { cards } = boardPackDeckPictures();
     all.disabled = true;
-    boardPackShare(images => cards.map((c, i) => [CardPainter.slide(c, { brand: images.brand, crown: images.crown, month: monthLabel(month) }), `money-padel-${month}-review-${String(i + 1).padStart(2, '0')}-${bpSlug(c.id)}.png`]), `${cards.length} slide pictures`);
+    boardPackShare(images => cards.map((c, i) => [CardPainter.slide(c, { brand: images.brand, crown: images.crown, month: monthLabel(month) }), `${CLUB.fileSlug}-${month}-review-${String(i + 1).padStart(2, '0')}-${bpSlug(c.id)}.png`]), `${cards.length} slide pictures`);
   };
   // The whole pack at once: busy until the files are ready.
   const whole = (id, run) => { const el = document.getElementById(id); if(el) el.onclick = () => { el.disabled = true; run(); }; };

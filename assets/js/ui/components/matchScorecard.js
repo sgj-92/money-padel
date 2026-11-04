@@ -74,7 +74,7 @@ function matchResultCardHtml(card){
     : '';
   return `<div class="mrc${card.isDraw ? ' mrc-draw' : ''}" data-match="${escapeHtml(card.matchId)}" data-story="${escapeHtml(card.story.key)}" aria-label="${escapeHtml(card.headline)}">
     <div class="mrc-top">
-      <img src="assets/brand/mp-mark.svg" alt="" class="mrc-mark"><span class="mrc-brand">Money Padel</span>
+      <img src="${CLUB.logo}" alt="" class="mrc-mark"><span class="mrc-brand">${escapeHtml(CLUB.name)}</span>
     </div>
     <div class="mrc-when">${escapeHtml(matchResultContext(card))}</div>
     ${card.isDraw
@@ -201,9 +201,9 @@ async function shareMatchResult(matchId){
     if(!pending){
       const card = matchResultCardFor(matchId);
       if(!card) return;
-      const brand = await CardPainter.loadImage('assets/brand/mp-mark.svg');
+      const brand = await CardPainter.loadImage(CLUB.logo);
       const cv = CardPainter.matchResult(card, { brand, when: matchResultContext(card) });
-      const name = `money-padel-${String(card.matchId).replace(/[^A-Za-z0-9_-]+/g, '-')}-result.png`;
+      const name = `${CLUB.fileSlug}-${String(card.matchId).replace(/[^A-Za-z0-9_-]+/g, '-')}-result.png`;
       pending = { files: [await CardPainter.toFile(cv, name)], meta: { title: card.headline, text: `${card.headline} — ${card.sets.map(s => s.join('–')).join(', ')}. ${card.story.title}.` } };
     }
     const outcome = await CardPainter.share(pending.files, pending.meta);

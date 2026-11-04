@@ -12,6 +12,8 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.PdfDoc = factory();
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  // The community (config/club.js): the page's, or Money Padel in Node.
+  const club = () => (typeof CLUB !== 'undefined' ? CLUB : require('../../config/club.js').CLUB);
   'use strict';
 
   // 1080 px wide is 540 pt (7.5 in): print-sized, and the same scale for
@@ -35,7 +37,7 @@
   const num = (n) => String(Math.round(n * 100) / 100);
 
   // pages: [{ jpeg: Uint8Array, width, height }] (pixels) -> Uint8Array.
-  function build(pages, { title = '', author = 'Money Padel' } = {}) {
+  function build(pages, { title = '', author = club().name } = {}) {
     if (!Array.isArray(pages) || !pages.length) throw new Error('PdfDoc: no pages');
     pages.forEach((p, i) => {
       if (!(p.jpeg instanceof Uint8Array) || p.jpeg[0] !== 0xff || p.jpeg[1] !== 0xd8) throw new Error(`PdfDoc: page ${i + 1} is not a JPEG`);
@@ -55,7 +57,7 @@
     const pageRef = (i) => 4 + i * 3;
     obj(1, () => put('<< /Type /Catalog /Pages 2 0 R >>'));
     obj(2, () => put(`<< /Type /Pages /Count ${pages.length} /Kids [${pages.map((_, i) => `${pageRef(i)} 0 R`).join(' ')}] >>`));
-    obj(3, () => put(`<< /Title ${textString(title)} /Author ${textString(author)} /Producer ${textString('Money Padel')} >>`));
+    obj(3, () => put(`<< /Title ${textString(title)} /Author ${textString(author)} /Producer ${textString(club().name)} >>`));
 
     pages.forEach((p, i) => {
       const w = p.width * PT_PER_PX, h = p.height * PT_PER_PX;

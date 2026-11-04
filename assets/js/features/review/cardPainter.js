@@ -22,6 +22,8 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.CardPainter = api;
 })(typeof self !== 'undefined' ? self : this, function () {
+  // The community (config/club.js): the page's, or Money Padel in Node.
+  const club = () => (typeof CLUB !== 'undefined' ? CLUB : require('../../config/club.js').CLUB);
   const W = 1080;
   const SLIDE_H = 1350;
   const U = W / 100;
@@ -124,7 +126,7 @@
   function brand(ctx, img, month, x, y, size, right) {
     if (img) ctx.drawImage(img, x, y, size, size);
     font(ctx, size * 0.48, { weight: 700, spacing: 0.14 });
-    textAt(ctx, 'MONEY PADEL', x + size * 1.36, y + size * 0.68, { color: C.soft });
+    textAt(ctx, club().name.toUpperCase(), x + size * 1.36, y + size * 0.68, { color: C.soft });
     font(ctx, size * 0.48, { spacing: 0.06 });
     textAt(ctx, month || '', right, y + size * 0.68, { color: C.goldSoft, align: 'right' });
   }
@@ -175,7 +177,7 @@
       let y = (SLIDE_H - h) / 2;
       if (o.brand) ctx.drawImage(o.brand, (W - markS) / 2, y, markS, markS);
       y += markS + 3.8 * U;
-      font(ctx, 3.4 * U, { weight: 700, spacing: 0.22 }); textAt(ctx, 'MONEY PADEL', W / 2, y + 3.4 * U, { color: C.soft, align: 'center' });
+      font(ctx, 3.4 * U, { weight: 700, spacing: 0.22 }); textAt(ctx, club().name.toUpperCase(), W / 2, y + 3.4 * U, { color: C.soft, align: 'center' });
       y += 3.4 * U * 1.2 + 2.8 * U;
       font(ctx, 12 * U, { serif: true });
       title.forEach((line) => { textAt(ctx, line, W / 2, y + 12 * U * 0.85, { color: C.bright, align: 'center' }); y += 12 * U * 1.05; });

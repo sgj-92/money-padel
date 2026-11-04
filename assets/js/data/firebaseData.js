@@ -16,14 +16,9 @@
 // match edits, deletions, tier overrides) still live in the production project
 // and have not been migrated, so anything this app computes from Firestore
 // alone will differ from production until that migration runs.
-const firebaseConfig = {
-  apiKey: "AIzaSyDIiA5NVo3jKCkr_Kzi8y1fJhzXsWNuVmY",
-  authDomain: "mp-dashboard-beta-v3.firebaseapp.com",
-  projectId: "mp-dashboard-beta-v3",
-  storageBucket: "mp-dashboard-beta-v3.firebasestorage.app",
-  messagingSenderId: "1084285278543",
-  appId: "1:1084285278543:web:c183d0e28374747a234d3a"
-};
+// The community's own Firebase project (config/club.js): each community's
+// data lives apart from every other's.
+const firebaseConfig = CLUB.firebase;
 
 let db = null;
 try {

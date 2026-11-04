@@ -247,7 +247,7 @@ function renderHomeDashboard(){
     </div>
 
     <div class="home-block home-block-month">
-    <div class="home-card-header home-section-header"><span>${currentMonth ? monthLabel(currentMonth).toUpperCase() : 'THIS MONTH'} AT MONEY PADEL</span><button class="home-card-link" id="homeFullReviewBtn">View Full Review ›</button></div>
+    <div class="home-card-header home-section-header"><span>${currentMonth ? monthLabel(currentMonth).toUpperCase() : 'THIS MONTH'} AT ${escapeHtml(CLUB.name.toUpperCase())}</span><button class="home-card-link" id="homeFullReviewBtn">View Full Review ›</button></div>
     ${meaningfulMonthNoteHtml(homeMonthDefault, currentMonth, 'homeMonth', false)}
     <div class="mp-card-standard home-card home-monthly-grid">
       <div class="home-monthly-stat"><div class="home-monthly-num">${gamesThisMonth}</div><div class="section-sub">Games played</div></div>

@@ -467,7 +467,7 @@ function openSheet(name, matchFilter){
   const p = PLAYERS.find(x=>x.name===name);
   document.getElementById('sheetName').textContent = name;
   const riskInfo = RISK_LABELS[p.risk] || RISK_LABELS.stable;
-  document.getElementById('sheetSub').innerHTML = `Tier ${p.tier} · Money Padel &nbsp; <span class="risk-badge ${riskInfo.cls}">${riskInfo.text}</span>`;
+  document.getElementById('sheetSub').innerHTML = `Tier ${p.tier} · ${CLUB.name} &nbsp; <span class="risk-badge ${riskInfo.cls}">${riskInfo.text}</span>`;
   document.getElementById('sheetStats').innerHTML = `
     <div><b>${Math.round(p.rating)}</b>Power rating</div>
     <div><b>${playerRecordOf(name).winpct}%</b>Win rate</div>

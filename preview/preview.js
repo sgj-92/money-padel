@@ -100,7 +100,7 @@
       if (frame) return;
       frame = doc.createElement('iframe');
       frame.id = 'appFrame';
-      frame.title = 'Money Padel';
+      frame.title = 'App preview';
       frame.src = app;
       frame.addEventListener('load', hideScrollbars);
       $('device').appendChild(frame);

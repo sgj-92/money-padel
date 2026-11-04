@@ -21,6 +21,8 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.ShareDeck = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
+  // The community (config/club.js): the page's, or Money Padel in Node.
+  const club = () => (typeof CLUB !== 'undefined' ? CLUB : require('../../config/club.js').CLUB);
   const VERSION = 1;
   // No slide lists more than this many rows: a slide is a headline, and the
   // full table is one tap away in the app.
@@ -366,7 +368,7 @@
 
   // The WhatsApp text: plain lines, the headline of each slide, then the link.
   function summaryText(deck, { link, canSee } = {}) {
-    const lines = [`*${deck.summaryTitle || `Money Padel — ${monthLabel(deck.month)}`}*`];
+    const lines = [`*${deck.summaryTitle || `${club().name} — ${monthLabel(deck.month)}`}*`];
     visibleSlides(deck, canSee || (() => true)).forEach((s) => s.summary.forEach((l) => lines.push(l)));
     if (link) lines.push('', deck.linkLabel || `Full ${monthName(deck.month)} review:`, link);
     return lines.join('\n');
