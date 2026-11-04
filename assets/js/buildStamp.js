@@ -18,7 +18,9 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.BuildStamp = factory();
 }(typeof self !== 'undefined' ? self : this, function () {
-  const PRODUCT = 'Money Padel Beta';
+  // The community (config/club.js): the page's, or Money Padel in Node.
+  const club = () => (typeof CLUB !== 'undefined' ? CLUB : require('./config/club.js').CLUB);
+  const PRODUCT = club().productName;
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   // A stamp is only believed when it looks like one. Anything else -- the

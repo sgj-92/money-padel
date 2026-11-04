@@ -53,7 +53,7 @@
   async function bootPlayer() {
     var gone = function () { return empty('Monthly Pack', 'This Monthly Pack is not available. Ask the club for a new link.'); };
     if (!PLAYER_TOKEN.test(token)) return gone();
-    if (!storageAvailable()) return empty('Monthly Pack', 'This page can’t reach Money Padel right now. Try again in a moment.');
+    if (!storageAvailable()) return empty('Monthly Pack', 'This page can’t reach ' + CLUB.name + ' right now. Try again in a moment.');
     var got = await Promise.all([fsGetIn('playerPacks', token), fsGetJson(STORAGE_KEY_VISIBILITY, {}, 'visibility')]);
     var pub = got[0] ? JSON.parse(got[0]) : null, vis = got[1] || {};
     if (!pub || pub.withdrawn || pub.kind !== 'player' || pub.token !== token || !pub.deck || !Array.isArray(pub.deck.slides)) return gone();
@@ -63,9 +63,9 @@
   }
 
   function show(deck, slides) {
-    document.title = deck.title + ' · Money Padel';
+    document.title = deck.title + ' · ' + CLUB.name;
     document.getElementById('reviewTitle').textContent = deck.title;
-    main.innerHTML = DeckView.html(deck, slides, { brandSrc: '../assets/brand/mp-mark.svg', crownSrc: '../assets/rankings/podium-crown-laurel.png', appLink: appLink });
+    main.innerHTML = DeckView.html(deck, slides, { brandSrc: '../' + CLUB.logo, crownSrc: '../assets/rankings/podium-crown-laurel.png', appLink: appLink });
     DeckView.mount(main);
 
     // Share where the phone offers its own share sheet (WhatsApp is on it);
@@ -73,7 +73,7 @@
     if (navigator.share) {
       actions.innerHTML = '<button type="button" class="review-btn" id="reviewShare">Share</button>';
       document.getElementById('reviewShare').onclick = function () {
-        navigator.share({ title: 'Money Padel — ' + deck.title, url: shareUrl }).catch(function () {});
+        navigator.share({ title: CLUB.name + ' — ' + deck.title, url: shareUrl }).catch(function () {});
       };
     } else {
       actions.innerHTML = '<button type="button" class="review-btn" id="reviewCopyLink">Copy link</button>';
@@ -88,14 +88,14 @@
   }
 
   // On the standings site the way back is to the standings, not "the app".
-  var backLabel = /^mpstandings\./i.test(location.hostname) ? 'Back to the standings' : 'Open Money Padel';
+  var backLabel = (CLUB.standingsHosts || []).some(function (re) { return re.test(location.hostname); }) ? 'Back to the standings' : 'Open ' + CLUB.name;
 
   // The months a review could have been published for: this one and the
   // two years before it, asked for at once. Only published, not withdrawn,
   // reviews are listed.
   async function bootIndex() {
     document.getElementById('reviewTitle').textContent = 'Monthly Reviews';
-    if (!storageAvailable()) return empty('Monthly Reviews', 'This page can’t reach Money Padel right now. Try again in a moment.');
+    if (!storageAvailable()) return empty('Monthly Reviews', 'This page can’t reach ' + CLUB.name + ' right now. Try again in a moment.');
     var now = new Date();
     var months = [];
     for (var i = 0; i < 24; i++) {
@@ -106,7 +106,7 @@
     var live = months.filter(function (m, i) { var p = got[i]; return p && !p.withdrawn && p.deck && Array.isArray(p.deck.slides); });
     if (!live.length) return empty('Monthly Reviews', 'No monthly review has been published yet.');
     main.innerHTML = '<div class="review-index" data-review-index>' +
-      '<h1>Monthly Reviews</h1><p class="review-index-sub">Swipe through each month at Money Padel.</p>' +
+      '<h1>Monthly Reviews</h1><p class="review-index-sub">Swipe through each month at ' + CLUB.name + '.</p>' +
       live.map(function (m) {
         var deck = got[months.indexOf(m)].deck;
         return '<a class="review-index-row" href="?m=' + m + '"><span class="review-index-month">' + esc(ShareDeck.monthLabel(m)) + '</span>' +
@@ -121,7 +121,7 @@
     if (!month) return bootIndex();
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return empty('No review chosen', 'This link does not name a month.');
     var label = ShareDeck.monthLabel(month);
-    if (!storageAvailable()) return empty(label + ' Review', 'This page can’t reach Money Padel right now. Try again in a moment.');
+    if (!storageAvailable()) return empty(label + ' Review', 'This page can’t reach ' + CLUB.name + ' right now. Try again in a moment.');
     var got = await Promise.all([loadPublishedReview(month), fsGetJson(STORAGE_KEY_VISIBILITY, {}, 'visibility')]);
     var pub = got[0], vis = got[1] || {};
     if (pub && pub.withdrawn) {

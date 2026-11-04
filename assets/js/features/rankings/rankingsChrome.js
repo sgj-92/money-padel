@@ -106,7 +106,7 @@ function renderRankingsPodium(){
         </div>
       `).join('')}
     </div>
-    <div class="podium-caption">Money Padel · ${scopeLabel}</div>
+    <div class="podium-caption">${escapeHtml(CLUB.name)} · ${scopeLabel}</div>
   `;
   // Insert before the column header (if built) rather than before #list directly,
   // so the order is always: podium, then "# Player Rating Δ", then the rows.

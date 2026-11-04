@@ -54,7 +54,7 @@ function enableDesktopShell(){
   desktopShellOn = true;
   const brand = document.createElement('div');
   brand.className = 'shell-rail-brand';
-  brand.innerHTML = `<img src="assets/brand/mp-mark.svg" alt="" class="shell-rail-mark"><span class="shell-rail-wordmark">Money <b>Padel</b></span>`;
+  brand.innerHTML = `<img src="${CLUB.logo}" alt="" class="shell-rail-mark"><span class="shell-rail-wordmark">${clubWordmarkHtml()}</span>`;
   nav.insertBefore(brand, nav.firstChild);
   const foot = document.createElement('div');
   foot.className = 'shell-rail-foot';

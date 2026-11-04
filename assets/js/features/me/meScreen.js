@@ -60,7 +60,7 @@ function renderMe(){
   const viewer = getCurrentViewer();
   const groups = meRows(viewer);
   box.innerHTML = `<div class="me-inner">
-    <div class="mp-section-label">Money Padel</div>
+    <div class="mp-section-label">${escapeHtml(CLUB.name)}</div>
     <h2 class="mp-serif-display me-title">Me</h2>
     ${meIdentityHtml(viewer)}
     ${groups.map(g => `${mpSectionHeadHtml({ title: g.title })}

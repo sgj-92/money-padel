@@ -17,6 +17,8 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.DeckView = api;
 })(typeof self !== 'undefined' ? self : this, function () {
+  // The community (config/club.js): the page's, or Money Padel in Node.
+  const club = () => (typeof CLUB !== 'undefined' ? CLUB : require('../../config/club.js').CLUB);
   const esc = (v) => String(v === undefined || v === null ? '' : v)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
@@ -27,7 +29,7 @@
   function brandHtml(o, month) {
     return `<header class="deck-brand">
       <img class="deck-mark" src="${esc(o.brandSrc)}" alt="" width="22" height="22">
-      <span class="deck-brand-name">Money Padel</span>
+      <span class="deck-brand-name">${esc(club().name)}</span>
       <span class="deck-brand-month">${esc(month)}</span>
     </header>`;
   }
@@ -95,7 +97,7 @@
     return `<section class="deck-slide" data-slide="cover" role="group" aria-roledescription="slide" aria-label="1 of ${n}: ${esc(deck.title)}">
       <article class="deck-card deck-card-cover">
         <img class="deck-cover-mark" src="${esc(o.brandSrc)}" alt="" width="64" height="64">
-        <div class="deck-cover-club">Money Padel</div>
+        <div class="deck-cover-club">${esc(club().name)}</div>
         <h1 class="deck-cover-title">${esc(deck.cover ? deck.cover.title : month)}</h1>
         <div class="deck-cover-sub">${esc(deck.cover ? deck.cover.sub : 'Monthly Review')}</div>
         <div class="deck-cover-hint" aria-hidden="true">Swipe to begin →</div>
@@ -108,8 +110,8 @@
       <article class="deck-card deck-card-end">
         ${brandHtml(o, month)}
         <h2 class="deck-title">${esc(deck.closing ? deck.closing.title : `That’s ${month.split(' ')[0]}.`)}</h2>
-        <p class="deck-end-text">${esc(deck.closing ? deck.closing.text : 'Every table, every game and your own month are in Money Padel.')}</p>
-        ${o.appLink ? `<a class="deck-end-link" href="${esc(o.appLink)}">View full stats in Money Padel</a>` : ''}
+        <p class="deck-end-text">${esc(deck.closing ? deck.closing.text : 'Every table, every game and your own month are in ' + club().name + '.')}</p>
+        ${o.appLink ? `<a class="deck-end-link" href="${esc(o.appLink)}">View full stats in ${club().name}</a>` : ''}
       </article>
     </section>`;
   }

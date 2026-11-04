@@ -877,7 +877,7 @@ function renderUpcoming(){
     html += foldHeading('upFoldReview', `🗂 Court bookings to record (${unrecorded.length})`, upcomingSectionOpen.review, { summary: 'admin' });
     if(upcomingSectionOpen.review){
       html += `<div id="upFoldReviewBody">
-        <div class="section-sub">These games were added before Money Padel recorded court bookings, so nothing says whether a court is booked. Until you answer, each is listed under Called Out.</div>
+        <div class="section-sub">These games were added before ${escapeHtml(CLUB.name)} recorded court bookings, so nothing says whether a court is booked. Until you answer, each is listed under Called Out.</div>
         ${unrecorded.map(r => {
           const sum = FixtureFlow.summaryLine(r, requestTeams);
           const id = escapeHtml(r.id);

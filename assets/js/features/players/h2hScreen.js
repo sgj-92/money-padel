@@ -266,7 +266,7 @@ function h2hResultWord(outcome){
 function h2hExportText(opp, team, monthActive){
   const A = h2hPlayerA, B = h2hPlayerB;
   const t = MatchOutcome.tally(opp, A);
-  const lines = ['Money Padel · Head to head', h2hExportTitle(monthActive), ''];
+  const lines = [CLUB.name + ' · Head to head', h2hExportTitle(monthActive), ''];
   lines.push(`As opponents: ${A} ${t.wins} – ${t.losses} ${B}${t.draws ? ` (${t.draws} drawn)` : ''} · ${opp.length} meeting${opp.length === 1 ? '' : 's'}`);
   opp.forEach(m => { const r = h2hOpponentRow(m, A, B); lines.push(`${h2hShortDate(m.date)} · ${r.drew ? 'Drew' : r.result} · ${r.teams} · ${m.score}`); });
   if(team.length){
@@ -313,11 +313,11 @@ function wireH2HExport(opp, team, monthActive){
   if(picBtn) picBtn.onclick = async () => {
     picBtn.disabled = true;
     try {
-      const brand = await CardPainter.loadImage('assets/brand/mp-mark.svg');
+      const brand = await CardPainter.loadImage(CLUB.logo);
       const cv = CardPainter.headToHead(h2hExportView(opp, team, monthActive), { brand });
       const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      const file = await CardPainter.toFile(cv, `money-padel-h2h-${slug(h2hPlayerA)}-v-${slug(h2hPlayerB)}.png`);
-      const outcome = await CardPainter.share([file], { title: `Money Padel — ${h2hExportTitle(monthActive)}` });
+      const file = await CardPainter.toFile(cv, `${CLUB.fileSlug}-h2h-${slug(h2hPlayerA)}-v-${slug(h2hPlayerB)}.png`);
+      const outcome = await CardPainter.share([file], { title: `${CLUB.name} — ${h2hExportTitle(monthActive)}` });
       msg(outcome === 'shared' ? 'Picture shared.' : outcome === 'saved' ? 'Picture saved — post it from your photos.' : outcome === 'ready' ? 'Picture ready: tap Share picture again.' : '');
     } catch(e){ msg('Could not make the picture.'); }
     picBtn.disabled = false;
@@ -373,7 +373,7 @@ function h2hEveryoneHtml(){
 }
 
 function h2hEveryoneText(d){
-  const lines = ['Money Padel · Head to head', `${d.A} v everyone · ${d.monthActive ? monthLabel(h2hMonth) : 'All time'}`, '',
+  const lines = [CLUB.name + ' · Head to head', `${d.A} v everyone · ${d.monthActive ? monthLabel(h2hMonth) : 'All time'}`, '',
     `${d.matches} matches · ${d.overall.wins}W ${d.overall.draws}D ${d.overall.losses}L`];
   d.groups.forEach(g => {
     lines.push('', `v ${h2hTierName(g.tier)}: ${h2hRec(g.rec)} (${TierRecord.pct(g.rec)}%)`);
@@ -407,11 +407,11 @@ function wireH2HEveryone(box){
   if(picBtn) picBtn.onclick = async () => {
     picBtn.disabled = true;
     try {
-      const brand = await CardPainter.loadImage('assets/brand/mp-mark.svg');
+      const brand = await CardPainter.loadImage(CLUB.logo);
       const cv = CardPainter.headToHeadAll(h2hEveryoneView(d), { brand });
       const slug = String(d.A).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      const file = await CardPainter.toFile(cv, `money-padel-h2h-${slug}-v-everyone.png`);
-      const outcome = await CardPainter.share([file], { title: `Money Padel — ${d.A} v everyone` });
+      const file = await CardPainter.toFile(cv, `${CLUB.fileSlug}-h2h-${slug}-v-everyone.png`);
+      const outcome = await CardPainter.share([file], { title: `${CLUB.name} — ${d.A} v everyone` });
       msg(outcome === 'shared' ? 'Picture shared.' : outcome === 'saved' ? 'Picture saved — post it from your photos.' : outcome === 'ready' ? 'Picture ready: tap Share picture again.' : '');
     } catch(e){ msg('Could not make the picture.'); }
     picBtn.disabled = false;

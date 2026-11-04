@@ -11,6 +11,8 @@
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.PlayerDeck = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
+  // The community (config/club.js): the page's, or Money Padel in Node.
+  const club = () => (typeof CLUB !== 'undefined' ? CLUB : require('../../config/club.js').CLUB);
   const ROWS = 5;
   const NOTE_MAX = 600;
   const record = (t) => `${t.wins}W ${t.draws}D ${t.losses}L`;
@@ -120,7 +122,7 @@
       version: 1, kind: 'player', month, player,
       title: `${player} · ${monthLabel}`, monthLabel,
       cover: { title: player, sub: `${monthLabel} · Monthly Pack` },
-      closing: { title: `That’s your ${NAMES[m - 1]}.`, text: 'Every game, every table and your full record are in Money Padel.' },
+      closing: { title: `That’s your ${NAMES[m - 1]}.`, text: 'Every game, every table and your full record are in ' + club().name + '.' },
       summaryTitle: `${player} — ${monthLabel}`, linkLabel: 'Your full monthly pack:',
       slides: entries.map(({ item, data }) => slideFor(item, data, ctx)).filter(Boolean),
     };

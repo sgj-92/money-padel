@@ -64,7 +64,7 @@ rating chokepoint now reads v3 persisted state.
 | Branch | `main` (production: Vercel deploys it) |
 | Working branches (27 Oct) | **Three branches.** **`main`** — production (Vercel). **`app-features-fixes`** — features, fixes and functional updates; CCode keeps it identical to `main` and pushes both, so this work goes live. **`redesign`** — the app redesign (renamed by Shaun 27 Oct from `ux/player-reset-v2`), **held**: never merged to or deployed from `main` until Shaun releases it. **Up to date with `main` at `ed8a9dd` (27 Oct)**; served at **<https://mpr.sgj.luxe>** (Vercel Preview, branch `redesign`). `app-redesign` (superseded 30 Sep) and `claude/upload-commit-main-yfgpx0` were deleted 27 Oct. *(Older entries below use the old names.)* |
 | Last verified implementation commit | **`3f45899`** (Monthly Race leads, 31 Oct; Merit sorting `060108b`; Merit Table sorting, 31 Oct; Race column `eaed298`; Merit Table Race column, 30 Oct; Even column `0baa96f`; Merit Table Even column, 30 Oct; standings site `1108a73`; standings site mpstandings.sgj.luxe, 30 Oct; "New build available · Refresh" notice `79eddad`, 27 Oct; correcting a game's date moves it `a7a6761`, 27 Oct; Add a game result reader `c6f0b79`, 27 Oct; new players join the record with their first game `2a7cbe9`, 27 Oct; every record counts draws `777b7c0`, 15 Oct; player form counts draws `9809d88`, 15 Oct; Predict a Matchup batches + 16px inputs `3259cdc`, 10 Oct; four/five-set scores `06370f5`, 8 Oct; rated games say who submitted them again `bde692b`, 6 Oct; editing a game keeps your place `21f79c1`, 6 Oct; League P W D L + Race drill-downs `750e31b`, 6 Oct; draws on the Match Result Card `71dc4f1`, 5 Oct; Matchup Card shows the % of games `a3e515b`, 4 Oct; Predict a Matchup: More + Matchup Card `acba496`; POTM nominees picture `69e6640`; nominations refined `e5f868a`; Player of the Month `7dca948`; player status model `4cbfeb7`; Match Result Card + Match Analysis `c6acfd9`; completed-match scorecard `19662b1`; desktop-friendly dashboard `269327c`; Board Pack split by tier `382f907`; whole-pack PDF `d74d466`; losing modules `337c70e`; Player Monthly Packs `d6e4ae1`; partnership draws `2d43540`; options + autosave `f58ec1d`; Tier S + pictures `6f40764`; Unpublish + Kings tiles `a5cbe84`; the Share Deck is `4af924d`; the Board Pack is `9e4a5e6` + `e666a96`), on `app-features-fixes` = `main`. The redesign branching point is still **`f75a493`**; the redesign branch is at `e463300` (Phase 2). *(Was `8e1c91e`, the desktop phone preview.)* |
-| Tests | **986 / 986 on `main`** (2 Nov, after head-to-head pictures; 985 after Vs Tiers; 983 after head-to-head export; 982 after Monthly Reviews on mpstandings; 979 after locked Champions; 977 after the Roll of Honour; 976 after King vs Champion; 973 after Race details; 970 after Merit sorting; 969 after the Merit Race column; 967 after the standings site; 962 after the new-build notice; 959 after date moves; 958 after the result reader; 951 after new-player entry; 948 after every record counts draws; 947 after player form draws + UI suite pinned to the fixture era; 938 after Predict a Matchup batches + 16px inputs; 929 after the four/five-set score fix; 927 after match attribution; 920 after the Edit Game position fix; 912 after the League / Race drill-downs; 911 after Predict a Matchup's Matchup Card; 905 after the POTM nominees picture; 904 after the POTM nomination refinement; 897 after Player of the Month; 882 after the player status model; 874 after the Match Result Card; 870 after the match scorecard; 861 after the desktop layout; 852 after the tier split; 849 after whole-pack saving; 843 after the losing modules; 839 after Player Monthly Packs; 824 after partnership draws); 816 / 816 on `ux/player-reset-v2` at Phase 2. *(Was 762 / 762.)* |
+| Tests | **992 / 992 on `main`** (4 Nov, after the settings file; 986 after head-to-head pictures; 985 after Vs Tiers; 983 after head-to-head export; 982 after Monthly Reviews on mpstandings; 979 after locked Champions; 977 after the Roll of Honour; 976 after King vs Champion; 973 after Race details; 970 after Merit sorting; 969 after the Merit Race column; 967 after the standings site; 962 after the new-build notice; 959 after date moves; 958 after the result reader; 951 after new-player entry; 948 after every record counts draws; 947 after player form draws + UI suite pinned to the fixture era; 938 after Predict a Matchup batches + 16px inputs; 929 after the four/five-set score fix; 927 after match attribution; 920 after the Edit Game position fix; 912 after the League / Race drill-downs; 911 after Predict a Matchup's Matchup Card; 905 after the POTM nominees picture; 904 after the POTM nomination refinement; 897 after Player of the Month; 882 after the player status model; 874 after the Match Result Card; 870 after the match scorecard; 861 after the desktop layout; 852 after the tier split; 849 after whole-pack saving; 843 after the losing modules; 839 after Player Monthly Packs; 824 after partnership draws); 816 / 816 on `ux/player-reset-v2` at Phase 2. *(Was 762 / 762.)* |
 | First content, at a phone's 250ms round trip | **499ms** (was 3,779ms) |
 | **Live record status** | **REPAIRED 20 Sep — replays to itself (0 differences), diagnostics 8/8. Editing works again.** |
 | Firebase (beta) | `mp-dashboard-beta-v3` |
@@ -151,6 +151,21 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 ---
 
 ### Added since the compaction
+
+**White-label, step 1a: one settings file per community — DONE (`e8f1090`), 4 Nov.** Shaun: white-label the app for other padel communities on their own domains; the first is **Padel Championships** (Dubai), a community he is part of. Managed model (Shaun sets up each community; no self-serve sign-up).
+- `assets/js/config/club.js` (loads first; dual-use: the page sets `CLUB`, Node `require()`s it): name, wordmark, results-group label, titles, file-name slug, logo, monogram, hosts, standings hosts/domain, Firebase config. The community is chosen from the hostname; `?club=<id>` only where no community claims the address (a laptop, tests); else Money Padel. Every address Money Padel has used stays Money Padel.
+- Every hard-wired "Money Padel" (≈45 places: header and rail wordmark, titles, share titles and texts, picture painter, Share Deck, PDFs, file names, review page), the logo paths, the Firebase config and the standings host now read `CLUB`. Money Padel looks exactly as before (tested).
+- **Storage keys keep their `moneypadel_` names on purpose:** each community has its own Firebase project and each domain its own browser storage, so they cannot collide, and Money Padel's live data is untouched.
+- **Padel Championships entry added, not live:** placeholder "PC" mark, no domain, no Firebase project (`firebase: null`), reachable only as `?club=padelchampionships` on an unclaimed address. `tests/club.test.js`: host resolution, required fields, a vercel.json redirect for every standings domain, no community named outside the settings file, Money Padel unchanged, Padel Championships shows no Money Padel. 992 / 992.
+- **Still Money Padel-only (later steps):** tiers / anchors / rules in the engine; `productionSnapshot.js` and the history/repair scripts; the static HTML's first-paint title, home-screen manifest (name + MP icons) and the review page's link-preview (og:) text — WhatsApp link previews read static HTML, so per-domain previews need per-host HTML (Vercel middleware or a build step).
+
+**Padel Championships — the brief (Shaun, 4 Nov).** 12–18 active players; same tier system (S/A/B/C). A side group, **Padel Invitational**: the strongest players (essentially Tier A), a subset who play each other, results sometimes hidden from the main group; past results exist for the Invitational. **Ranking events** for Championships; **Americano**-style formats to be factored in. **Different rules:** probably no qualifiers; assessed over a **2–3 month period**. No logo or colours yet; Shaun's own domain, to be set up.
+
+**White-label plan (CCode, agreed with Shaun 4 Nov "Yes lets start"):**
+1. Foundation — (a) settings file ✅; (b) Money Padel history and repair scripts out of the shared app, neutral test fixture; (c) **Admin sign-in (Firebase Auth, email link proposed) and Firestore rules: only signed-in Admins write** — needs Shaun in the Firebase console.
+2. Launch Championships — new Firebase project, players and tiers, the period and rules from settings, brand, domains, standings site.
+3. Events and Americano.
+4. Invitational — member sign-in, private results, past results imported.
 
 **Head-to-head pictures drawn like the app — DONE (`4ad5aae`), 2 Nov.** Shaun: "The image generated needs to have the similar colour scheme and formatting as the app does." New `CardPainter.headToHead` (scoreline card "A 8 – 1 drawn – 12 B" with the leader in gold, then rows: date · teams over score · result in green / red / grey) and `CardPainter.headToHeadAll` (summary card, then "Against Tier X" tables with W green, L red). Replaces the Board Pack sheet look for these two pictures. 986 / 986.
 
@@ -3037,6 +3052,15 @@ with Shaun.**
 ---
 
 ## 5. OPEN QUESTIONS / DECISIONS
+
+### OPEN 4 Nov — Padel Championships: decisions before steps 2–4 (Shaun; CGPT to shape events/Americano, CChat to challenge)
+1. **Invitational results and the rating:** count towards everyone's Power Rating (CCode recommends yes: one player, one rating; the strongest results are the best Tier A evidence), or kept out?
+2. **Who sees Invitational results:** truly private needs **member sign-in** (today "Who are you?" is a picker anyone can change) — confirm, since it is more than Admin sign-in.
+3. **Americano rounds in the rating:** a short game to points (e.g. 16–8); CCode proposes lighter evidence than a full match (a fraction, tuned on data) — a rating-methodology call.
+4. **Ranking events:** do finishing positions feed the period standings (points by place), or only the ratings?
+5. **Assessment period:** 2 or 3 months; one length for league, race, champions and honours, or some stay monthly? Qualifying minimum zero?
+6. **Brand:** CCode to propose a mark and colour scheme distinct from Money Padel's gold.
+7. **Sign-in method** for Admins (and members later): email link (proposed) or Google.
 
 ### RESOLVED 1 Nov — Lock each month's Champions once the month is over: yes (Shaun), built as recommended
 The Roll of Honour reads Player of the Month from stored awards, but works
@@ -9126,6 +9150,8 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 ---
 
 ## 8. NEXT
+
+**CCode, 4 Nov (latest): white-label step 1a, the settings file (`e8f1090`, 992 / 992).** Next for CCode: step 1b (Money Padel history out of the shared app). Baton → Shaun for the Padel Championships decisions (Open Questions, 4 Nov) and, for step 1c, the Firebase console steps CCode will write up. CGPT: please shape events + Americano; CChat: challenge the Invitational privacy model.
 
 **CCode, 2 Nov (latest): head-to-head pictures in the app's look (`4ad5aae`, 986 / 986).** Baton → Shaun.
 

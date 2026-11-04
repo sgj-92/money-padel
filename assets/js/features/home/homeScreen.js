@@ -96,7 +96,7 @@ function homeHeroHtml(viewer, snap, month){
     const games = month ? MeaningfulMonth.countInMonth(getAllApprovedMatches(), month) : 0;
     return `<section class="home-hero home-block home-block-hero">
       <div class="home-hello"><span class="home-hello-date">${escapeHtml(dateLabel)}</span><span class="home-hello-greeting">${greeting}</span></div>
-      <div class="home-month-context">${escapeHtml(mName)} at Money Padel</div>
+      <div class="home-month-context">${escapeHtml(mName)} at ${escapeHtml(CLUB.name)}</div>
       <div class="home-month home-month-static">
         <span class="home-month-headline">${games} ${games === 1 ? 'game' : 'games'} played</span>
         <span class="home-month-line">Select a player to personalise Home.</span>

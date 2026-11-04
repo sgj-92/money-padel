@@ -1,0 +1,5 @@
+<!-- PLACEHOLDER for Padel Championships until it has its own mark (Ledger, 4 Nov) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect x="1" y="1" width="30" height="30" rx="7" stroke="#d4af37" stroke-width="1.4"/>
+  <text x="16" y="21" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#f5d576">PC</text>
+</svg>
