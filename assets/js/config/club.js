@@ -106,6 +106,11 @@ const CLUBS = {
         '--text': '#f1ecfa', '--text-soft': '#d3cae6', '--text-dim': '#ada2c6',
         '--gold-rgb': '165,133,255', '--gold-bright-rgb': '212,196,255', '--text-rgb': '241,236,250',
         '--tier-s': '#e4e1ec', '--tier-s-rgb': '228,225,236', '--glow': '#24173f', '--badge-s-top': '#f4f1fb',
+        // The redesign's accent family (its champagne, tokens.css): unused
+        // until the redesign ships, set now so it arrives branded.
+        '--accent': '#b39cff', '--accent-bright': '#d4c4ff', '--accent-ink': '#0b0812',
+        '--accent-hairline': 'rgba(165,133,255,0.26)', '--accent-wash': 'rgba(165,133,255,0.08)',
+        '--row-self': '#1d1830', '--icon-inactive': '#6f6787',
       },
       themeColor: '#0b0812',
       painter: {
