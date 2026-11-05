@@ -55,9 +55,15 @@
     return cache[src];
   }
 
+  // Every picture is drawn here, so this is where a picture takes the
+  // community's words for its period (ui/components/clubWords.js).
   function canvas(w, h) {
     const c = document.createElement('canvas');
     c.width = w; c.height = h;
+    if (typeof ClubWords !== 'undefined' && ClubWords.active) {
+      const get = c.getContext.bind(c);
+      c.getContext = (type, opts) => { const x = get(type, opts); return type === '2d' ? ClubWords.canvas(x) : x; };
+    }
     return c;
   }
 

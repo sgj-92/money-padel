@@ -339,7 +339,7 @@ function leagueTierHeading(tier, open){
 function tierSpellLabel(name, month){
   if(!month || month === 'all' || !V3_TIER_HISTORY) return null;
   const start = month + '-01';
-  const end = month + '-31';
+  const end = Period.end(month);
   const dates = [start].concat(
     (V3_TIER_HISTORY.changesFor(name) || [])
       .map(c => c.effectiveDate)
@@ -852,7 +852,7 @@ function renderMonthlyRace(){
   html += `<div class="section-heading" style="margin-top:6px;">🏁 ${label} Monthly Race</div>`;
   html += `<div class="section-sub" style="margin:2px 0 0;">Best Month: harder wins earn more, harder losses cost less.</div>`;
   html += leagueInlineFold('raceExplainerToggle', 'How the race works', raceExplainerOpen,
-    `<div class="section-sub" style="margin:0;">Everyone in a tier starts the month on 0. Every match has stakes, set by how hard it was for an ordinary player of your tier with your actual partner against your actual opponents, judged by their Power Ratings going in. Harder wins earn more and harder losses cost less; an even match is +10 for a win and −10 for a loss. The highest score among players with at least ${MonthlyRace.MIN_MATCHES} matches in the tier had the best month. If you change tier during the month, each tier is its own race and starts from 0. Tap a score to see every match behind it, or P, W, D or L to see those matches.</div>`);
+    `<div class="section-sub" style="margin:0;">Everyone in a tier starts the month on 0. Every match has stakes, set by how hard it was for an ordinary player of your tier with your actual partner against your actual opponents, judged by their Power Ratings going in. Harder wins earn more and harder losses cost less; an even match is +10 for a win and −10 for a loss. The highest score among players with at least ${raceMinMatches()} matches in the tier had the best month. If you change tier during the month, each tier is its own race and starts from 0. Tap a score to see every match behind it, or P, W, D or L to see those matches.</div>`);
 
   let anyShown = false;
   const rowsByTier = {};
@@ -870,7 +870,7 @@ function renderMonthlyRace(){
     if(qualified.length) html += buildRaceTableHtml(qualified, true);
     else html += `<div class="race-noq">No qualifier this month</div>`;
     if(provisional.length){
-      html += `<div class="race-prov-head">Provisional · fewer than ${MonthlyRace.MIN_MATCHES} matches</div>`;
+      html += `<div class="race-prov-head">Provisional · fewer than ${raceMinMatches()} matches</div>`;
       html += buildRaceTableHtml(provisional, false);
     }
     html += `</div>`;

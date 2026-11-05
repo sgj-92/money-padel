@@ -122,8 +122,7 @@ function boardPackSources(){ return {
     // club's flag, which has no history, so it is today's.
     const minGames = Number(o.min || defaultRankingMinGames(month));
     const players = o.players || 'all';
-    const [y, mo] = month.split('-').map(Number);
-    const monthEnd = Date.UTC(y, mo, 1) - 1;
+    const monthEnd = Date.parse(Period.end(month) + 'T23:59:59.999Z');
     const keep = (name) => {
       if(players === 'all') return true;
       const st = playerStateOf(name, monthEnd);
@@ -179,7 +178,7 @@ function boardPackSources(){ return {
 
   race(month, o){
     const { table, unresolved } = buildMonthlyRace(month);
-    return { unresolved: unresolved.length, minMatches: MonthlyRace.MIN_MATCHES, tiers: boardPackTiers(o.tier).map(tier => ({ tier,
+    return { unresolved: unresolved.length, minMatches: raceMinMatches(), tiers: boardPackTiers(o.tier).map(tier => ({ tier,
       rows: table.filter(r => r.tier === tier && (o.provisional === 'show' || r.qualified)).slice(0, BoardPack.limit(o.top)) }))
       .filter(t => t.rows.length) };
   },
@@ -254,14 +253,14 @@ function boardPackSources(){ return {
     // League counts), and its win % has them in the denominator, as Monthly
     // Information's does.
     // Every game together, draws included (buildPartnerships counts them).
-    const rows = buildPartnerships(matchesIncludingDraws().filter(m => m.date.slice(0,7) === month), TIER_MAP)
+    const rows = buildPartnerships(matchesIncludingDraws().filter(m => Period.of(m.date) === month), TIER_MAP)
       .map(p => ({ ...p, played: p.games }));
     return { rows: rows.slice(0, BoardPack.limit(o.top)) };
   },
 
   tier_moves(month){
     const changes = V3_TIER_HISTORY ? V3_TIER_HISTORY.changes : [];
-    return { rows: changes.filter(c => c.effectiveDate.slice(0,7) === month)
+    return { rows: changes.filter(c => Period.of(c.effectiveDate) === month)
       .map(c => ({ name: displayNameFor(c.playerId), date: c.effectiveDate, fromTier: c.fromTier, toTier: c.toTier, eventType: c.eventType })) };
   },
 
@@ -284,7 +283,7 @@ function boardPackModuleData(item, month){
 // result or a club decision has changed what the month shows. The pack's
 // figures are always today's; this only says whether they still match.
 function boardPackBasis(month){
-  const matches = getAllApprovedMatches().filter(m => m.date.slice(0,7) === month)
+  const matches = getAllApprovedMatches().filter(m => Period.of(m.date) === month)
     .map(m => [m.id, m.date, m.winners, m.losers, m.sets, !!m.isDraw])
     .sort((a,b) => String(a[0]).localeCompare(String(b[0])));
   const closing = monthEndRatings(month);

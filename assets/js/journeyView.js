@@ -150,7 +150,8 @@
   // no monthly seed and no monthly re-solve: a month is a window onto one
   // continuous trajectory, and this function cannot express anything else.
   function monthSlice(journey, month) {
-    const entries = journey.entries.filter((e) => String(e.date).slice(0, 7) === month);
+    const period = typeof Period !== 'undefined' ? Period : require('./config/period.js');
+    const entries = journey.entries.filter((e) => period.of(String(e.date)) === month);
     if (!entries.length) return null;
     const first = entries[0], last = entries[entries.length - 1];
     const opened = typeof first.previousRating === 'number' ? first.previousRating : first.rating;

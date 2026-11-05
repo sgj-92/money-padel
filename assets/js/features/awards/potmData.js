@@ -109,8 +109,8 @@ function potmPlayerMonths(month){
   if(!view) return [];
   const league = computeMonthlySummaryStats(month);
   const approved = {};
-  getAllApprovedMatches().forEach(m => { if(m.date.slice(0,7) === month) approved[m.id] = m; });
-  const facts = Object.values(V3_MATCH_FACTS || {}).filter(f => f.date && f.date.slice(0,7) === month);
+  getAllApprovedMatches().forEach(m => { if(Period.of(m.date) === month) approved[m.id] = m; });
+  const facts = Object.values(V3_MATCH_FACTS || {}).filter(f => f.date && Period.of(f.date) === month);
   const STORY = MatchScorecard.STORY;
   const names = [...new Set(Object.keys(league).concat(view.rows.map(r => r.playerId)))];
   const winners = potmCompetitionWinners(month);

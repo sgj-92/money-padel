@@ -339,12 +339,13 @@
   // player's matches that month. Never game-weighted, never rating points,
   // never strength-of-schedule adjusted (opponent strength is already inside
   // the pre-match expectation; adding a bonus would double-count).
-  function calculateMonthlyPerformance(journey, { provisionalMax = 2, podiumMin = 5 } = {}) {
+  function calculateMonthlyPerformance(journey, { provisionalMax = 2, podiumMin = 5, periodOf = (d) => d.slice(0, 7) } = {}) {
     const buckets = {};
     journey
       .filter((e) => e.eventType === EVENT.MATCH_UPDATE)
       .forEach((e) => {
-        const month = e.effectiveDate.slice(0, 7);
+        // The community's period (config/period.js); a calendar month by default.
+        const month = periodOf(e.effectiveDate);
         const key = e.playerId + '|' + month;
         if (!buckets[key]) buckets[key] = { playerId: e.playerId, month: month, residuals: [] };
         buckets[key].residuals.push(e.actualScore - e.preMatchExpectedScore);

@@ -74,12 +74,11 @@ function playerMonthlyPack(name, month){
 
   // The chemistry the Insights screen ranks by, over this month's games --
   // draws included -- for this player's pairs (2+ games together).
-  const chemistry = buildPartnerships(matchesIncludingDraws().filter(m => m.date.slice(0,7) === month), TIER_MAP)
+  const chemistry = buildPartnerships(matchesIncludingDraws().filter(m => Period.of(m.date) === month), TIER_MAP)
     .filter(p => p.pair.includes(name))
     .map(p => ({ partner: p.pair.find(x => x !== name), chemistry: p.avg_overperf, decided: p.games }));
 
-  const [y, mo] = month.split('-').map(Number);
-  const monthEnd = `${month}-${String(new Date(Date.UTC(y, mo, 0)).getUTCDate()).padStart(2, '0')}`;
+  const monthEnd = Period.end(month);
   const tier = (power && power.tierEnd) || historicalTierOf(name, monthEnd);
 
   return { player: name, month, label: monthLabel(month), model, stats, league, merit, race: raceRows, power, chemistry, tier };

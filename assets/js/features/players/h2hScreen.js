@@ -131,7 +131,7 @@ function renderH2H(){
   // They were built here from `MATCHES` -- the RATED set -- so a drawn meeting
   // was not a meeting at all: two players who had drawn once and never
   // otherwise met were told they had never played each other.
-  const inMonth = (m) => !monthActive || m.date.slice(0,7) === h2hMonth;
+  const inMonth = (m) => !monthActive || Period.of(m.date) === h2hMonth;
   const opponentMatches = h2hOpponentMatches(h2hPlayerA, h2hPlayerB)
     .filter(inMonth).sort((a,b)=> a.date < b.date ? 1 : -1);
   const teammateMatches = h2hTeammateMatches(h2hPlayerA, h2hPlayerB)
@@ -332,7 +332,7 @@ function wireH2HExport(opp, team, monthActive){
 // opponent for the full one-on-one.
 function h2hEveryoneData(){
   const A = h2hPlayerA;
-  const inMonth = (m) => h2hMonth === 'all' || m.date.slice(0, 7) === h2hMonth;
+  const inMonth = (m) => h2hMonth === 'all' || Period.of(m.date) === h2hMonth;
   const matches = matchesIncludingDraws().filter(m => inMonth(m) && [...(m.winners || []), ...(m.losers || [])].includes(A));
   const row = TierRecord.build({ matches, tierAt: (n, d) => historicalTierOf(n, d) }).find(r => r.player === A) || null;
   const tiers = TIER_ORDER_LIST.concat(['?']).filter(t => row && row.vs[t] && row.vs[t].played);

@@ -54,7 +54,10 @@
     let type = f.type || 'all';
 
     let games = (matches || []).slice();
-    if (month !== 'all') games = games.filter((m) => m.date.slice(0, 7) === month);
+    if (month !== 'all') {
+      const period = typeof Period !== 'undefined' ? Period : require('../../config/period.js');
+      games = games.filter((m) => period.of(m.date) === month);
+    }
 
     const typeScope = PlayerFilter.filter(games, playerIds, d.toId);
     const typeOptions = GameType

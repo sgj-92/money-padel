@@ -96,12 +96,9 @@
   async function bootIndex() {
     document.getElementById('reviewTitle').textContent = 'Monthly Reviews';
     if (!storageAvailable()) return empty('Monthly Reviews', 'This page can’t reach ' + CLUB.name + ' right now. Try again in a moment.');
-    var now = new Date();
-    var months = [];
-    for (var i = 0; i < 24; i++) {
-      var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
-    }
+    // The last two years of the community's periods (config/period.js).
+    var months = [Period.current(new Date())];
+    for (var i = 1; i < 24 / Period.MONTHS; i++) months.push(Period.prev(months[i - 1]));
     var got = await Promise.all(months.map(function (m) { return loadPublishedReview(m).catch(function () { return null; }); }));
     var live = months.filter(function (m, i) { var p = got[i]; return p && !p.withdrawn && p.deck && Array.isArray(p.deck.slides); });
     if (!live.length) return empty('Monthly Reviews', 'No monthly review has been published yet.');

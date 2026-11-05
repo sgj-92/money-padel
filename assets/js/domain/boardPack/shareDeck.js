@@ -39,11 +39,11 @@
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-  function monthLabel(month) {
-    const [y, m] = String(month).split('-');
-    return `${LONG[Number(m) - 1]} ${y}`;
-  }
-  const monthName = (month) => LONG[Number(String(month).split('-')[1]) - 1];
+  // The community's period (config/period.js): "October 2026" for Money
+  // Padel, "Oct–Dec 2026" for a quarter.
+  const period = () => (typeof Period !== 'undefined' ? Period : require('../../config/period.js'));
+  function monthLabel(month) { return period().label(month); }
+  const monthName = (month) => period().name(month);
   const day = (ymd) => { const [, m, d] = String(ymd).split('-'); return `${Number(d)} ${MONTHS[Number(m) - 1]}`; };
   const signed = (n) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)}`;
   const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;

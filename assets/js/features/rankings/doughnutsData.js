@@ -23,7 +23,7 @@
 function doughnutMatches(month){
   const out = [];
   function processMatch(m){
-    if(month && month !== 'all' && m.date.slice(0,7) !== month) return;
+    if(month && month !== 'all' && Period.of(m.date) !== month) return;
     // Which shutout sets exist, and in which direction, within this one match --
     // deduped so a match with two 6-0 sets the same way still counts once per
     // player per category (same total-count logic as before, just also keeping

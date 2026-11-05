@@ -47,7 +47,10 @@
   'use strict';
   const K = 20;              // an even match is +10 / -10
   const WIN_SCALE = 250;     // results-calibrated; see above
-  const MIN_MATCHES = 5;     // qualification, per tier spell
+  // Qualification, per tier spell. The default; a community with its own
+  // minimum passes `minMatches` (config/club.js periodMinMatches: 4 a quarter
+  // for Padel Championships, Shaun 5 Nov).
+  const MIN_MATCHES = 5;
   const DRAW_RESULT = 0.5;   // a draw is half a win against par, as analysed
 
   const mean = (xs) => xs.reduce((s, x) => s + x, 0) / xs.length;
@@ -86,7 +89,7 @@
   //   { id, date, winners, losers, isDraw, sets? }, in the order they were played.
   // `tierAt(name, date)`: the canonical historical tier.
   // `preRating(matchId, name)`: the persisted pre-match Power Rating, or null.
-  function build({ matches, tierAt, preRating }) {
+  function build({ matches, tierAt, preRating, minMatches = MIN_MATCHES }) {
     const unresolved = [];
     const scored = [];
     (matches || []).forEach((m) => {
@@ -133,7 +136,7 @@
       }));
     });
 
-    const table = Object.values(rows).map((r) => ({ ...r, qualified: r.played >= MIN_MATCHES }));
+    const table = Object.values(rows).map((r) => ({ ...r, qualified: r.played >= minMatches }));
     // Qualified first; within each, the race score. Ties go to more wins, then
     // fewer matches (the same total off fewer games), then name.
     table.sort((a, b) => (b.qualified - a.qualified)

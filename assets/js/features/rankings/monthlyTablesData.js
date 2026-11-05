@@ -12,6 +12,12 @@
 // per match. Built from the same two sources the monthly aggregation uses --
 // ALL_MATCHES/MATCHES for rated results and getAllApprovedMatches() for draws
 // -- so the two tables can never disagree about what a game was.
+// The matches a period needs to qualify: the community's own minimum
+// (config/club.js periodMinMatches), else the Race's default of 5.
+function raceMinMatches(){
+  return CLUB.periodMinMatches || MonthlyRace.MIN_MATCHES;
+}
+
 function leagueAppearances(){
   const out = [];
   let seq = 0;
@@ -73,7 +79,7 @@ function raceStandingOf(name, month){
     return { tier: r.tier, qualified: r.qualified,
       position: r.qualified ? ranked.findIndex(x => x.playerId === name) + 1 : null, of: ranked.length,
       score: r.score, games: r.played, wins: r.wins, draws: r.draws, losses: r.losses,
-      toQualify: Math.max(0, MonthlyRace.MIN_MATCHES - r.played),
+      toQualify: Math.max(0, raceMinMatches() - r.played),
       lastDate: r.matches.map(m => m.date).sort().pop() || null };
   });
 }
@@ -82,7 +88,7 @@ function raceStandingOf(name, month){
 // record up to and including that month's last day -- so a past month's form
 // is that month's, not today's.
 function lastTenAtMonthEnd(month){
-  const end = month + '-31';
+  const end = Period.end(month);
   return LastTen.build(leagueAppearances().filter(a => a.date <= end));
 }
 
@@ -128,7 +134,7 @@ function sortLastTenRows(rows, key = leagueSortKey, desc = leagueSortDesc){
 // and the League can never disagree about what a game was.
 function meritMatches(month){
   return getAllApprovedMatches()
-    .filter(m => month === 'all' || m.date.slice(0,7) === month)
+    .filter(m => month === 'all' || Period.of(m.date) === month)
     .map(m => ({ id: m.id, date: m.date, winners: m.winners, losers: m.losers,
       isDraw: !!m.isDraw, sets: m.sets, type: m.type }));
 }
@@ -137,7 +143,7 @@ function meritMatches(month){
 // a tier's par is built from each player's FIRST pre-match rating of the month.
 function raceMatches(month){
   return getAllApprovedMatches()
-    .filter(m => m.date.slice(0,7) === month)
+    .filter(m => Period.of(m.date) === month)
     .slice()
     .sort((a,b)=> a.date < b.date ? -1 : a.date > b.date ? 1 : (a.sourceIndex||0) - (b.sourceIndex||0))
     .map(m => ({ id: m.id, date: m.date, winners: m.winners, losers: m.losers,
@@ -146,6 +152,7 @@ function raceMatches(month){
 
 function buildMonthlyRace(month){
   return MonthlyRace.build({
+    minMatches: raceMinMatches(),
     matches: raceMatches(month),
     tierAt: (n, d) => historicalTierOf(n, d),
     // The persisted pre-match rating, read back from the journey -- never
