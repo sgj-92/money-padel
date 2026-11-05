@@ -15,6 +15,17 @@
       "permanent": false
     },
     {
+      "source": "/((?!assets/|review(?:/|$)).+)",
+      "has": [
+        {
+          "type": "host",
+          "value": "pcstandings.sgj.luxe"
+        }
+      ],
+      "destination": "/",
+      "permanent": false
+    },
+    {
       "source": "/preview",
       "destination": "/preview/",
       "permanent": false

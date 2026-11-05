@@ -58,7 +58,7 @@
   // Bump when the recommendation rules change. Stored with each shortlist, so a
   // past month records which rules suggested its candidates.
   const RULES_VERSION = 'potm-2';
-  const MIN_MATCHES = 5;
+  const MIN_MATCHES = ((typeof CLUB !== 'undefined' ? CLUB : require('../../config/club.js').CLUB).periodMinMatches) || 5;
   const SHORTLIST_MIN = 3;
   // A vote works best between a handful. More cases than this are all shown,
   // and Admin is asked to trim; nothing is cut automatically.
@@ -70,7 +70,9 @@
 
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
     'August', 'September', 'October', 'November', 'December'];
-  const monthLabel = (month) => `${MONTHS[Number(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}`;
+  // "Oct 2026" for a month; a longer period by its own label ("Oct–Dec 2026").
+  const period = () => (typeof Period !== 'undefined' ? Period : require('../../config/period.js'));
+  const monthLabel = (month) => (period().MONTHS === 1 ? `${MONTHS[Number(month.slice(5, 7)) - 1]} ${month.slice(0, 4)}` : period().label(month));
   const monthName = (month) => MONTHS[Number(month.slice(5, 7)) - 1];
 
   const r1 = (v) => Math.round(v * 10) / 10;

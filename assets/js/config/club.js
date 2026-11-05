@@ -42,6 +42,11 @@ const CLUBS = {
     // Shown if the logo cannot load.
     monogram: 'MP',
     hosts: [/^moneypadel\./i, /^mpstandings\./i, /^mpr\./i, /^mp-dashboard-new-ratings\b/i, /^money-padel\b/i],
+    // How long a competition period is (config/period.js): a month.
+    period: { months: 1, noun: 'month' },
+    // Matches in a period to qualify: its Race and Champion titles, its
+    // Power rankings and Player of the Period shortlist.
+    periodMinMatches: 5,
     // The read-only standings site (data/siteMode.js). Every host here also
     // needs its redirect rule in vercel.json (tests/club.test.js checks).
     standingsHosts: [/^mpstandings\./i],
@@ -69,12 +74,12 @@ const CLUBS = {
     },
   },
 
-  // Dubai (Shaun, 4 Nov). Not live yet: no domain and no Firebase project,
-  // so it is reached only as ?club=padelchampionships on an address no
-  // community claims (a laptop, the tests) -- and with no database it shows
-  // an empty record. Its logo and colours are placeholders until it has a
-  // brand; its tiers, rules, events and the Invitational group are the next
-  // steps (Ledger, 4 Nov).
+  // Dubai (Shaun, 4 Nov). Its addresses (5 Nov): padelchamps.sgj.luxe and
+  // pcstandings.sgj.luxe, once they point at Vercel; until then, and on any
+  // address no community claims, ?club=padelchampionships. No Firebase
+  // project yet, so no data. Logo and colours are placeholders until Shaun
+  // picks a brand; events, Americano and the Invitational group come later
+  // (Ledger, 4 Nov).
   padelchampionships: {
     id: 'padelchampionships',
     name: 'Padel Championships',
@@ -86,9 +91,12 @@ const CLUBS = {
     fileSlug: 'padel-championships',
     logo: 'assets/brand/pc-mark.svg',
     monogram: 'PC',
-    hosts: [],
-    standingsHosts: [],
-    standingsDomain: null,
+    // Shaun, 5 Nov: judged by the quarter; 4 matches in it to qualify.
+    period: { months: 3, noun: 'quarter' },
+    periodMinMatches: 4,
+    hosts: [/^padelchamps\./i],
+    standingsHosts: [/^pcstandings\./i],
+    standingsDomain: 'pcstandings.sgj.luxe',
     adminAccounts: true,
     legacyAdminPassword: false,
     dataScripts: [],

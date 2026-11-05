@@ -80,7 +80,7 @@
   // a win -- { kind, steps, points } -- or null.
   function build({ player, month, matches, tierOf, factsOf, meritOf }) {
     const mine = (matches || [])
-      .filter((m) => m.date.slice(0, 7) === month)
+      .filter((m) => (typeof Period !== 'undefined' ? Period : require('../../config/period.js')).of(m.date) === month)
       .map((m) => side(m, player, tierOf))
       .filter(Boolean)
       .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.order - b.order))

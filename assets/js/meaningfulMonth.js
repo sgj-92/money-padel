@@ -32,20 +32,18 @@
   'use strict';
 
   const THRESHOLD = 5;
+  // The community's period (config/period.js): a month for Money Padel.
+  const period = () => (typeof Period !== 'undefined' ? Period : require('./config/period.js'));
 
   // The reader's calendar month, in their own time zone. A game at half past
   // midnight on 1 October in London is an October game, whatever UTC says --
   // and match dates are stored as the local date they were played.
   function monthKey(now) {
-    const d = now instanceof Date ? now : new Date(now);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return period().current(now instanceof Date ? now : new Date(now));
   }
 
   function monthLabel(key) {
-    const names = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
-      'August', 'September', 'October', 'November', 'December'];
-    const [y, m] = String(key).split('-');
-    return `${names[Number(m) - 1]} ${y}`;
+    return period().label(key);
   }
 
   // Canonical matches in a month, each counted once. `id` is the record's own
@@ -54,7 +52,7 @@
   function countInMonth(matches, key) {
     const seen = new Set();
     (matches || []).forEach((m) => {
-      if (!m || typeof m.date !== 'string' || m.date.slice(0, 7) !== key) return;
+      if (!m || typeof m.date !== 'string' || period().of(m.date) !== key) return;
       const id = m.id || `${m.date}|${(m.winners || []).slice().sort().join('&')}|${(m.losers || []).slice().sort().join('&')}`;
       seen.add(id);
     });
@@ -77,7 +75,7 @@
     // "last calendar month": a month the club did not play in is not a month
     // worth opening on.
     const earlier = [...new Set((matches || [])
-      .map((m) => (m && typeof m.date === 'string' ? m.date.slice(0, 7) : null))
+      .map((m) => (m && typeof m.date === 'string' ? period().of(m.date) : null))
       .filter((k) => k && k < current))].sort();
     const fallback = earlier.length ? earlier[earlier.length - 1] : null;
 

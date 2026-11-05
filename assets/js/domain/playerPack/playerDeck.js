@@ -116,13 +116,14 @@
 
   // [{ item, data }] in the pack's order -> a deck with the player's cover.
   function build({ player, month, monthLabel, entries }) {
-    const m = Number(month.split('-')[1]);
-    const ctx = { nextMonthName: NAMES[m % 12] };
+    // The period after this one: "November", or a quarter's "Jan–Mar".
+    const period = typeof Period !== 'undefined' ? Period : require('../../config/period.js');
+    const ctx = { nextMonthName: period.MONTHS === 1 ? NAMES[Number(month.split('-')[1]) % 12] : period.name(period.next(month)) };
     return {
       version: 1, kind: 'player', month, player,
       title: `${player} · ${monthLabel}`, monthLabel,
       cover: { title: player, sub: `${monthLabel} · Monthly Pack` },
-      closing: { title: `That’s your ${NAMES[m - 1]}.`, text: 'Every game, every table and your full record are in ' + club().name + '.' },
+      closing: { title: `That’s your ${period.MONTHS === 1 ? NAMES[Number(month.split('-')[1]) - 1] : period.name(month)}.`, text: 'Every game, every table and your full record are in ' + club().name + '.' },
       summaryTitle: `${player} — ${monthLabel}`, linkLabel: 'Your full monthly pack:',
       slides: entries.map(({ item, data }) => slideFor(item, data, ctx)).filter(Boolean),
     };

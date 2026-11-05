@@ -1085,7 +1085,7 @@ function acknowledgeFullHistory(){
 
 function getAvailableMonths(){
   const months = new Set();
-  getDisplayMatches().forEach(m=> months.add(m.date.slice(0,7)));
+  getDisplayMatches().forEach(m=> months.add(Period.of(m.date)));
   return [...months].sort();
 }
 
@@ -1113,10 +1113,9 @@ function reconcileSelectedMonth(){
   return true;
 }
 
+// "October 2026", or a quarter's "Oct–Dec 2026" (config/period.js).
 function monthLabel(ym){
-  const names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const [y,m] = ym.split('-');
-  return names[parseInt(m)-1] + ' ' + y;
+  return Period.label(ym);
 }
 function dayLabel(ymd){
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -1128,7 +1127,7 @@ function dayLabel(ymd){
 function computeMonthlyStats(month){
   // Every rated game, draws included -- the same games buildPlayers counts.
   const all = matchesIncludingDraws();
-  const filtered = month==='all' ? all : all.filter(m=>m.date.slice(0,7)===month);
+  const filtered = month==='all' ? all : all.filter(m=>Period.of(m.date)===month);
   // Judge opponent strength and upset status using each player's rating AS OF this specific
   // month, not their season-long rating -- otherwise "avg opp." and "upset" would be judged by
   // a different yardstick than the Month Rating headline number sitting right next to them.
@@ -1268,7 +1267,7 @@ function computeMonthlySummaryStats(month, { splitByTier } = {}){
   // order) carries the computed match_strength -- combine the two rather than assuming either
   // array alone has everything needed.
   ALL_MATCHES.forEach((raw, idx)=>{
-    if(month !== 'all' && raw.date.slice(0,7) !== month) return;
+    if(month !== 'all' && Period.of(raw.date) !== month) return;
     const enriched = MATCHES[idx];
     if(!enriched) return;
     const allNames = [...new Set([...raw.winners, ...raw.losers])];
@@ -1286,7 +1285,7 @@ function computeMonthlySummaryStats(month, { splitByTier } = {}){
 
   // Draws are excluded from the rating engine entirely, so they're pulled separately here --
   // "winners"/"losers" on a draw just mean team1/team2, not an actual result.
-  getAllApprovedMatches().filter(m => m.isDraw && (month==='all' || m.date.slice(0,7)===month)).forEach(m=>{
+  getAllApprovedMatches().filter(m => m.isDraw && (month==='all' || Period.of(m.date)===month)).forEach(m=>{
     const allNames = [...new Set([...m.winners, ...m.losers])];
     const strengthEstimate = allNames.reduce((s,n)=>{
       const p = PLAYERS.find(x=>x.name===n);

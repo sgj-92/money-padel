@@ -67,8 +67,10 @@ function rankingPool(month, minGamesFloor){
 // The default qualifying threshold differs by scope on purpose (10 for
 // all-time, 5 for a single month, since monthly game counts are naturally
 // lower).
+// A period's own minimum (config/club.js periodMinMatches): 5 for Money
+// Padel's month, 4 for a Padel Championships quarter.
 function defaultRankingMinGames(month){
-  return month === 'all' ? 10 : 5;
+  return month === 'all' ? 10 : (CLUB.periodMinMatches || 5);
 }
 
 // Three honours, three sources (Shaun, 1 Nov):
@@ -80,14 +82,14 @@ function defaultRankingMinGames(month){
 // month is on screen. For a finished month it is that pool as it stood at the
 // month's end (month-end rating, tier at the close, Ranked then); for the
 // current month, or All time, it is today's.
+// The current period and a period's last day (config/period.js): a month for
+// Money Padel, a quarter for Padel Championships.
 function currentMonthKey(){
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return Period.current(new Date());
 }
 
 function monthLastDay(month){
-  const [y, m] = month.split('-').map(Number);
-  return `${month}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`;
+  return Period.end(month);
 }
 
 function kingPool(month){

@@ -499,7 +499,7 @@ function openSheet(name, matchFilter){
   // started choosing August automatically.
   const monthActive = profileMonth !== 'all';
   if(monthActive){
-    ms = ms.filter(m => m.date.slice(0,7) === profileMonth);
+    ms = ms.filter(m => Period.of(m.date) === profileMonth);
   }
 
   let filterBannerHtml = '';

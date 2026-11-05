@@ -22,7 +22,9 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (Engine) {
   'use strict';
 
-  const monthOf = (date) => date.slice(0, 7);
+  // The community's period (config/period.js): a month for Money Padel.
+  const period = () => (typeof Period !== 'undefined' ? Period : require('./config/period.js'));
+  const monthOf = (date) => period().of(date);
 
   // The rating an event leaves a player on. A tier change leaves it unmoved.
   function ratingAfter(event) {
@@ -106,13 +108,13 @@
   // uses the tier that applied AT the boundary, never today's.
   function build(events, { tierAsOf } = {}) {
     const { months, closing } = buildSnapshots(events);
-    const perf = Engine.calculateMonthlyPerformance(events);
+    const perf = Engine.calculateMonthlyPerformance(events, { periodOf: monthOf });
     const byMonth = {};
 
     months.forEach((month, idx) => {
       const openRatings = idx === 0 ? {} : closing[months[idx - 1]];
       const closeRatings = closing[month];
-      const lastDay = month + '-31';
+      const lastDay = period().end(month);
       const firstDay = month + '-01';
       const tierOpen = tierAsOf ? (n) => tierAsOf(n, firstDay) : null;
       const tierClose = tierAsOf ? (n) => tierAsOf(n, lastDay) : null;

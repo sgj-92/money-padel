@@ -25,6 +25,7 @@
   // Text for the document's Title: UTF-16BE with a byte-order mark, as hex,
   // so a name with an accent or a dash survives.
   function textString(s) {
+    if (typeof ClubWords !== 'undefined') s = ClubWords.text(String(s));
     let hex = 'FEFF';
     for (const ch of String(s)) {
       const cp = ch.codePointAt(0);
