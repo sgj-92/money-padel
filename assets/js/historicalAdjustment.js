@@ -191,5 +191,84 @@
     return { ...planned, context: ctx, events, summary: Review.describe(toReview(adjustment, ctx), { [adjustment.playerId]: ctx.before }) };
   }
 
-  return { context, incompleteReasons, eventsFor, plan, toReview };
+  // ---- Moving a recorded decision to the date it really took effect ----
+  // Shaun, 6 Nov: PDM's promotion (and his new rating) was recorded a day
+  // late, after he had already played a game as a Tier A player. The
+  // decision is right; its date is wrong.
+  //
+  // The decisions recorded for the player on `fromDate` are recorded again on
+  // `toDate`, each SUPERSEDING the original -- so the original stays in the
+  // record, is no longer replayed, and everything from the earlier of the two
+  // dates is re-derived. What moves is what the board decided: the tier, and
+  // a rating or Reliability the decision actually set. A promotion moved no
+  // points, so its figures are not carried; a club rating of 1620 is 1620 on
+  // whichever date it applies.
+  function liveDecisionsOn(journey, playerId, date) {
+    const supersededIds = {};
+    (journey || []).forEach((e) => { if (e.supersedes) supersededIds[e.supersedes] = true; });
+    return (journey || []).filter((e) => e.playerId === playerId && e.effectiveDate === date
+      && e.eventType !== Engine.EVENT.MATCH_UPDATE && e.eventType !== Engine.EVENT.PLAYER_INITIALISED
+      && !supersededIds[e.id || Store.eventId(e)]);
+  }
+
+  // The dates a player has live decisions on, newest first, for the picker.
+  function decisionDates(journey, playerId) {
+    const dates = {};
+    (journey || []).forEach((e) => {
+      if (e.playerId === playerId && e.eventType !== Engine.EVENT.MATCH_UPDATE && e.eventType !== Engine.EVENT.PLAYER_INITIALISED) dates[e.effectiveDate] = true;
+    });
+    return Object.keys(dates).filter((d) => liveDecisionsOn(journey, playerId, d).length).sort().reverse();
+  }
+
+  function movedEvents({ journey, playerId, fromDate, toDate, reason, createdBy }) {
+    if (!ISO_DATE.test(fromDate || '') || !ISO_DATE.test(toDate || '')) throw new Error('Both dates are needed, as YYYY-MM-DD.');
+    if (fromDate === toDate) throw new Error('Choose a different date to move it to.');
+    if (!reason || !String(reason).trim()) throw new Error('Say why the date is being corrected — it is recorded with the move.');
+    if (!createdBy) throw new Error('Choose who you are first — every change is recorded against someone.');
+    const live = liveDecisionsOn(journey, playerId, fromDate);
+    if (!live.length) throw new Error(`${playerId} has no decision recorded on ${fromDate}.`);
+    const init = (journey || []).find((e) => e.playerId === playerId && e.eventType === Engine.EVENT.PLAYER_INITIALISED);
+    if (init && toDate < init.effectiveDate) throw new Error(`${playerId} entered the record on ${init.effectiveDate}; a decision cannot come before that.`);
+    const clash = liveDecisionsOn(journey, playerId, toDate).filter((e) => live.some((l) => l.eventType === e.eventType));
+    if (clash.length) throw new Error(`${playerId} already has a ${clash[0].eventType.toLowerCase().replace(/_/g, ' ')} on ${toDate}. Use the adjustment above to replace it instead.`);
+    const changed = (a, b) => typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) > 1e-9;
+    return live.map((e) => {
+      const ev = {
+        playerId, eventType: e.eventType, effectiveDate: toDate,
+        newTier: e.newTier ?? null,
+        decisionType: e.decisionType ?? null,
+        reasonCode: e.reasonCode ?? null,
+        notes: `${e.notes ? e.notes + ' ' : ''}[Date corrected from ${fromDate} to ${toDate}: ${String(reason).trim()}]`,
+        createdBy, source: 'Decision date correction',
+        recommendationRating: e.recommendationRating ?? null,
+        recommendationReliability: e.recommendationReliability ?? null,
+        recommendationMethodVersion: e.recommendationMethodVersion ?? null,
+        supersedes: e.id || Store.eventId(e),
+        revision: (e.revision || 1) + 1,
+      };
+      if (e.newClassificationStatus && e.newClassificationStatus !== e.previousClassificationStatus) ev.newClassificationStatus = e.newClassificationStatus;
+      if (changed(e.newPowerRating, e.previousPowerRating)) ev.newPowerRating = e.newPowerRating;
+      if (changed(e.newReliability, e.previousReliability)) {
+        ev.newReliability = e.newReliability;
+        if (typeof e.effectiveEvidenceAfter === 'number') ev.newEffectiveEvidence = e.effectiveEvidenceAfter;
+      }
+      // A rating decision that set nothing ("keep the current rating") is
+      // still a decision, and is recorded as one on its new date.
+      if (e.eventType === Engine.EVENT.CLUB_RATING_REASSESSMENT && ev.newPowerRating === undefined && ev.newReliability === undefined) ev.allowNoChange = true;
+      return ev;
+    });
+  }
+
+  function planMove({ stored, playerId, fromDate, toDate, reason, createdBy, provenance }) {
+    const events = movedEvents({ journey: stored.journey, playerId, fromDate, toDate, reason, createdBy })
+      .sort((a, b) => Review.eventRank(a.eventType) - Review.eventRank(b.eventType));
+    const planned = Replay.plan({ stored, change: { type: 'clubDecision', events }, provenance });
+    const what = events.map((e) => e.eventType === Engine.EVENT.CLUB_RATING_REASSESSMENT
+      ? (e.newPowerRating !== undefined ? `rating ${Math.round(e.newPowerRating * 10) / 10}` : 'rating decision')
+      : `${e.eventType.toLowerCase().replace(/_/g, ' ')}${e.newTier ? ` to Tier ${e.newTier}` : ''}`).join(' and ');
+    return { ...planned, events, fromDate, toDate, playerId,
+      summary: `${playerId}: ${what} moved from ${fromDate} to ${toDate}. Every game from ${fromDate < toDate ? fromDate : toDate} is re-rated.` };
+  }
+
+  return { context, incompleteReasons, eventsFor, plan, toReview, liveDecisionsOn, decisionDates, movedEvents, planMove };
 });

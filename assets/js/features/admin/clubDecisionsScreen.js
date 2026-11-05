@@ -42,11 +42,23 @@ let histMessage = '';
 
 let histBusy = false;
 
+// Moving a recorded decision to the date it really took effect
+// (HistoricalAdjustment.planMove).
+let moveDraft = null;    // { player, fromDate, toDate, reason }
+let movePlan = null;     // the replayed consequence, awaiting confirmation
+let moveMessage = '';
+
 function histReset(){ histAdj = null; histCtx = null; histPlan = null; histMessage = ''; }
 
 async function histLoadContext(){
   const name = (document.getElementById('histPlayer') || {}).value || '';
   const date = (document.getElementById('histDate') || {}).value || '';
+  histStart(name, date);
+}
+
+// Opens the adjustment for a player at a date -- from its own form, or handed
+// over by the monthly review when the decision took effect before today.
+function histStart(name, date){
   const player = Object.keys(V3_STATE.players || {}).find(n => n.toLowerCase() === name.trim().toLowerCase());
   if(!player){ histMessage = name ? `No v3 record for "${name}".` : 'Enter a player name.'; renderManage(); return; }
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){ histMessage = 'Enter an effective date as YYYY-MM-DD.'; renderManage(); return; }
@@ -225,6 +237,97 @@ function buildHistoricalAdjustmentHtml(){
   return html;
 }
 
+// "PDM was promoted on the 3rd, not the 5th": the decision stays exactly as
+// the board made it; only the date it takes effect from moves.
+function buildMoveDecisionHtml(){
+  const d = moveDraft || { player: '', fromDate: '', toDate: '', reason: '' };
+  const journey = (V3_RECORD && V3_RECORD.journey) || [];
+  const player = d.player ? Object.keys(V3_STATE.players || {}).find(n => n.toLowerCase() === d.player.trim().toLowerCase()) : null;
+  const dates = player ? HistoricalAdjustment.decisionDates(journey, playerIdFor(player)) : [];
+  const describe = (date) => { const live = HistoricalAdjustment.liveDecisionsOn(journey, playerIdFor(player), date); return live.map(e => auditEventLabel(e, live)).join(' + '); };
+  let html = `<div class="section-heading" style="margin-top:16px;">Move a recorded decision to another date</div>
+    <div class="section-sub">For a tier change or rating recorded on the wrong date — say a promotion entered a day late, after the player had already played in their new tier. The decision stays exactly as made (tier, rating, Reliability); only its date moves, and every game from the earlier date is re-rated. The original stays in the audit trail.</div>`;
+  if(moveMessage) html += `<div class="section-sub" style="color:${/failed|cannot|No |needs|already|Choose|Say why|entered the record/.test(moveMessage)?'var(--red)':'var(--gold-bright)'};">${escapeHtml(moveMessage)}</div>`;
+  html += `<div class="fg-controls">
+    <div class="fg-row"><label class="fg-label">Player</label><input id="movePlayer" list="playerNamesList" class="fg-select" value="${escapeHtml(d.player)}" placeholder="Player name" /></div>`;
+  if(player){
+    html += dates.length
+      ? `<div class="fg-row"><label class="fg-label">Decision recorded on</label><select id="moveFrom" class="fg-select">${dates.map(x => `<option value="${x}" ${x === d.fromDate ? 'selected' : ''}>${escapeHtml(dayLabel(x))} — ${escapeHtml(describe(x))}</option>`).join('')}</select></div>
+        <div class="fg-row"><label class="fg-label">It really took effect on</label><input id="moveTo" type="date" class="fg-select" value="${escapeHtml(d.toDate)}" /></div>
+        <div class="section-sub" style="font-size:10.5px;">On that date it comes before that day's games: a promotion dated the 3rd counts for a game played on the 3rd.</div>
+        <div class="fg-row"><label class="fg-label">Reason — required</label><input id="moveReason" class="fg-select" value="${escapeHtml(d.reason)}" placeholder="e.g. Promoted before his game on the 3rd; entered late" /></div>
+        <div class="fg-row"><button class="preset-btn" id="movePreviewBtn" ${histBusy?'disabled':''}>Preview the full consequence</button></div>`
+      : `<div class="section-sub">${escapeHtml(player)} has no tier or rating decision on record to move.</div>`;
+  } else {
+    html += `<div class="fg-row"><button class="preset-btn" id="moveFindBtn">Find their decisions</button></div>`;
+  }
+  html += `</div>`;
+  if(movePlan){
+    const p = movePlan;
+    html += `<div class="callout-card" style="padding:12px; margin-top:10px; border-color:var(--gold-dim);">
+      <div style="font-weight:700; color:var(--gold-bright);">Confirm — this re-rates every game from ${escapeHtml(p.fromDate < p.toDate ? p.fromDate : p.toDate)}</div>
+      <div class="section-sub" style="margin-top:4px; color:var(--text);">${escapeHtml(p.summary)}</div>
+      <div class="section-sub" style="font-size:10.5px;">${p.documentsToWrite} documents rewritten, ${p.documentsToDelete} removed. The decision on ${escapeHtml(p.fromDate)} stays in the record, superseded.</div>
+      <div class="section-sub" style="margin-top:6px; font-weight:700; color:var(--text);">${p.playersMoved.length} player${p.playersMoved.length===1?'':'s'} end on a different rating</div>
+      <div class="section-sub" style="font-size:10.5px; max-height:180px; overflow:auto;">${p.playersMoved.map(m=>`${escapeHtml(m.playerId)} ${m.delta>0?'+':''}${m.delta} → ${Math.round(m.to*10)/10}`).join(' &nbsp;·&nbsp; ') || 'Nobody\'s rating changes.'}</div>
+      <div class="difficulty-row" style="margin-top:8px;">
+        <button class="preset-btn" id="moveCommitBtn" style="flex:1;" ${histBusy?'disabled':''}>Move it and replay</button>
+        <button class="preset-btn" id="moveCancelBtn" style="flex:1;">Cancel</button>
+      </div>
+    </div>`;
+  }
+  return html;
+}
+
+function moveDraftFromScreen(){
+  const v = (id, fallback) => { const e = document.getElementById(id); return e ? e.value : fallback; };
+  const prev = moveDraft || {};
+  return { player: v('movePlayer', prev.player || '').trim(), fromDate: v('moveFrom', prev.fromDate || ''),
+    toDate: v('moveTo', prev.toDate || ''), reason: v('moveReason', prev.reason || '') };
+}
+
+async function movePreview(){
+  moveDraft = moveDraftFromScreen();
+  movePlan = null;
+  const player = Object.keys(V3_STATE.players || {}).find(n => n.toLowerCase() === moveDraft.player.toLowerCase());
+  if(!player){ moveMessage = moveDraft.player ? `No record for "${moveDraft.player}".` : 'Enter a player name.'; renderManage(); return; }
+  histBusy = true; moveMessage = 'Replaying…'; renderManage();
+  try {
+    const stored = await readStoredRecord(RatingStore.firestoreCompatBackend(db));
+    movePlan = HistoricalAdjustment.planMove({ stored, playerId: playerIdFor(player), fromDate: moveDraft.fromDate, toDate: moveDraft.toDate,
+      reason: moveDraft.reason, createdBy: reviewActor(),
+      provenance: { createdBy: reviewActor(), recordedAt: new Date().toISOString(), source: 'Decision date correction' } });
+    moveMessage = '';
+  } catch(e){ movePlan = null; moveMessage = e.message; }
+  histBusy = false;
+  renderManage();
+}
+
+async function moveCommit(){
+  if(!movePlan) return;
+  histBusy = true; moveMessage = 'Writing…'; renderManage();
+  try {
+    await ReplayForward.commit(RatingStore.firestoreCompatBackend(db), movePlan);
+    const summary = movePlan.summary;
+    movePlan = null; moveDraft = null;
+    await loadV3State();
+    moveMessage = 'Moved and replayed. ' + summary;
+  } catch(e){ moveMessage = 'Write failed: ' + e.message; }
+  histBusy = false;
+  dataChanged();
+}
+
+function wireMoveDecision(){
+  const on = (id, fn) => { const el = document.getElementById(id); if(el) el.onclick = fn; };
+  on('moveFindBtn', () => { moveDraft = moveDraftFromScreen(); movePlan = null; moveMessage = ''; renderManage(); });
+  const p = document.getElementById('movePlayer');
+  if(p) p.onchange = () => { moveDraft = { ...moveDraftFromScreen(), fromDate: '' }; movePlan = null; moveMessage = ''; renderManage(); };
+  ['moveFrom', 'moveTo'].forEach(id => { const el = document.getElementById(id); if(el) el.onchange = () => { moveDraft = moveDraftFromScreen(); movePlan = null; }; });
+  on('movePreviewBtn', movePreview);
+  on('moveCommitBtn', moveCommit);
+  on('moveCancelBtn', () => { movePlan = null; moveMessage = 'Cancelled — nothing was written.'; renderManage(); });
+}
+
 function buildHistPlanHtml(){
   const p = histPlan;
   const moved = p.playersMoved;
@@ -276,6 +379,8 @@ let reviewSubject = null;      // player currently being reviewed
 let reviewDraft = null;        // the half-made decision on screen
 
 let reviewSnapshotCache = null; // one pre-review snapshot per effective date
+
+let reviewEffective = null;    // the date a review decision takes effect from; null = today
 
 // ---- Audit row ------------------------------------------------------------
 // The raw record is truthful but unreadable: "CLUB_RATING_REASSESSMENT — B→B"
@@ -474,6 +579,23 @@ function buildReviewPanelHtml(name){
     <div style="font-weight:700; color:var(--text); font-size:14px;">${name}</div>
     <div class="section-sub" style="margin-top:2px;">Tier ${s.tier} · Power Rating <b style="color:var(--text);">${(Math.round(s.rating*10)/10).toFixed(1)}</b> · Reliability ${Math.round(Engine_reliability(s.effectiveEvidence)*100)}% · ${s.lifetimeMatches} rated matches · ${s.classificationStatus || 'status unknown'}</div>
     <div class="section-sub" style="font-size:10.5px;">Figures are as they stood before ${reviewToday()} (last event ${s.asOfDate}). Everyone reviewed today is measured against this same snapshot, so the order the board works through them cannot change what anybody is offered.</div>`;
+
+  // ---- When it takes effect ----
+  // Today, normally. A decision that really took effect earlier (entered a day
+  // late, after the player had already played in their new tier) is recorded
+  // at that date through the Historical club adjustment, which re-rates every
+  // game since and shows the consequence first.
+  html += `<div class="fg-controls" style="margin-top:10px;">
+    <div class="fg-row"><label class="fg-label">Takes effect from</label><input id="reviewEffective" type="date" class="fg-select" value="${reviewEffective || reviewToday()}" max="${reviewToday()}" /></div>
+  </div>`;
+  if(reviewEffective && reviewEffective < reviewToday()){
+    html += `<div class="callout-card" style="padding:10px; margin-top:6px; border-color:var(--gold-dim);">
+      <div class="section-sub" style="margin:0; color:var(--text);">Dated ${escapeHtml(dayLabel(reviewEffective))}, before today. It is recorded through the Historical club adjustment: the tier and rating are judged as they stood that day, and every game since is re-rated — you see who moves before anything is written.</div>
+      <div class="difficulty-row" style="margin-top:8px;"><button class="preset-btn" id="reviewGoHistorical" style="flex:1;">Continue at ${escapeHtml(reviewEffective)}</button></div>
+    </div>`;
+    html += `<div style="margin-top:10px;"><button class="preset-btn" id="reviewCloseBtn" style="width:100%;">Close review</button></div></div>`;
+    return html;
+  }
 
   // ---- Step 1: the tier decision ----
   html += `<div class="section-heading" style="margin-top:12px;">1 · Tier</div>`;
@@ -687,7 +809,23 @@ function wireReviewSection(){
     renderManage();
   };
   const closeBtn = document.getElementById('reviewCloseBtn');
-  if(closeBtn) closeBtn.onclick = ()=>{ reviewSubject = null; reviewDraft = null; reviewPending = null; reviewMessage = ''; renderManage(); };
+  if(closeBtn) closeBtn.onclick = ()=>{ reviewSubject = null; reviewDraft = null; reviewPending = null; reviewMessage = ''; reviewEffective = null; renderManage(); };
+  const eff = document.getElementById('reviewEffective');
+  if(eff) eff.onchange = ()=>{
+    const v = eff.value;
+    reviewEffective = (!v || v >= reviewToday()) ? null : v;
+    reviewDraft = null; reviewPending = null;
+    renderManage();
+  };
+  const goHist = document.getElementById('reviewGoHistorical');
+  if(goHist) goHist.onclick = ()=>{
+    const player = reviewSubject, date = reviewEffective;
+    reviewSubject = null; reviewDraft = null; reviewPending = null; reviewEffective = null;
+    adminOpenSections.historical = true;
+    histStart(player, date);
+    const sec = document.querySelector('[data-acc="historical"]');
+    if(sec) sec.scrollIntoView({ block: 'start' });
+  };
 
   // Step 1. Arms the review and computes the recommendation from the shared
   // snapshot -- never from live state, which already contains any decision
