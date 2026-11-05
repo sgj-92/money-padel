@@ -46,6 +46,12 @@ const CLUBS = {
     // needs its redirect rule in vercel.json (tests/club.test.js checks).
     standingsHosts: [/^mpstandings\./i],
     standingsDomain: 'mpstandings.sgj.luxe',
+    // Admins sign in with their own email and password (data/adminAuth.js).
+    adminAccounts: true,
+    // The old shared Admin password, offered until Money Padel's Admin
+    // accounts exist and the database rules are published (docs/ADMIN_SIGN_IN.md).
+    // Then false: the rules refuse its writes anyway.
+    legacyAdminPassword: true,
     // Its own record, loaded only for this community (index.html): the
     // pre-v3 base layer, the April/May display-only games, the old app's
     // ratings snapshot, who submitted the early games, the Box Office Cup.
@@ -84,6 +90,8 @@ const CLUBS = {
     hosts: [],
     standingsHosts: [],
     standingsDomain: null,
+    adminAccounts: true,
+    legacyAdminPassword: false,
     dataScripts: [],
     firebase: null,
   },

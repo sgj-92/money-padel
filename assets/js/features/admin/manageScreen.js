@@ -111,12 +111,20 @@ function renderManage(){
     + `<div class="fg-row"><button class="preset-btn" id="openNorthSouthBtn" style="width:100%;">Open North vs South</button></div>`);
   html += adminSection('diagnostics', 'Beta diagnostics', buildDiagnosticsSectionHtml());
 
-  html += adminSection('lock', 'Admin lock',
+  const account = !adminAccountsOn() ? ''
+    : signedInAdmin
+      ? `<div class="section-sub">Signed in as <b>${escapeHtml(signedInAdmin.email)}</b> · ${signedInAdmin.role === 'owner' ? 'Owner' : 'Board'}. Locking signs you out on this device.</div>
+         <div class="fg-row"><button class="preset-btn" id="acctResetBtn" style="width:100%;">Change my password (sends a reset email)</button></div>
+         <div id="acctMessage" class="section-sub"></div>`
+      : `<div class="section-sub">Unlocked with the shared Admin password on this device. Once your Admin account is set up, lock and sign in with it instead.</div>`;
+  html += adminSection('lock', adminAccountsOn() ? 'Admin account' : 'Admin lock',
     `<div class="fg-controls">
-    <div class="fg-row"><button class="preset-btn" id="lockNowBtn" style="width:100%;">Lock admin area</button></div>
+    ${account}
+    <div class="fg-row"><button class="preset-btn" id="lockNowBtn" style="width:100%;">${signedInAdmin ? 'Sign out and lock' : 'Lock admin area'}</button></div>
   </div>`);
 
-  html += adminSection('ownerpw', 'Your password',
+  // The shared passwords: only where a community still uses them.
+  if(!adminAccountsOn() || legacyAdminPasswordOn()) html += adminSection('ownerpw', 'Your password',
     `<div class="section-sub">${ownerPasswordHash ? 'Change your own password. This never touches the board password.' : 'Not set yet — this shouldn\'t normally happen once one exists, but you can set it here if needed.'}</div>`
     + `<div class="fg-controls">
     <div class="fg-row"><input id="cpOwnerCurrent" type="password" class="fg-select" placeholder="${ownerPasswordHash ? 'Current password' : '(leave blank — not set yet)'}" style="margin-bottom:6px;" /></div>
@@ -125,7 +133,7 @@ function renderManage(){
     <div id="cpOwnerMessage" class="section-sub"></div>
   </div>`);
 
-  html += adminSection('boardpw', 'Board password',
+  if(!adminAccountsOn() || legacyAdminPasswordOn()) html += adminSection('boardpw', 'Board password',
     `<div class="section-sub">${boardPasswordHash ? 'A second, independent password — whoever knows it can change it themselves without touching yours.' : 'Not set up yet. Set one here to give the board their own password, separate from yours.'}</div>`
     + `<div class="fg-controls">
     <div class="fg-row"><input id="cpBoardCurrent" type="password" class="fg-select" placeholder="${boardPasswordHash ? 'Current board password' : '(leave blank — not set yet)'}" style="margin-bottom:6px;" /></div>
@@ -224,11 +232,13 @@ function renderManage(){
   }; });
 
   on('lockNowBtn', (btn)=>{ btn.onclick = async ()=>{
-    isUnlocked = false;
-    adminRole = null;
-    await saveMyUnlocked(false);
-    applyTabVisibility();
+    await lockAdminArea();
     renderManage();
+  }; });
+  on('acctResetBtn', (btn)=>{ btn.onclick = async ()=>{
+    const r = await sendAdminPasswordReset(signedInAdmin && signedInAdmin.email);
+    const msg = document.getElementById('acctMessage');
+    if(msg) msg.textContent = r.message;
   }; });
 
   on('cpOwnerSubmit', (btn)=>{ btn.onclick = async ()=>{

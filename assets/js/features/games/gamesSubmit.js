@@ -110,18 +110,16 @@ async function submitNewGame(){
     }
   }
 
-  // register any new players with chosen tiers
-  document.querySelectorAll('.ag-new-tier').forEach(sel=>{
-    const name = sel.dataset.name;
-    tagOverridesState[name] = {...(tagOverridesState[name]||{}), tier: sel.value, active:true};
-  });
-  if(document.querySelectorAll('.ag-new-tier').length>0){
-    await saveTagOverrides(tagOverridesState);
-  }
+  // New players' starting tiers travel with the submission. The tier list is
+  // an Admin's to change (the database only lets Admins write it), so it is
+  // written when an Admin approves the game (gamesAdmin.js commitApproval).
+  const newPlayerTiers = {};
+  document.querySelectorAll('.ag-new-tier').forEach(sel=>{ newPlayerTiers[sel.dataset.name] = sel.value; });
 
   const id = 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
   const newMatch = {id, date, winners, losers, sets, type: isSingles?'singles':'doubles', note:'', isDraw,
                      status:'pending', submittedBy: submitter, submittedAt: new Date().toISOString()};
+  if(Object.keys(newPlayerTiers).length) newMatch.newPlayerTiers = newPlayerTiers;
   // Submitted from an Upcoming card: the player has SAID which fixture this
   // was. That is a proposal, not a link -- an admin confirms it when
   // approving, and the fixture stays in Upcoming until then (D3).

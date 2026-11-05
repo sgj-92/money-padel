@@ -109,7 +109,7 @@ async function open(options = {}) {
   const pageErrors = [];
   page.on('pageerror', (e) => pageErrors.push(e.message));
 
-  await page.addInitScript(({ data, failReads, readLatency, tapDuringBoot }) => {
+  await page.addInitScript(({ data, failReads, readLatency, tapDuringBoot, accounts, signedIn }) => {
     window.__writes = [];
     window.__data = data;
     // Every read, with the window it occupied. A test can then assert that
@@ -122,7 +122,29 @@ async function open(options = {}) {
     // a replay went out in a couple of round trips rather than hundreds.
     window.__batches = [];
     const fail = () => { throw new Error('stubbed read failure'); };
+    // Firebase Authentication, as data/adminAuth.js uses it. `accounts` are
+    // { email: { password, uid } }; `signedIn` is the email already signed in
+    // on this device (Firebase restores it at start-up). Sign-ins and
+    // sign-outs are logged in window.__auth.
+    window.__auth = [];
+    const authState = { user: null, listeners: [] };
+    if (signedIn && accounts[signedIn]) authState.user = { uid: accounts[signedIn].uid, email: signedIn };
+    const authErr = (code) => Object.assign(new Error(code), { code });
+    const authApi = {
+      get currentUser() { return authState.user; },
+      onAuthStateChanged(cb) { authState.listeners.push(cb); setTimeout(() => cb(authState.user), 0); return () => { authState.listeners = authState.listeners.filter((x) => x !== cb); }; },
+      async signInWithEmailAndPassword(email, password) {
+        const a = accounts[email];
+        if (!a || a.password !== password) { window.__auth.push({ signIn: email, ok: false }); throw authErr('auth/invalid-credential'); }
+        authState.user = { uid: a.uid, email };
+        window.__auth.push({ signIn: email, ok: true });
+        return { user: authState.user };
+      },
+      async signOut() { window.__auth.push({ signOut: authState.user && authState.user.email }); authState.user = null; },
+      async sendPasswordResetEmail(email) { window.__auth.push({ reset: email }); },
+    };
     window.firebase = {
+      auth() { return authApi; },
       initializeApp() {},
       firestore() {
         return {
@@ -226,6 +248,9 @@ async function open(options = {}) {
         // as the app stores them: { key: value }, each saved as { value: JSON }.
         moneypadel: Object.fromEntries(Object.entries(options.club || {})
           .map(([k, v]) => [k, { value: JSON.stringify(v), updatedAt: 0 }])),
+        // `options.admins` is the admins collection as the console makes it:
+        // { uid: { role, name } }, stored as is.
+        admins: { ...(options.admins || {}) },
         // `options.collections` seeds other collections stored the same way
         // (published Player Packs in playerPacks, say): { name: { id: value } }.
         ...Object.fromEntries(Object.entries(options.collections || {}).map(([name, docs]) => [name,
@@ -235,6 +260,8 @@ async function open(options = {}) {
     failReads: !!options.failReads,
     readLatency: options.readLatency || 0,
     tapDuringBoot: options.tapDuringBoot || null,
+    accounts: options.accounts || {},
+    signedIn: options.signedIn || null,
   });
 
   // `path` opens another page of the site (the public Monthly Review, say),
