@@ -665,10 +665,7 @@ or a team per line with 🏆 and the sets"></textarea>
   }
 
   document.getElementById('gamesLockNowBtn').onclick = async ()=>{
-    isUnlocked = false;
-    adminRole = null;
-    await saveMyUnlocked(false);
-    applyTabVisibility();
+    await lockAdminArea();
     renderGamesTab();
   };
 

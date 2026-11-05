@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// ===================== WHO MAY CHANGE WHAT =====================
+// White-label step 1c (5 Nov). Paste into Firebase console › Firestore
+// Database › Rules for each community's project, then Publish
+// (docs/ADMIN_SIGN_IN.md). The same rules serve every community.
+//
+//   * Everyone may READ the record: the app, the standings site and the
+//     published Monthly Reviews are all read without signing in.
+//   * Only an Admin may CHANGE it: someone signed in whose account has an
+//     entry in `admins` (made by hand in the console; nobody can make
+//     themselves an Admin, because nothing may write `admins`).
+//   * Members, who do not sign in, may still write the five things the app
+//     lets anyone do: submit a game for approval, the Upcoming / wishlist
+//     games, Find a Game challenges, development notes, and the app's own
+//     health reports.
+//
+// tests/adminAuth.test.js holds the app's code to this list: every document
+// a member's action writes must be one of MEMBER_DOCS below.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // The club's shared documents, one per storage key (data/firebaseData.js).
+    match /moneypadel/{key} {
+      allow read: if true;
+      allow write: if isAdmin() || key in [
+        'moneypadel_extra_matches',   // MEMBER_DOCS: game submissions (pending approval)
+        'moneypadel_game_requests',   // MEMBER_DOCS: Upcoming games and the wishlist
+        'moneypadel_challenges',      // MEMBER_DOCS: Find a Game challenges
+        'moneypadel_dev_areas'        // MEMBER_DOCS: development notes
+      ];
+    }
+
+    // The rating record, the honours and the published player packs.
+    match /matches/{id}           { allow read: if true; allow write: if isAdmin(); }
+    match /ratingJourney/{id}     { allow read: if true; allow write: if isAdmin(); }
+    match /players/{id}           { allow read: if true; allow write: if isAdmin(); }
+    match /monthlyChampions/{id}  { allow read: if true; allow write: if isAdmin(); }
+    match /playerOfTheMonth/{id}  { allow read: if true; allow write: if isAdmin(); }
+    // A player pack is opened by its private link: readable one at a time,
+    // never listed.
+    match /playerPacks/{id}       { allow get: if true; allow list, write: if isAdmin(); }
+
+    // Any device that notices the record disagreeing with itself files a
+    // report (healthReport.js).
+    match /healthReports/{id}     { allow read, write: if true; }
+
+    // Who is an Admin. Each Admin may read their own entry (the app checks it
+    // at sign-in); nobody may write it -- the console does that.
+    match /admins/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

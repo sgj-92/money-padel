@@ -2201,7 +2201,7 @@ async function init(){
   // the application has no rating without it and will not invent one -- and it
   // is, because nothing below runs until every one of these has landed.
   const [ , stored, myName, ownerHash, boardHash, unlocked,
-          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords ] =
+          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords, admin ] =
     await PerfTrace.timeAsync('load the record', Promise.all([
       loadV3State(),
       loadStoredData(),
@@ -2216,6 +2216,7 @@ async function init(){
       loadNorthSouthResults(),
       loadPotmRecords(),
       loadChampionRecords(),
+      loadSignedInAdmin(),
     ]));
   extraMatchesState = stored.extraMatches;
   tagOverridesState = stored.tagOverrides;
@@ -2225,7 +2226,14 @@ async function init(){
   currentUserName = myName;
   ownerPasswordHash = ownerHash;
   boardPasswordHash = boardHash;
-  isUnlocked = unlocked && !isStandingsMode();   // the standings site has no Admin (siteMode.js)
+  // An Admin is someone signed in to an Admin account (data/adminAuth.js), or,
+  // while the community still allows it, someone who unlocked with the old
+  // shared password on this device.
+  signedInAdmin = admin;
+  const byPassword = unlocked && legacyAdminPasswordOn();
+  if(admin) adminRole = admin.role;
+  else if(!byPassword) adminRole = null;
+  isUnlocked = !!(admin || byPassword) && !isStandingsMode();   // the standings site has no Admin (siteMode.js)
   visibilityState = visibility;
   gameRequestsState = requests;
   devAreasState = areas;

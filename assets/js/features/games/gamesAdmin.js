@@ -81,23 +81,29 @@ async function carryMatchIdentity(oldId, newId){
 // (UNKNOWN_NEW_PLAYER), the record's status for a player whose starting tier
 // is the club's judgement: the rating is the tier baseline either way, and it
 // leaves the one-off starting-tier correction open in Club Decisions.
-function newPlayerTier(name){
-  const key = Object.keys(tagOverridesState || {}).find(k => k.toLowerCase() === String(name).toLowerCase());
-  const t = key && tagOverridesState[key] && tagOverridesState[key].tier;
+// `proposed` is the starting tiers a submission carries for its new players
+// (gamesSubmit.js); the club's tier list wins where it already names them.
+function newPlayerTier(name, proposed){
+  const lookup = (map) => {
+    const key = Object.keys(map || {}).find(k => k.toLowerCase() === String(name).toLowerCase());
+    return key ? map[key] : null;
+  };
+  const tagged = lookup(tagOverridesState);
+  const t = (tagged && tagged.tier) || lookup(proposed);
   return t && RatingEngine.TIER_SEED[t] !== undefined ? t : null;
 }
 
-function planIncludingNewPlayers(args){
+function planIncludingNewPlayers(args, proposed){
   try {
     return ReplayForward.plan(args);
   } catch(e){
     if(!e.unseen || !e.unseen.length) throw e;
-    const missing = e.unseen.filter(u => !newPlayerTier(u.playerId)).map(u => u.playerId);
+    const missing = e.unseen.filter(u => !newPlayerTier(u.playerId, proposed)).map(u => u.playerId);
     if(missing.length){
       throw new Error(`${missing.join(', ')} ${missing.length === 1 ? 'isn’t' : 'aren’t'} in the club yet. Add ${missing.length === 1 ? 'them' : 'each of them'} in More › Admin › Player tags › Add a new player, with a starting tier, then try again.`);
     }
     const initialisations = e.unseen.map(u => ({
-      playerId: u.playerId, tier: newPlayerTier(u.playerId),
+      playerId: u.playerId, tier: newPlayerTier(u.playerId, proposed),
       classificationStatus: RatingEngine.CLASSIFICATION.PROVISIONAL,
       effectiveDate: u.firstDate, reasonCode: 'UNKNOWN_NEW_PLAYER',
     }));
@@ -338,7 +344,7 @@ async function prepareApproval(id){
       stored,
       change: { type: 'append', match: pendingToEngineMatch(m, matchId) },
       provenance: { createdBy: name, recordedAt: new Date().toISOString(), source: 'Approved from a submission' },
-    });
+    }, m.newPlayerTiers);
     // Upcoming games this result might be. Candidates only: an admin says
     // which one, if any, before the game is rated. Same four players on
     // their own never close a fixture (D3).
@@ -347,6 +353,7 @@ async function prepareApproval(id){
       gameRequestsState, { canon: playerIdFor, proposedFixtureId: m.fixtureId || null })
       .map(c => ({ id: c.fixture.id, reasons: c.reasons }));
     approvalPlan = { submissionId: id, matchId, planned, approvedBy: name,
+      newPlayerTiers: m.newPlayerTiers || null,
       fixtureCandidates, fixtureChoice: null,
       result: { date: m.date, winners: m.winners.slice(), losers: m.losers.slice(), sets: m.sets, isDraw: !!m.isDraw } };
     approvalMessage = '';
@@ -378,6 +385,13 @@ async function commitApproval(){
     // purpose and must not linger as a second copy of the same game.
     extraMatchesState = extraMatchesState.filter(x => x.id !== a.submissionId);
     await saveExtraMatches(extraMatchesState);
+    // The new players the submission brought, onto the club's tier list at
+    // the tier they were rated from.
+    const joined = ((a.planned && a.planned.newPlayers) || []).filter(n => !Object.keys(tagOverridesState).some(k => k.toLowerCase() === n.playerId.toLowerCase()));
+    if(joined.length){
+      joined.forEach(n => { tagOverridesState[n.playerId] = { tier: n.tier, active: true }; });
+      await saveTagOverrides(tagOverridesState);
+    }
     approvalPlan = null;
     // The admin's answer about Upcoming, applied only now the game is safely
     // in the record. The chosen fixture becomes played and names this result;
