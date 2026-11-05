@@ -27,6 +27,14 @@
 <link rel="stylesheet" href="../assets/css/screens/review.css">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- The community (config/club.js), its period and its colours, before
+     anything is drawn: a community with its own brand never flashes gold. -->
+<script src="../assets/js/config/club.js"></script>
+<script src="../assets/js/config/period.js"></script>
+<script src="../assets/js/ui/components/clubTheme.js"></script>
+<script>ClubTheme.apply(document);</script>
+<script src="../assets/js/ui/components/clubWords.js"></script>
+<script>ClubWords.watch(document);</script>
 </head>
 <body class="review-page">
   <header class="review-top">
@@ -39,10 +47,6 @@
   <div class="review-toast" id="reviewToast" role="status"></div>
   <!-- A published review is read, never calculated: this page loads the
        stored review and the drawing, and none of the app's statistics. -->
-  <script src="../assets/js/config/club.js"></script>
-  <script src="../assets/js/config/period.js"></script>
-  <script src="../assets/js/ui/components/clubWords.js"></script>
-  <script>ClubWords.watch(document);</script>
   <script src="../assets/js/data/firebaseData.js"></script>
   <script src="../assets/js/domain/boardPack/shareDeck.js"></script>
   <script src="../assets/js/features/review/deckView.js"></script>

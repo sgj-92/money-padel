@@ -77,9 +77,8 @@ const CLUBS = {
   // Dubai (Shaun, 4 Nov). Its addresses (5 Nov): padelchamps.sgj.luxe and
   // pcstandings.sgj.luxe, once they point at Vercel; until then, and on any
   // address no community claims, ?club=padelchampionships. No Firebase
-  // project yet, so no data. Logo and colours are placeholders until Shaun
-  // picks a brand; events, Americano and the Invitational group come later
-  // (Ledger, 4 Nov).
+  // project yet, so no data. Events, Americano and the Invitational group
+  // come later (Ledger, 4 Nov).
   padelchampionships: {
     id: 'padelchampionships',
     name: 'Padel Championships',
@@ -97,6 +96,25 @@ const CLUBS = {
     hosts: [/^padelchamps\./i],
     standingsHosts: [/^pcstandings\./i],
     standingsDomain: 'pcstandings.sgj.luxe',
+    // "Royal Amethyst" (Shaun, 5 Nov): deep violet in place of Money Padel's
+    // black and gold; Tier S in silver. Every text colour 7:1 or better on
+    // bg2 (text 15.3, text-dim 7.4, accent-bright 11.1). ui/components/clubTheme.js.
+    theme: {
+      css: {
+        '--gold': '#a585ff', '--gold-bright': '#d4c4ff', '--gold-dim': '#7058c4', '--gold-soft': '#b39cff',
+        '--bg0': '#0b0812', '--bg1': '#130f1d', '--bg2': '#1b1528', '--line': '#2f2545',
+        '--text': '#f1ecfa', '--text-soft': '#d3cae6', '--text-dim': '#ada2c6',
+        '--gold-rgb': '165,133,255', '--gold-bright-rgb': '212,196,255', '--text-rgb': '241,236,250',
+        '--tier-s': '#e4e1ec', '--tier-s-rgb': '228,225,236', '--glow': '#24173f', '--badge-s-top': '#f4f1fb',
+      },
+      themeColor: '#0b0812',
+      painter: {
+        bg0: '#0b0812', top: '#1d1630', bottom: '#0f0c17', surface2: '#1b1528',
+        text: '#f1ecfa', soft: '#d3cae6', dim: '#ada2c6',
+        gold: '#a585ff', bright: '#d4c4ff', goldSoft: '#b39cff', goldDim: '#7058c4',
+        goldRgb: '165,133,255', textRgb: '241,236,250', brightRgb: '212,196,255', tierSRgb: '228,225,236', tierS: '#e4e1ec',
+      },
+    },
     adminAccounts: true,
     legacyAdminPassword: false,
     dataScripts: [],

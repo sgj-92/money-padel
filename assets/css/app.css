@@ -21,6 +21,16 @@
     --green:#5a9c5a;
     --red:#b5453f;
     --draw:#a39a86;              /* a draw: neutral warm grey, between the win green and the loss red, and neither */
+    /* The same colours as r,g,b, for the translucent washes and hairlines
+       (rgba(var(--gold-rgb), .2)). A community with its own brand sets these
+       with the rest (config/club.js theme; ui/components/clubTheme.js). */
+    --gold-rgb:212,175,55;
+    --gold-bright-rgb:245,213,118;
+    --text-rgb:241,233,216;
+    --tier-s:#f0dfa0;
+    --tier-s-rgb:240,223,160;
+    --glow:#23200f;              /* the warm light at the top of the page */
+    --badge-s-top:#fff3c4;
   }
   *{box-sizing:border-box;}
   /* Buttons and form controls take the browser's own font unless told to
@@ -37,7 +47,7 @@
        it -- titles and player names (Shaun, 31 Oct: "apply the fonts app-wide"). */
     font-family: var(--font-ui);
     background:
-      radial-gradient(ellipse at top, #23200f 0%, var(--bg0) 55%),
+      radial-gradient(ellipse at top, var(--glow) 0%, var(--bg0) 55%),
       var(--bg0);
     color:var(--text);
     padding:0 0 40px;

@@ -29,14 +29,18 @@
   const U = W / 100;
   const SERIF = "Georgia, 'Iowan Old Style', serif";
   const SANS = "'Helvetica Neue', Arial, sans-serif";
-  const C = {
+  // Money Padel's colours, or the community's own (config/club.js
+  // theme.painter): the same palette as its screens.
+  const BRAND = (club().theme && club().theme.painter) || {};
+  const C = Object.assign({
     bg0: '#0b0a08', top: '#1b1712', bottom: '#100e0b', surface2: '#1c1814',
     text: '#f1e9d8', soft: '#d6cbb2', dim: '#bcb096',
-    gold: '#d4af37', bright: '#f5d576', goldSoft: '#bd9a3a',
-    hair: 'rgba(241,233,216,0.08)', rule: 'rgba(212,175,55,0.16)', border: 'rgba(212,175,55,0.24)',
-  };
-  const METAL = { s: '#f0dfa0', a: '#f5d576', b: '#d9cca3', c: '#c99a63' };
-  const GLOW = { s: 'rgba(240,223,160,0.18)', a: 'rgba(245,213,118,0.18)', b: 'rgba(217,204,163,0.15)', c: 'rgba(201,154,99,0.17)' };
+    gold: '#d4af37', bright: '#f5d576', goldSoft: '#bd9a3a', goldDim: '#8a6d1f',
+    goldRgb: '212,175,55', textRgb: '241,233,216', brightRgb: '245,213,118', tierSRgb: '240,223,160', tierS: '#f0dfa0',
+  }, BRAND);
+  C.hair = `rgba(${C.textRgb},0.08)`; C.rule = `rgba(${C.goldRgb},0.16)`; C.border = `rgba(${C.goldRgb},0.24)`;
+  const METAL = { s: C.tierS, a: C.bright, b: '#d9cca3', c: '#c99a63' };
+  const GLOW = { s: `rgba(${C.tierSRgb},0.18)`, a: `rgba(${C.brightRgb},0.18)`, b: 'rgba(217,204,163,0.15)', c: 'rgba(201,154,99,0.17)' };
   // The crown is one image for every tier; the app shifts its metal with a
   // CSS filter, and canvas takes the same filter where the browser has it.
   const CROWN_FILTER = { b: 'saturate(0.45) brightness(1.1)', c: 'sepia(0.35) saturate(0.85) brightness(0.8) hue-rotate(-8deg)' };
@@ -122,7 +126,7 @@
     ctx.translate(w / 2, -0.08 * Math.min(h, SLIDE_H));
     ctx.scale(1, 0.58);
     const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, w * 0.95);
-    glow.addColorStop(0, 'rgba(212,175,55,0.16)'); glow.addColorStop(0.7, 'rgba(212,175,55,0)');
+    glow.addColorStop(0, `rgba(${C.goldRgb},0.16)`); glow.addColorStop(0.7, `rgba(${C.goldRgb},0)`);
     ctx.fillStyle = glow; ctx.fillRect(-w, -w, 2 * w, 2 * w);
     ctx.restore();
     ctx.strokeStyle = C.border; ctx.lineWidth = 3;
@@ -260,7 +264,7 @@
     const single = (s.groups || []).length === 1;
     (s.groups || []).forEach((g, gi) => {
       const compact = !single;
-      if (gi > 0) { y += 2.8 * U; hline(ctx, P, R, y, 'rgba(212,175,55,0.14)'); y += 2.2 * U; }
+      if (gi > 0) { y += 2.8 * U; hline(ctx, P, R, y, `rgba(${C.goldRgb},0.14)`); y += 2.2 * U; }
       if (g.label) { font(ctx, 3 * U, { weight: 700, spacing: 0.12 }); textAt(ctx, String(g.label).toUpperCase(), P, y + 3 * U, { color: C.dim }); y += 3 * U * 1.3; }
       g.rows.forEach((r, i) => {
         const hero = single && i === 0;
@@ -283,7 +287,7 @@
         if (subLines.length) { font(ctx, 3.2 * U); subLines.forEach((l, k) => textAt(ctx, k === 2 ? fit(ctx, l, nw) : l, nx, ty + 3.2 * U + k * 3.2 * U * 1.3, { color: C.dim })); }
         if (r.value) { font(ctx, valS, { serif: true }); textAt(ctx, fit(ctx, r.value, inner * 0.45), R, mid + valS * 0.35, { color: hero ? C.bright : C.text, align: 'right' }); }
         y += h;
-        if (i < g.rows.length - 1) hline(ctx, P, R, y - 1, 'rgba(241,233,216,0.06)');
+        if (i < g.rows.length - 1) hline(ctx, P, R, y - 1, `rgba(${C.textRgb},0.06)`);
       });
     });
     return cv;
@@ -302,7 +306,7 @@
     if (sh.tag) {
       font(ctx, 22, { weight: 700, spacing: 0.08 });
       const tw = ctx.measureText(sh.tag.toUpperCase()).width + 36;
-      ctx.strokeStyle = 'rgba(138,109,31,1)'; ctx.lineWidth = 2; roundRect(ctx, P, y, tw, 40, 20); ctx.stroke();
+      ctx.strokeStyle = C.goldDim; ctx.lineWidth = 2; roundRect(ctx, P, y, tw, 40, 20); ctx.stroke();
       textAt(ctx, sh.tag.toUpperCase(), P + 18, y + 28, { color: C.bright });
       y += 40 + 18;
     }
@@ -517,7 +521,7 @@
     // The story, in its own panel.
     y += 62;
     const panelH = 210;
-    ctx.fillStyle = 'rgba(212,175,55,0.07)';
+    ctx.fillStyle = `rgba(${C.goldRgb},0.07)`;
     roundRect(ctx, M, y, W - 2 * M, panelH, 36); ctx.fill();
     ctx.strokeStyle = C.border; ctx.lineWidth = 2; ctx.stroke();
     font(ctx, 66, { serif: true });
@@ -598,7 +602,7 @@
 
     // The call.
     const py = 600, ph = 184;
-    ctx.fillStyle = 'rgba(212,175,55,0.07)';
+    ctx.fillStyle = `rgba(${C.goldRgb},0.07)`;
     roundRect(ctx, M, py, room, ph, 36); ctx.fill();
     ctx.strokeStyle = C.border; ctx.lineWidth = 2; ctx.stroke();
     if (card.call.names) {

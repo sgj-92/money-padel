@@ -123,3 +123,39 @@ maybe('another community: its own name, wordmark, logo and file names, and no Mo
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+test('colours: the stylesheets name no gold of their own, so a community\'s brand reaches every wash and hairline', () => {
+  const found = [];
+  fs.readdirSync(path.join(ROOT, 'assets/css'), { recursive: true }).filter((f) => f.endsWith('.css')).forEach((f) => {
+    fs.readFileSync(path.join(ROOT, 'assets/css', f), 'utf8').split('\n').forEach((line, i) => {
+      if (/^\s*--[\w-]+\s*:/.test(line)) return; // a variable's definition is where the colour belongs
+      if (/rgba\(\s*(212\s*,\s*175\s*,\s*55|245\s*,\s*213\s*,\s*118|241\s*,\s*233\s*,\s*216|240\s*,\s*223\s*,\s*160)\s*,|#(23200f|fff3c4)\b/i.test(line)) found.push(`${f}:${i + 1}`);
+    });
+  });
+  assert.deepStrictEqual(found, []);
+  const pc = C.CLUBS.padelchampionships.theme;
+  ['--gold', '--gold-bright', '--bg0', '--bg2', '--text', '--text-dim', '--gold-rgb', '--text-rgb'].forEach((k) => assert.ok(pc.css[k], k));
+  assert.strictEqual(C.CLUBS.moneypadel.theme, undefined, 'Money Padel is the stylesheet\'s own colours');
+});
+
+maybe('Money Padel\'s colours resolve exactly as before; Padel Championships is Royal Amethyst, from the first paint', async () => {
+  const look = async (p) => {
+    const app = await H.open({ viewport: { width: 390, height: 844 }, path: p });
+    try {
+      return await app.run(() => {
+        const css = getComputedStyle(document.documentElement);
+        const probe = document.createElement('div');
+        probe.style.borderColor = 'rgba(var(--gold-rgb), 0.5)';
+        document.body.appendChild(probe);
+        const wash = getComputedStyle(probe).borderTopColor;
+        probe.remove();
+        return { gold: css.getPropertyValue('--gold').trim(), bg0: css.getPropertyValue('--bg0').trim(), wash,
+          meta: document.querySelector('meta[name="theme-color"]').content, logo: document.querySelector('.brand-mark img').getAttribute('src') };
+      });
+    } finally { await app.close(); }
+  };
+  assert.deepStrictEqual(await look('index.html'),
+    { gold: '#d4af37', bg0: '#0b0a08', wash: 'rgba(212, 175, 55, 0.5)', meta: '#0b0a08', logo: 'assets/brand/mp-mark.svg' });
+  assert.deepStrictEqual(await look('index.html?club=padelchampionships'),
+    { gold: '#a585ff', bg0: '#0b0812', wash: 'rgba(165, 133, 255, 0.5)', meta: '#0b0812', logo: 'assets/brand/pc-mark.svg' });
+});

@@ -72,7 +72,7 @@
     margin:5px 0;
     letter-spacing:.01em;
   }
-  .upset-good{ background:rgba(212,175,55,.15); color:var(--gold-bright); border:1px solid var(--gold-dim); }
+  .upset-good{ background:rgba(var(--gold-rgb),.15); color:var(--gold-bright); border:1px solid var(--gold-dim); }
   .upset-bad{ background:rgba(181,69,63,.15); color:#e8a5a1; border:1px solid var(--red); }
 
   .minGamesRow{
@@ -211,7 +211,7 @@
   border-top: 1px solid var(--surface-border);
 }
 .kings-card:first-child{ border-top: 0; }
-.kings-tier-a{ --kings-glow: rgba(245,213,118,0.16); }
+.kings-tier-a{ --kings-glow: rgba(var(--gold-bright-rgb),0.16); }
 .kings-tier-b{ --kings-glow: rgba(217,204,163,0.14); }
 .kings-tier-c{ --kings-glow: rgba(201,154,99,0.16); }
 
@@ -246,7 +246,7 @@
   font-family: var(--font-interface); font-size: 11px; text-align: center;
 }
 
-.upset-drill{ cursor: pointer; text-decoration: underline; text-decoration-color: rgba(212,175,55,0.4); }
+.upset-drill{ cursor: pointer; text-decoration: underline; text-decoration-color: rgba(var(--gold-rgb),0.4); }
 
 /* ==========================================================================
    PRESTIGE V1B — polish pass: compact filters, hero, refined podium/header/nav
@@ -403,7 +403,7 @@
 
 .rg-formula{
   font-family: 'Menlo', 'Consolas', monospace; font-size: 12px;
-  color: var(--gold-bright); background: rgba(212,175,55,.06);
+  color: var(--gold-bright); background: rgba(var(--gold-rgb),.06);
   border: 1px solid var(--line); border-radius: 8px;
   padding: 8px 10px; margin: 6px 0;
   /* Wraps rather than scrolls: a formula the reader has to swipe to finish is
@@ -503,7 +503,7 @@
 .mrb-gap-secondary{ color: var(--text-dim); margin-top: 2px; }
 .mrb-close-note{
   font-family: var(--font-interface); font-size: 11.5px; color: var(--gold-bright);
-  margin-top: 8px; padding: 6px 8px; background: rgba(212,175,55,0.10); border: 1px solid var(--gold-dim);
+  margin-top: 8px; padding: 6px 8px; background: rgba(var(--gold-rgb),0.10); border: 1px solid var(--gold-dim);
   border-radius: var(--radius-sm);
 }
 .mrb-detail-line{ font-size: 11.5px; color: var(--text-dim); line-height: 1.6; margin-bottom: 6px; }
@@ -530,7 +530,7 @@
    of the card answers "what happened" before the detail asks for attention. */
 .ms-takeaways{
   border:1px solid var(--line); border-radius:10px;
-  padding:9px 11px; margin-bottom:12px; background:rgba(212,175,55,.04);
+  padding:9px 11px; margin-bottom:12px; background:rgba(var(--gold-rgb),.04);
 }
 .ms-takeaways-head{
   font-family: var(--font-ui); font-size:10px;

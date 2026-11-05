@@ -93,7 +93,7 @@
 .game-edit-inline .section-heading{ margin-top: 6px; }
 
 /* Add a game: how a pasted result was read (ResultParse). */
-.ag-read{ margin-top: 6px; padding: 10px 12px; border: 1px solid var(--gold-hairline); border-radius: 10px; background: rgba(212,175,55,0.05); }
+.ag-read{ margin-top: 6px; padding: 10px 12px; border: 1px solid var(--gold-hairline); border-radius: 10px; background: rgba(var(--gold-rgb),0.05); }
 .ag-read.is-problem{ border-color: var(--red); background: rgba(181,69,63,0.08); }
 .ag-read-line{ font-weight: 700; color: var(--text); }
 .ag-read-list{ margin: 6px 0 0; padding-left: 18px; font-size: 12px; }
