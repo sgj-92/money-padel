@@ -36,10 +36,9 @@ test('the rules: everyone reads, Admins write, members only their four documents
     assert.match(RULES, new RegExp(`match /${c}/\\{id\\}\\s*\\{ allow read: if true; allow write: if isAdmin\\(\\); \\}`), `${c}: Admin writes only`));
 });
 
-test('every community signs Admins in with accounts; only Money Padel still offers the shared password, for now', () => {
+test('every community signs Admins in with accounts; none offers the old shared password (off for Money Padel, 5 Nov)', () => {
   Object.values(C.CLUBS).forEach((c) => assert.strictEqual(c.adminAccounts, true, c.id));
-  assert.strictEqual(C.CLUBS.padelchampionships.legacyAdminPassword, false);
-  assert.strictEqual(C.CLUBS.moneypadel.legacyAdminPassword, true, 'until its accounts and rules are live (docs/ADMIN_SIGN_IN.md)');
+  Object.values(C.CLUBS).forEach((c) => assert.strictEqual(c.legacyAdminPassword, false, c.id));
 });
 
 maybe('signing in: a wrong password is refused, the right one unlocks as Owner, locking signs out', async () => {
@@ -121,19 +120,26 @@ maybe('a community without the shared password: no shared-password unlock, even 
   } finally { await app.close(); }
 });
 
-maybe('Money Padel, until its accounts are live: the shared password still unlocks, underneath the sign-in', async () => {
-  const app = await H.open({ club: { moneypadel_admin_pw_owner_hash: null } });
+maybe('Money Padel: the shared password is gone -- not offered, its panels gone, and an old unlock on a phone no longer counts', async () => {
+  const app = await H.open({ club: { moneypadel_admin_pw_owner_hash: 'x' } });
   try {
-    const r = await app.run(async () => {
-      ownerPasswordHash = simpleHash('old-shared');
+    await app.run(() => { localStorage.setItem('moneypadel_my_unlocked', JSON.stringify({ unlocked: true, role: 'owner' })); });
+    await app.page.reload({ waitUntil: 'domcontentloaded' });
+    await app.page.waitForFunction(() => typeof DATA_READY !== 'undefined' && DATA_READY, null, { timeout: 20000 });
+    const r = await app.run(() => {
+      document.getElementById('viewerSelectorSheet')?.remove();
+      const unlockedAtBoot = isUnlocked;
       document.querySelector('#tabrow .tab-btn[data-tab="games"]').click();
-      const offered = !!document.getElementById('lockPwInput');
-      document.getElementById('lockPwInput').value = 'old-shared';
-      document.getElementById('lockUnlockBtn').click();
-      await new Promise((res) => setTimeout(res, 100));
-      return { offered, unlocked: isUnlocked, role: adminRole };
+      const lock = { legacy: !!document.getElementById('lockPwInput'), form: !!document.getElementById('lockEmail'),
+        offer: /shared Admin password/i.test(document.getElementById('gamesView').innerText) };
+      // Signed in as an Admin, More › Admin has no shared-password panels.
+      isUnlocked = true; adminRole = 'owner'; signedInAdmin = { uid: 'u', email: 'shaun@example.com', role: 'owner', name: 'Shaun' };
+      adminOpenSections.lock = true; renderManage();
+      const panels = !!document.getElementById('cpOwnerSubmit') || !!document.getElementById('cpBoardSubmit');
+      return { unlockedAtBoot, ...lock, panels };
     });
-    assert.deepStrictEqual(r, { offered: true, unlocked: true, role: 'owner' });
+    assert.deepStrictEqual(r, { unlockedAtBoot: false, legacy: false, form: true, offer: false, panels: false });
+    assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
 

@@ -152,7 +152,7 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
-**White-label, step 1c: Admin sign-in and database rules — BUILT (`e5bc4fe`), 5 Nov; live once Shaun does the console steps.** Shaun: "happy to have an actual password for admins, the normal way" (email + password, not email link or Google).
+**White-label, step 1c: Admin sign-in and database rules — LIVE, 5 Nov** (`e5bc4fe`; Shaun did the Firebase console steps; Money Padel's shared password turned off `f9d99dc`). Shaun: "happy to have an actual password for admins, the normal way" (email + password, not email link or Google).
 - `data/adminAuth.js`: Firebase Authentication email/password. An Admin is an account with an `admins/{uid}` entry `{ role: 'owner' | 'board', name }`, made by hand in the console; the app never creates accounts or Admins. A non-Admin account is told so and signed straight out. The session survives reloads (Firebase keeps it); "Sign out and lock" signs out; "Change my password" / "Forgot your password?" send Firebase's reset email. Owner / Board roles carry over from the old passwords.
 - **`firestore.rules`** (repo root; same for every community): everyone reads; members write only `moneypadel_extra_matches`, `_game_requests`, `_challenges`, `_dev_areas` and `healthReports`; signed-in Admins write everything else; nothing writes `admins`; player packs readable by link, never listed. Tested against the app: a member's actions write only those documents.
 - **Behaviour change (small):** a member's game with a new player no longer writes the tier list (Admin data); the starting tier travels with the submission and is added when an Admin approves it.
@@ -3071,7 +3071,7 @@ with Shaun.**
 
 ## 5. OPEN QUESTIONS / DECISIONS
 
-### OPEN 5 Nov — Shaun: Firebase console steps for Admin sign-in (`docs/ADMIN_SIGN_IN.md`)
+### RESOLVED 5 Nov — Shaun: Firebase console steps for Admin sign-in done; shared password off (`f9d99dc`)
 Money Padel project `mp-dashboard-beta-v3`: enable Email/Password, untick self sign-up, add each Admin's account, add their `admins` entry (role owner/board), check sign-in in the app, tell CCode, publish `firestore.rules`. CCode then removes the shared password (`legacyAdminPassword: false`). Until then nothing changes for anyone.
 
 ### OPEN 4 Nov — Padel Championships: decisions before steps 2–4 (Shaun; CGPT to shape events/Americano, CChat to challenge)
@@ -9172,7 +9172,7 @@ Backfill of 817 documents to `mp-dashboard-beta-v3` verified against the plan:
 
 ## 8. NEXT
 
-**CCode, 5 Nov (latest): white-label step 1c, Admin sign-in + `firestore.rules` (`e5bc4fe`, 1001 / 1001).** Baton → Shaun for the console steps (Open Questions, 5 Nov; `docs/ADMIN_SIGN_IN.md`). When he confirms, CCode turns off Money Padel's shared password. Then step 2 (launch Championships) waits on the Padel Championships decisions. CChat: please challenge `firestore.rules` and the member-documents residual risk.
+**CCode, 5 Nov (latest): white-label step 1 complete.** Admin sign-in + `firestore.rules` (`e5bc4fe`) live; Shaun did the console steps; shared password off (`f9d99dc`, 1001 / 1001). `scripts/moneypadel/` writes now need an Admin sign-in (not yet built; reads and dry runs unaffected). Step 2 (launch Championships) waits on the Padel Championships decisions. CChat: please challenge `firestore.rules` and the member-documents residual risk.
 
 **CCode, 4 Nov: white-label step 1b, Money Padel's own record in `clubs/moneypadel/` (`7bece9b`, 993 / 993); redesign merged (`ef73c05`, 1047 / 1047).** Next for CCode (then): step 1c (Admin sign-in + Firestore rules), which waits on Shaun choosing the sign-in method and doing the Firebase console steps CCode will write up. Baton → Shaun.
 
