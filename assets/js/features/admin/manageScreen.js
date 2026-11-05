@@ -104,7 +104,7 @@ function renderManage(){
   html += adminSection('review', 'Admin monthly review', buildReviewSectionHtml());
   html += adminSection('potm', 'Player of the Month', adminOpenSections.potm ? buildPotmSectionHtml() : '');
   html += adminSection('boardpack', 'Monthly Board Pack', adminOpenSections.boardpack ? buildBoardPackSectionHtml() : '');
-  html += adminSection('historical', 'Historical club adjustment', buildHistoricalAdjustmentHtml());
+  html += adminSection('historical', 'Historical club adjustment', adminOpenSections.historical ? buildHistoricalAdjustmentHtml() + buildMoveDecisionHtml() : '');
   // Off the main More list (Shaun, 4 Oct), kept here for Admin.
   if(NORTH_SOUTH_EVENT) html += adminSection('northsouth', 'North vs South',
     `<div class="section-sub">The North vs South exhibition. It is no longer on the More menu; open it from here.</div>`
@@ -172,6 +172,7 @@ function renderManage(){
 
   wireReviewSection();
   wireHistoricalAdjustment();
+  wireMoveDecision();
   wireBoardPackSection();
   wirePotmSection();
 
