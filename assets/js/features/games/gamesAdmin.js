@@ -56,6 +56,10 @@ function matchFixReset(){ matchFixPlan = null; matchFixMessage = ''; managingGam
 // submitted it, and an Upcoming game it was reconciled with. Their history
 // lines keep the identifier they were written with.
 async function carryMatchIdentity(oldId, newId){
+  if(MatchNote.forMatch(matchNotesState, oldId)){
+    matchNotesState = MatchNote.carried(matchNotesState, oldId, newId);
+    await saveMatchNotes(matchNotesState);
+  }
   if(matchAttributionState && matchAttributionState[oldId]){
     const next = { ...matchAttributionState, [newId]: { ...matchAttributionState[oldId], matchId: newId } };
     delete next[oldId];

@@ -92,7 +92,8 @@ function buildLastResultCardHtml(name){
     </div>
     <div class="lr-body">
       <div class="lr-headline">${headline}</div>
-      <div class="lr-score">${scoreForViewer(m, onStoredWinningSide)}${m.isDraw ? ' · not finished' : ''}</div>
+      <div class="lr-score">${scoreForViewer(m, onStoredWinningSide)}${matchNoteMarkHtml(m.id)}${m.isDraw ? ' · not finished' : ''}</div>
+      ${matchNoteLineHtml(m.id)}
       ${commentary ? `<div class="lr-note">${commentary}</div>` : ''}
       <div class="lr-foot">
         <div class="lr-delta">

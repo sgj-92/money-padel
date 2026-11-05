@@ -178,14 +178,15 @@ async function savePublishedReview(doc){
 // only ever bought four round trips where one would do. See init() for the
 // same argument applied to the whole of start-up.
 async function loadStoredData(){
-  const [extraMatches, tagOverrides, matchEdits, deletedIds, matchAttribution] = await Promise.all([
+  const [extraMatches, tagOverrides, matchEdits, deletedIds, matchAttribution, matchNotes] = await Promise.all([
     fsGetJson(STORAGE_KEY_MATCHES, [], 'matches'),
     fsGetJson(STORAGE_KEY_TAGS, {}, 'tags'),
     fsGetJson(STORAGE_KEY_EDITS, {}, 'edits'),
     fsGetJson(STORAGE_KEY_DELETED, [], 'deleted ids'),
     fsGetJson(MatchAttribution.STORAGE_KEY, {}, 'match attribution'),
+    fsGetJson(MatchNote.STORAGE_KEY, {}, 'match notes'),
   ]);
-  return {extraMatches, tagOverrides, matchEdits, deletedIds, matchAttribution};
+  return {extraMatches, tagOverrides, matchEdits, deletedIds, matchAttribution, matchNotes};
 }
 
 async function loadMyName(){
@@ -255,6 +256,14 @@ async function saveMatchAttribution(map){
     await fsSet(MatchAttribution.STORAGE_KEY, JSON.stringify(map));
     return true;
   } catch(e){ lastStorageError = (e && e.message) ? e.message : String(e); console.error('save match attribution failed', e); return false; }
+}
+
+// A result's asterisk and note (domain/matches/matchNote.js). Admin-only.
+async function saveMatchNotes(map){
+  try {
+    await fsSet(MatchNote.STORAGE_KEY, JSON.stringify(map));
+    return true;
+  } catch(e){ lastStorageError = (e && e.message) ? e.message : String(e); console.error('save match notes failed', e); return false; }
 }
 
 async function saveTagOverrides(tagOverrides){

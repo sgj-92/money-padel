@@ -76,7 +76,8 @@ function matchResultCardHtml(card){
     <div class="mrc-top">
       <img src="${CLUB.logo}" alt="" class="mrc-mark"><span class="mrc-brand">${escapeHtml(CLUB.name)}</span>
     </div>
-    <div class="mrc-when">${escapeHtml(matchResultContext(card))}</div>
+    <div class="mrc-when">${escapeHtml(matchResultContext(card))}${matchNoteMarkHtml(card.matchId)}</div>
+    ${matchNoteLineHtml(card.matchId)}
     ${card.isDraw
       // Nobody won: both pairs alike -- same type, size and colour -- one
       // above the other, so neither reads as the winner.
