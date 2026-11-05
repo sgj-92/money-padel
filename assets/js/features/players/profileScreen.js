@@ -577,7 +577,8 @@ function openSheet(name, matchFilter){
       <div class="top"><span>${m.date}${m.type==='singles' ? ' · Singles' : ''}</span><span style="color:${drew?'var(--text-dim)':(won?'var(--green)':'var(--red)')}">${drew?'DRAW':(won?'WIN':'LOSS')}</span></div>
       ${upsetTag}
       <div class="teams"><b>${namesWithRatings}</b> vs ${oppWithRatings}</div>
-      <div class="score">${scoreForViewer(m, onStoredWinnersSide)}${m.note ? ' · '+m.note : ''}</div>
+      <div class="score">${scoreForViewer(m, onStoredWinnersSide)}${matchNoteMarkHtml(m.id)}${m.note ? ' · '+m.note : ''}</div>
+      ${matchNoteLineHtml(m.id)}
       ${whyYourRatingMovedHtml(m, name)}
       ${matchDeltaLineHtml(m)}
       ${adminButtons}

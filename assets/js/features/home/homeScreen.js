@@ -307,9 +307,10 @@ function buildLastResultCardHtml(name){
       ${side(theirs, false)}
     </div>
     <div class="lr-foot">
-      <span class="lr-result">${word}${delta === null ? '' : ` · Power Rating <span class="lr-delta ${delta > 0 ? 'is-up' : delta < 0 ? 'is-down' : ''}">${homeSigned(delta)}</span>`}</span>
+      <span class="lr-result">${word}${matchNoteMarkHtml(m.id)}${delta === null ? '' : ` · Power Rating <span class="lr-delta ${delta > 0 ? 'is-up' : delta < 0 ? 'is-down' : ''}">${homeSigned(delta)}</span>`}</span>
       <button type="button" class="lr-view" data-match-id="${escapeHtml(m.id)}" data-player="${escapeHtml(name)}">View match</button>
     </div>
+    ${matchNoteLineHtml(m.id)}
     ${commentary ? `<div class="lr-note">${commentary}</div>` : ''}
   </div>`;
 }

@@ -432,7 +432,8 @@ or a team per line with 🏆 and the sets"></textarea>
       <div class="game-card-head">
         <div class="game-card-clickable" data-gameid="${m.id}" style="cursor:pointer; min-width:0; flex:1;">
           <div class="cc-title">${titleText}</div>
-          <div class="cc-detail">${scoreText}${scoreBinding}${m.note?' · '+m.note:''}</div>
+          <div class="cc-detail">${scoreText}${matchNoteMarkHtml(m.id)}${scoreBinding}${m.note?' · '+m.note:''}</div>
+          ${matchNoteLineHtml(m.id)}
           <div class="cc-meta-row">
             <div class="cc-meta">${metaLine}</div>
             ${isUnlocked ? `<button class="game-manage-btn${isManaging ? ' open' : ''}" data-manage="${m.id}"
@@ -446,7 +447,8 @@ or a team per line with 🏆 and the sets"></textarea>
           <button class="preset-btn match-action" data-edit="${m.id}" style="flex:1;">Correct match<span class="match-action-sub">Change the score or the players</span></button>
           <button class="preset-btn match-action match-action-destructive" data-delete="${m.id}" style="flex:1;">Remove and replay<span class="match-action-sub">Delete this match from the record</span></button>
         </div>
-        <div class="section-sub" style="margin-top:4px; font-size:10.5px;">${MATCH_CORRECTION_NOTE}</div>`}
+        <div class="section-sub" style="margin-top:4px; font-size:10.5px;">${MATCH_CORRECTION_NOTE}</div>
+        ${matchNoteEditorHtml(m.id)}`}
         ${hasStagedFix ? buildMatchFixConfirmHtml() : ''}
       </div>` : ''}
     </div>`;
@@ -670,6 +672,7 @@ or a team per line with 🏆 and the sets"></textarea>
   };
 
   wireMatchFix();
+  wireMatchNoteEditors(document.getElementById('gamesView'));
   if(matchFixMessage){
     const msg = document.getElementById('gamesMessage');
     if(msg) msg.innerHTML = `<span style="color:${/failed|cannot|Nothing was changed/.test(matchFixMessage)?'var(--red)':'var(--gold-bright)'};">${matchFixMessage}</span>`;

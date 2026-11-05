@@ -88,6 +88,7 @@ let isUnlocked = false;
 let extraMatchesState = [];   // each: {id, date, winners, losers, sets, type, note, status, submittedBy, submittedAt}
 let tagOverridesState = {};
 let matchAttributionState = {};   // matchId -> who submitted / approved it (MatchAttribution)
+let matchNotesState = {};         // matchId -> an Admin's asterisk and note (MatchNote)
 let matchEditsState = {};     // id -> {date?,winners?,losers?,sets?,type?,note?, editedBy, editedAt}
 let deletedIdsState = [];
 let currentUserName = '';
@@ -2224,6 +2225,7 @@ async function init(){
   extraMatchesState = stored.extraMatches;
   tagOverridesState = stored.tagOverrides;
   matchAttributionState = stored.matchAttribution || {};
+  matchNotesState = stored.matchNotes || {};
   matchEditsState = stored.matchEdits;
   deletedIdsState = stored.deletedIds;
   currentUserName = myName;

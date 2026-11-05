@@ -676,6 +676,16 @@
   textarea{ font-size: 16px !important; }
 }
 
+/* ---- A result's asterisk and note (features/games/matchNotes.js) ---- */
+.match-asterisk{ color: var(--gold-bright); font-weight: 700; margin-left: 2px; }
+.match-note{ font-size: 11.5px; line-height: 1.4; color: var(--text-soft); margin-top: 4px;
+  padding: 5px 8px; border-left: 2px solid var(--gold-dim); background: rgba(var(--gold-rgb),0.05); border-radius: 0 6px 6px 0; }
+.match-note-mark{ color: var(--gold-bright); font-weight: 700; margin-right: 2px; }
+.h2h-list .match-note{ margin: 0 0 6px; }
+.match-note-editor{ margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.match-note-check{ display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); margin-bottom: 6px; }
+.match-note-editor textarea{ width: 100%; resize: vertical; font-size: 16px; font-family: var(--font-interface); line-height: 1.4; }
+
 /* ==========================================================================
    REDESIGN PRIMITIVES -- Player Experience Reset, Phase 0 (30 Sep 2026)
    docs/design/CLAUDE_DESIGN_IMPLEMENTATION_MAP.md §3.4. Reference page:

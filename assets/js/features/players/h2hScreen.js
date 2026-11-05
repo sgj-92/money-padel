@@ -165,9 +165,9 @@ function renderH2H(){
       const r = h2hOpponentRow(m, h2hPlayerA, h2hPlayerB);
       return `<div class="h2h-row">
         <span class="h2h-date">${escapeHtml(h2hShortDate(m.date))}</span>
-        <span class="h2h-teams"><span>${escapeHtml(r.teams)}</span><span class="h2h-score">${escapeHtml(m.score)}</span></span>
+        <span class="h2h-teams"><span>${escapeHtml(r.teams)}</span><span class="h2h-score">${escapeHtml(m.score)}${matchNoteMarkHtml(m.id)}</span></span>
         <span class="h2h-res" style="color:${r.drew ? 'var(--text-dim)' : (r.aWon ? 'var(--green)' : 'var(--red)')};">${escapeHtml(r.result)}</span>
-      </div>`;
+      </div>${matchNoteLineHtml(m.id)}`;
     }).join('') + `</div>`;
   }
 
@@ -187,9 +187,9 @@ function renderH2H(){
       const word = sides.outcome===MatchOutcome.DRAW ? 'Draw' : (sides.outcome===MatchOutcome.WIN ? 'Won' : 'Lost');
       return `<div class="h2h-row">
         <span class="h2h-date">${escapeHtml(h2hShortDate(m.date))}</span>
-        <span class="h2h-teams"><span>v ${escapeHtml(sides.theirs.join(' & '))}</span><span class="h2h-score">${escapeHtml(m.score)}</span></span>
+        <span class="h2h-teams"><span>v ${escapeHtml(sides.theirs.join(' & '))}</span><span class="h2h-score">${escapeHtml(m.score)}${matchNoteMarkHtml(m.id)}</span></span>
         <span class="h2h-res" style="color:${sides.outcome===MatchOutcome.DRAW?'var(--text-dim)':(sides.outcome===MatchOutcome.WIN?'var(--green)':'var(--red)')};">${word}</span>
-      </div>`;
+      </div>${matchNoteLineHtml(m.id)}`;
     }).join('') + `</div>`;
   }
 
@@ -268,13 +268,16 @@ function h2hExportText(opp, team, monthActive){
   const t = MatchOutcome.tally(opp, A);
   const lines = [CLUB.name + ' · Head to head', h2hExportTitle(monthActive), ''];
   lines.push(`As opponents: ${A} ${t.wins} – ${t.losses} ${B}${t.draws ? ` (${t.draws} drawn)` : ''} · ${opp.length} meeting${opp.length === 1 ? '' : 's'}`);
-  opp.forEach(m => { const r = h2hOpponentRow(m, A, B); lines.push(`${h2hShortDate(m.date)} · ${r.drew ? 'Drew' : r.result} · ${r.teams} · ${m.score}`); });
+  const noted = (m) => { const e = MatchNote.forMatch(matchNotesState, m.id); const l = MatchNote.noteLine(e); return { mark: MatchNote.mark(e), line: l ? `   ${l}` : '' }; };
+  opp.forEach(m => { const r = h2hOpponentRow(m, A, B); const n = noted(m); lines.push(`${h2hShortDate(m.date)} · ${r.drew ? 'Drew' : r.result} · ${r.teams} · ${m.score}${n.mark}`); if(n.line) lines.push(n.line); });
   if(team.length){
     const tt = MatchOutcome.tally(team, A);
     lines.push('', `As teammates: ${tt.wins}W ${tt.draws ? `${tt.draws}D ` : ''}${tt.losses}L`);
     team.forEach(m => {
       const s = MatchOutcome.sidesFor(m, A);
-      lines.push(`${h2hShortDate(m.date)} · ${h2hResultWord(s.outcome)} · v ${s.theirs.join(' & ')} · ${m.score}`);
+      const n = noted(m);
+      lines.push(`${h2hShortDate(m.date)} · ${h2hResultWord(s.outcome)} · v ${s.theirs.join(' & ')} · ${m.score}${n.mark}`);
+      if(n.line) lines.push(n.line);
     });
   }
   return lines.join('\n');
@@ -290,14 +293,14 @@ function h2hExportView(opp, team, monthActive){
     title: `${A} v ${B}`, month: monthActive ? monthLabel(h2hMonth) : 'All time',
     score: { a: A, b: B, aWins: t.wins, bWins: t.losses, draws: t.draws, meetings: opp.length },
     rows: opp.map(m => { const r = h2hOpponentRow(m, A, B);
-      return { date: h2hShortDate(m.date), teams: r.teams, score: m.score, result: r.drew ? 'Drew' : r.result, tone: r.drew ? 'draw' : (r.aWon ? 'win' : 'loss') }; }),
+      return { date: h2hShortDate(m.date), teams: r.teams, score: m.score + MatchNote.mark(MatchNote.forMatch(matchNotesState, m.id)), result: r.drew ? 'Drew' : r.result, tone: r.drew ? 'draw' : (r.aWon ? 'win' : 'loss') }; }),
     teammates: null,
   };
   if(team.length){
     const tt = MatchOutcome.tally(team, A);
     view.teammates = { summary: `${tt.wins}W ${tt.draws ? `${tt.draws}D ` : ''}${tt.losses}L together`,
       rows: team.map(m => { const sd = MatchOutcome.sidesFor(m, A);
-        return { date: h2hShortDate(m.date), teams: `v ${sd.theirs.join(' & ')}`, score: m.score, result: h2hResultWord(sd.outcome), tone: tone(sd.outcome) }; }) };
+        return { date: h2hShortDate(m.date), teams: `v ${sd.theirs.join(' & ')}`, score: m.score + MatchNote.mark(MatchNote.forMatch(matchNotesState, m.id)), result: h2hResultWord(sd.outcome), tone: tone(sd.outcome) }; }) };
   }
   return view;
 }
