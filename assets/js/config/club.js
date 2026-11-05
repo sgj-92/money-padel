@@ -48,10 +48,9 @@ const CLUBS = {
     standingsDomain: 'mpstandings.sgj.luxe',
     // Admins sign in with their own email and password (data/adminAuth.js).
     adminAccounts: true,
-    // The old shared Admin password, offered until Money Padel's Admin
-    // accounts exist and the database rules are published (docs/ADMIN_SIGN_IN.md).
-    // Then false: the rules refuse its writes anyway.
-    legacyAdminPassword: true,
+    // The old shared Admin password: off since 5 Nov, when Money Padel's
+    // Admin accounts and database rules went live (docs/ADMIN_SIGN_IN.md).
+    legacyAdminPassword: false,
     // Its own record, loaded only for this community (index.html): the
     // pre-v3 base layer, the April/May display-only games, the old app's
     // ratings snapshot, who submitted the early games, the Box Office Cup.
