@@ -32,9 +32,9 @@
   width:min(100%, var(--deck-card-max)); aspect-ratio:4 / 5; box-sizing:border-box;
   display:flex; flex-direction:column; overflow:hidden;
   padding:20px; padding:5.5cqw;
-  border-radius:22px; border:1px solid rgba(212,175,55,0.24);
+  border-radius:22px; border:1px solid rgba(var(--gold-rgb),0.24);
   background:
-    radial-gradient(ellipse 95% 55% at 50% -8%, rgba(212,175,55,0.16) 0%, transparent 70%),
+    radial-gradient(ellipse 95% 55% at 50% -8%, rgba(var(--gold-rgb),0.16) 0%, transparent 70%),
     linear-gradient(180deg, #1b1712 0%, #100e0b 100%);
   box-shadow:0 18px 40px rgba(0,0,0,.55);
   color:var(--text); font-family:var(--font-interface);
@@ -55,13 +55,13 @@
 .deck-foot{ flex:none; margin-top:8px; margin-top:2.2cqw; font-size:11px; font-size:3cqw; color:var(--text-dim); line-height:1.35; }
 
 /* Lists: rank, who, figure. */
-.deck-group + .deck-group{ margin-top:10px; margin-top:2.8cqw; padding-top:8px; padding-top:2.2cqw; border-top:1px solid rgba(212,175,55,0.14); }
+.deck-group + .deck-group{ margin-top:10px; margin-top:2.8cqw; padding-top:8px; padding-top:2.2cqw; border-top:1px solid rgba(var(--gold-rgb),0.14); }
 .deck-group-label{ font-size:11px; font-size:3cqw; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:2px; }
 .deck-rows{ list-style:none; margin:0; padding:0; }
 .deck-row{
   display:flex; align-items:center; gap:10px; gap:2.8cqw;
   padding:6px 0; padding:1.7cqw 0;
-  border-bottom:1px solid rgba(241,233,216,0.06);
+  border-bottom:1px solid rgba(var(--text-rgb),0.06);
 }
 .deck-row:last-child{ border-bottom:0; }
 .deck-rank{ flex:none; width:20px; width:5.4cqw; text-align:center; font-family:var(--font-prestige); font-size:17px; font-size:4.6cqw; color:var(--gold-soft); }
@@ -81,7 +81,7 @@
 
 /* Big numbers: the first is the headline. */
 .deck-stats{ display:grid; grid-template-columns:1fr 1fr; gap:14px; gap:4cqw; margin-top:4px; margin-top:1cqw; }
-.deck-stat{ padding:10px 0; padding:2.8cqw 0; border-top:1px solid rgba(212,175,55,0.16); }
+.deck-stat{ padding:10px 0; padding:2.8cqw 0; border-top:1px solid rgba(var(--gold-rgb),0.16); }
 .deck-stat.is-hero{ grid-column:1 / -1; border-top:0; padding-top:0; }
 .deck-stat-value{ font-family:var(--font-prestige); font-size:36px; font-size:10cqw; line-height:1; color:var(--text); font-variant-numeric:tabular-nums; }
 .deck-stat.is-hero .deck-stat-value{ font-size:66px; font-size:18cqw; color:var(--gold-bright); }
@@ -111,13 +111,13 @@
 .deck-controls{ display:flex; align-items:center; justify-content:center; gap:6px; padding:4px 16px 0; }
 .deck-arrow{
   flex:none; width:44px; height:44px; border-radius:50%;
-  border:1px solid rgba(212,175,55,0.28); background:rgba(255,255,255,0.02);
+  border:1px solid rgba(var(--gold-rgb),0.28); background:rgba(255,255,255,0.02);
   color:var(--gold-bright); font-size:24px; line-height:1; cursor:pointer;
 }
 .deck-arrow:disabled{ opacity:.3; cursor:default; }
 .deck-dots{ display:flex; flex-wrap:wrap; justify-content:center; max-width:calc(100% - 110px); }
 .deck-dot{ width:18px; height:24px; padding:0; border:0; background:none; cursor:pointer; position:relative; }
-.deck-dot::after{ content:''; position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px 0 0 -3px; border-radius:50%; background:rgba(241,233,216,0.28); transition:transform .2s ease, background .2s ease; }
+.deck-dot::after{ content:''; position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px 0 0 -3px; border-radius:50%; background:rgba(var(--text-rgb),0.28); transition:transform .2s ease, background .2s ease; }
 .deck-dot[aria-current="true"]::after{ background:var(--gold-bright); transform:scale(1.4); }
 .deck-live{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 @media (prefers-reduced-motion: reduce){ .deck-dot::after{ transition:none; } }
@@ -135,13 +135,13 @@ body.review-page{
 .review-actions{ margin-left:auto; display:flex; gap:8px; }
 .review-btn{
   min-height:36px; padding:0 14px; border-radius:999px;
-  border:1px solid rgba(212,175,55,0.35); background:transparent; color:var(--gold-bright);
+  border:1px solid rgba(var(--gold-rgb),0.35); background:transparent; color:var(--gold-bright);
   font-family:var(--font-interface); font-size:13px; font-weight:600; cursor:pointer;
 }
 .review-main{ flex:1 1 auto; display:flex; flex-direction:column; justify-content:center; padding-bottom:12px; }
 .review-main .deck{ --deck-card-max:min(440px, calc((100dvh - 52px - 80px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 0.8)); }
 .review-toast{ min-height:18px; text-align:center; font-family:var(--font-interface); font-size:12px; color:var(--text-dim); }
-.review-empty{ margin:auto 16px; padding:28px 22px; text-align:center; font-family:var(--font-interface); color:var(--text-soft); border:1px solid rgba(212,175,55,0.2); border-radius:18px; }
+.review-empty{ margin:auto 16px; padding:28px 22px; text-align:center; font-family:var(--font-interface); color:var(--text-soft); border:1px solid rgba(var(--gold-rgb),0.2); border-radius:18px; }
 .review-empty h1{ font-family:var(--font-prestige); font-weight:400; font-size:26px; color:var(--text); margin:0 0 8px; }
 .review-empty a{ color:var(--gold-bright); }
 
@@ -155,7 +155,7 @@ body.review-page{
 /* A long deck: a count and a bar instead of dots. */
 .deck-progress{ flex:1 1 auto; max-width:200px; display:flex; flex-direction:column; align-items:center; gap:6px; }
 .deck-count{ font-family:var(--font-interface); font-size:13px; font-variant-numeric:tabular-nums; color:var(--text-soft); letter-spacing:.04em; }
-.deck-bar{ width:100%; height:3px; border-radius:2px; background:rgba(241,233,216,0.14); overflow:hidden; }
+.deck-bar{ width:100%; height:3px; border-radius:2px; background:rgba(var(--text-rgb),0.14); overflow:hidden; }
 .deck-bar span{ display:block; height:100%; width:0; background:var(--gold-bright); transition:width .25s ease; }
 @media (prefers-reduced-motion: reduce){ .deck-bar span{ transition:none; } }
 
@@ -177,10 +177,10 @@ body.review-page{
   content:''; position:absolute; inset:0; pointer-events:none; opacity:.7;
   background:radial-gradient(ellipse 90% 60% at 50% 0%, var(--kings-glow, transparent) 0%, transparent 75%);
 }
-.deck-king-a{ --kings-glow:rgba(245,213,118,0.18); --king-metal:var(--kings-a-bright); }
+.deck-king-a{ --kings-glow:rgba(var(--gold-bright-rgb),0.18); --king-metal:var(--kings-a-bright); }
 .deck-king-b{ --kings-glow:rgba(217,204,163,0.15); --king-metal:var(--kings-b-bright); }
 .deck-king-c{ --kings-glow:rgba(201,154,99,0.17); --king-metal:var(--kings-c-bright); }
-.deck-king-s{ --kings-glow:rgba(240,223,160,0.18); --king-metal:var(--tier-s-text); }
+.deck-king-s{ --kings-glow:rgba(var(--tier-s-rgb),0.18); --king-metal:var(--tier-s-text); }
 .deck-king > *{ position:relative; z-index:1; }
 .deck-king-crown{ width:62%; max-width:120px; max-width:32cqw; height:auto; aspect-ratio:2 / 1; object-fit:contain; margin-bottom:6px; margin-bottom:1.8cqw; }
 /* The same crown for every tier; a filter shifts its metal, as in the app. */
@@ -212,10 +212,10 @@ body.review-page{
 .review-index h1{ font-family: var(--font-prestige); font-weight: 400; font-size: 26px; color: var(--text); margin: 8px 0 4px; }
 .review-index-sub{ color: var(--text-dim); font-size: 14px; margin: 0 0 16px; }
 .review-index-row{ display: grid; grid-template-columns: 1fr auto 16px; align-items: center; gap: 10px; padding: 16px 14px;
-  margin-bottom: 10px; border: 1px solid rgba(212,175,55,0.2); border-radius: 14px; color: var(--text); text-decoration: none; }
+  margin-bottom: 10px; border: 1px solid rgba(var(--gold-rgb),0.2); border-radius: 14px; color: var(--text); text-decoration: none; }
 .review-index-month{ font-family: var(--font-prestige); font-size: 18px; }
 .review-index-count{ font-size: 13px; color: var(--text-dim); }
 .review-index-chev{ color: var(--gold-bright); }
 .review-index-back{ margin-top: 18px; text-align: center; }
 .review-index-back a{ color: var(--gold-bright); }
-.review-btn-quiet{ display: inline-flex; align-items: center; margin-right: 8px; border-color: rgba(212,175,55,0.2); color: var(--text-soft); text-decoration: none; }
+.review-btn-quiet{ display: inline-flex; align-items: center; margin-right: 8px; border-color: rgba(var(--gold-rgb),0.2); color: var(--text-soft); text-decoration: none; }

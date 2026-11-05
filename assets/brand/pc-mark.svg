@@ -1,5 +1,10 @@
-<!-- PLACEHOLDER for Padel Championships until it has its own mark (Ledger, 4 Nov) -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect x="1" y="1" width="30" height="30" rx="7" stroke="#d4af37" stroke-width="1.4"/>
-  <text x="16" y="21" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#f5d576">PC</text>
+  <!-- Padel Championships: a trophy with a star ("Royal Amethyst", Shaun 5 Nov) -->
+  <path d="M8.6 5.2 C5 5.2 3.6 7.2 4 9.6 C4.5 12.4 7 14 9.8 14.2" stroke="#a585ff" stroke-width="1.9" stroke-linecap="round"/>
+  <path d="M23.4 5.2 C27 5.2 28.4 7.2 28 9.6 C27.5 12.4 25 14 22.2 14.2" stroke="#a585ff" stroke-width="1.9" stroke-linecap="round"/>
+  <path d="M8 3.2 H24 V9.6 C24 15 20.6 18.6 16 18.6 C11.4 18.6 8 15 8 9.6 Z" fill="#a585ff"/>
+  <path d="M16 6.1 L17.15 8.45 L19.7 8.8 L17.85 10.6 L18.3 13.15 L16 11.95 L13.7 13.15 L14.15 10.6 L12.3 8.8 L14.85 8.45 Z" fill="#0b0812"/>
+  <rect x="14.6" y="18.4" width="2.8" height="5" fill="#a585ff"/>
+  <rect x="10.2" y="23.2" width="11.6" height="2.6" rx="0.9" fill="#d4c4ff"/>
+  <rect x="8.6" y="26.6" width="14.8" height="2.4" rx="1" fill="#d4c4ff"/>
 </svg>

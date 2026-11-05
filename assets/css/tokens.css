@@ -35,24 +35,24 @@
   --surface-0: var(--bg0);
   --surface-1: var(--bg1);
   --surface-2: var(--bg2);
-  --surface-border: rgba(241,233,216,0.08);
-  --surface-border-soft: rgba(241,233,216,0.05);
+  --surface-border: rgba(var(--text-rgb),0.08);
+  --surface-border-soft: rgba(var(--text-rgb),0.05);
 
   /* ---- Gold, used sparingly and only for these roles ---- */
-  --gold-hairline: rgba(212,175,55,0.22);
-  --gold-wash: rgba(212,175,55,0.07);
-  --gold-illumination: radial-gradient(ellipse 65% 45% at 50% 0%, rgba(212,175,55,0.10) 0%, transparent 72%);
+  --gold-hairline: rgba(var(--gold-rgb),0.22);
+  --gold-wash: rgba(var(--gold-rgb),0.07);
+  --gold-illumination: radial-gradient(ellipse 65% 45% at 50% 0%, rgba(var(--gold-rgb),0.10) 0%, transparent 72%);
 
   /* ---- Tier identity ----
      Distinct from --green/--red (which mean win/loss elsewhere) -- tiers get
      their own restrained, non-primary-color identity so they read as rank
      insignia, not status indicators. */
-  --tier-s-text: #f0dfa0;
-  --tier-s-border: rgba(240,223,160,0.35);
-  --tier-s-bg: rgba(240,223,160,0.08);
+  --tier-s-text: var(--tier-s);
+  --tier-s-border: rgba(var(--tier-s-rgb),0.35);
+  --tier-s-bg: rgba(var(--tier-s-rgb),0.08);
   --tier-a-text: var(--gold-bright);
-  --tier-a-border: rgba(212,175,55,0.30);
-  --tier-a-bg: rgba(212,175,55,0.08);
+  --tier-a-border: rgba(var(--gold-rgb),0.30);
+  --tier-a-bg: rgba(var(--gold-rgb),0.08);
   --tier-b-text: #9db8a8;
   --tier-b-border: rgba(157,184,168,0.30);
   --tier-b-bg: rgba(157,184,168,0.08);
@@ -75,7 +75,7 @@
   /* ---- Shadows / illumination -- CSS-only depth, per design direction ---- */
   --shadow-card: 0 1px 2px rgba(0,0,0,0.4);
   --shadow-podium: 0 10px 28px rgba(0,0,0,0.55);
-  --shadow-podium-first: 0 12px 32px rgba(0,0,0,0.6), 0 0 40px rgba(212,175,55,0.06);
+  --shadow-podium-first: 0 12px 32px rgba(0,0,0,0.6), 0 0 40px rgba(var(--gold-rgb),0.06);
   --glow-prestige: var(--gold-illumination);
 
   /* ---- Typography roles ----

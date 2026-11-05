@@ -27,6 +27,14 @@
 <link rel="stylesheet" href="assets/css/screens/admin.css">
 <link rel="stylesheet" href="assets/css/screens/review.css">
 <link rel="stylesheet" href="assets/css/layout/desktop.css">
+<!-- The community (config/club.js), its period and its colours, before
+     anything is drawn: a community with its own brand never flashes gold. -->
+<script src="assets/js/config/club.js"></script>
+<script src="assets/js/config/period.js"></script>
+<script src="assets/js/ui/components/clubTheme.js"></script>
+<script>ClubTheme.apply(document);</script>
+<script src="assets/js/ui/components/clubWords.js"></script>
+<script>ClubWords.watch(document);</script>
 </head>
 <body>
 
@@ -155,10 +163,6 @@
   </div>
 </div>
 
-<script src="assets/js/config/club.js"></script>
-<script src="assets/js/config/period.js"></script>
-<script src="assets/js/ui/components/clubWords.js"></script>
-<script>ClubWords.watch(document);</script>
 <script src="assets/js/buildInfo.js"></script>
 <script src="assets/js/buildStamp.js"></script>
 <script src="assets/js/perfTrace.js"></script>

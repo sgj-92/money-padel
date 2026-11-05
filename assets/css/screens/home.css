@@ -99,7 +99,7 @@
 .home-lastresult{ display: flex; gap: 12px; align-items: stretch; }
 .lr-stamp{
   flex: none; width: 92px; border-radius: 10px; border: 1px solid var(--line);
-  background: rgba(212,175,55,.04); padding: 10px 8px; text-align: center;
+  background: rgba(var(--gold-rgb),.04); padding: 10px 8px; text-align: center;
   display: flex; flex-direction: column; justify-content: center; gap: 4px;
 }
 .lr-date{ font-family: var(--font-interface); font-size: 10px; letter-spacing: .04em; color: var(--text); }

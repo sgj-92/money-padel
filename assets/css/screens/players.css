@@ -13,7 +13,7 @@
   .risk-promotion{ background:rgba(90,156,90,.18); color:var(--green); border:1px solid var(--green); }
   .risk-demotion{ background:rgba(181,69,63,.18); color:#e8a5a1; border:1px solid var(--red); }
   .risk-unproven{ background:rgba(168,156,130,.15); color:var(--text-dim); border:1px solid var(--line); }
-  .risk-stable{ background:rgba(212,175,55,.1); color:var(--gold-soft); border:1px solid var(--gold-dim); }
+  .risk-stable{ background:rgba(var(--gold-rgb),.1); color:var(--gold-soft); border:1px solid var(--gold-dim); }
 
   .profile-box{
     font-family:'Helvetica Neue', Arial, sans-serif;
