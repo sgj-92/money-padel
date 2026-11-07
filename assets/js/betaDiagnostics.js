@@ -131,7 +131,8 @@
     matches.forEach((m) => {
       const evs = byMatch[m.id];
       if (!evs) { problems.push(`${m.id}: rated match with no journey events`); return; }
-      const expected = ((m.teamA || []).length + (m.teamB || []).length);
+      // A forfeit's partner is in the match but untouched by it (ratingEngine.js).
+      const expected = ((m.teamA || []).length + (m.teamB || []).length) - ((m.forfeit && m.forfeit.unaffected) || []).length;
       if (evs.length !== expected) problems.push(`${m.id}: ${evs.length} events for ${expected} players`);
     });
     const matchIds = {};

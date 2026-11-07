@@ -338,6 +338,8 @@ function enrichMatches(matches){
       score: m.sets.map(s=>s.join('-')).join(', '),
       type: m.type, note: m.note||'', verified: m.verified !== false,
       isDraw: !!m.isDraw,
+      // A forfeit: who quit, and whose result does not count (v3Bridge).
+      ...(m.forfeit ? { forfeit: m.forfeit } : {}),
       games_winner: gw, games_loser: gl,
       game_share_winner: Math.round((gw/total)*1000)/1000,
       expected_score: Math.round(view.mine.expected*1000)/1000,

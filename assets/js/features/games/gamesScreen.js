@@ -448,6 +448,7 @@ or a team per line with 🏆 and the sets"></textarea>
           <button class="preset-btn match-action match-action-destructive" data-delete="${m.id}" style="flex:1;">Remove and replay<span class="match-action-sub">Delete this match from the record</span></button>
         </div>
         <div class="section-sub" style="margin-top:4px; font-size:10.5px;">${MATCH_CORRECTION_NOTE}</div>
+        ${matchForfeitPanelHtml(m)}
         ${matchNoteEditorHtml(m.id)}`}
         ${hasStagedFix ? buildMatchFixConfirmHtml() : ''}
       </div>` : ''}
@@ -691,7 +692,21 @@ or a team per line with 🏆 and the sets"></textarea>
   box.querySelectorAll('[data-reject]').forEach(btn=>{
     btn.onclick = ()=> rejectMatch(btn.dataset.reject);
   });
+  box.querySelectorAll('[data-forfeit-stage]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const who = btn.closest('[data-forfeit-panel]').querySelector('[data-forfeit-who]').value;
+      if(!who){ matchFixMessage = 'Choose who quit.'; renderGamesTab(); return; }
+      managingGameId = btn.dataset.forfeitStage;
+      withGameAnchor(btn.dataset.forfeitStage, () => stageForfeit(btn.dataset.forfeitStage, who));
+    };
+  });
+  box.querySelectorAll('[data-forfeit-remove]').forEach(btn=>{
+    btn.onclick = ()=>{ managingGameId = btn.dataset.forfeitRemove; withGameAnchor(btn.dataset.forfeitRemove, () => removeForfeit(btn.dataset.forfeitRemove)); };
+  });
   box.querySelectorAll('[data-edit]').forEach(btn=>{
+    // A forfeit's sides leave the partner out, so the ordinary correction
+    // form cannot see him: remove the forfeit first, then correct the match.
+    if(matchForfeitOf(btn.dataset.edit)){ btn.onclick = ()=>{ matchFixMessage = 'This match is a forfeit. Remove the forfeit first, then correct it.'; renderGamesTab(); }; return; }
     btn.onclick = ()=> openGameEditor(btn.dataset.edit);
   });
   // One card's actions open at a time. Tapping Manage again closes it, and a

@@ -268,7 +268,7 @@ function h2hExportText(opp, team, monthActive){
   const t = MatchOutcome.tally(opp, A);
   const lines = [CLUB.name + ' · Head to head', h2hExportTitle(monthActive), ''];
   lines.push(`As opponents: ${A} ${t.wins} – ${t.losses} ${B}${t.draws ? ` (${t.draws} drawn)` : ''} · ${opp.length} meeting${opp.length === 1 ? '' : 's'}`);
-  const noted = (m) => { const e = MatchNote.forMatch(matchNotesState, m.id); const l = MatchNote.noteLine(e); return { mark: MatchNote.mark(e), line: l ? `   ${l}` : '' }; };
+  const noted = (m) => { const e = MatchNote.forMatch(matchNotesState, m.id); const l = [matchForfeitText(matchForfeitOf(m.id)), MatchNote.noteLine(e)].filter(Boolean).map(x => `   ${x}`).join('\n'); return { mark: MatchNote.mark(e), line: l }; };
   opp.forEach(m => { const r = h2hOpponentRow(m, A, B); const n = noted(m); lines.push(`${h2hShortDate(m.date)} · ${r.drew ? 'Drew' : r.result} · ${r.teams} · ${m.score}${n.mark}`); if(n.line) lines.push(n.line); });
   if(team.length){
     const tt = MatchOutcome.tally(team, A);

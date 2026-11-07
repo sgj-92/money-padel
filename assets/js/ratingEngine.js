@@ -135,8 +135,16 @@
 
     const events = [];
 
+    // A forfeit (Shaun, 7 Nov): one player quit, so the match is a loss for
+    // him and a win for the opponents, at the score as it stood -- but his
+    // partner did nothing wrong. The partner still counts towards the pair's
+    // strength (the pair did play; the expectation is the pair's), and is
+    // otherwise untouched: no rating movement, no evidence, no match counted.
+    const unaffected = {};
+    ((match.forfeit && match.forfeit.unaffected) || []).forEach((n) => { unaffected[n] = true; });
+
     function applyTo(team, teamResidual, teamExpected, teamActual, side) {
-      team.forEach((name) => {
+      team.filter((name) => !unaffected[name]).forEach((name) => {
         const s = state[name];
         const preMatchRating = s.rating;
         const evidenceBefore = s.effectiveEvidence;
