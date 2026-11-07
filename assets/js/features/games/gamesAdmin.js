@@ -135,6 +135,35 @@ function newPlayersNoteHtml(planned){
   return `<div class="section-sub" style="margin-top:4px; color:var(--gold-bright);">${list.map(n => `${escapeHtml(n.playerId)} joins the record here, in Tier ${n.tier} at ${n.rating}`).join('; ')}. The starting tier can be corrected once in Club Decisions if it turns out wrong.</div>`;
 }
 
+// A forfeit (Shaun, 7 Nov): the rated match as stored, with the player who
+// quit on the losing side and his partner left untouched by the rating.
+async function stageForfeit(matchId, quitterName){
+  const raw = ((V3_RECORD && V3_RECORD.matches) || []).find(d => d.id === matchId);
+  if(!raw){ matchFixMessage = 'That match is not in the record.'; renderGamesTab(); return; }
+  const qid = playerIdFor(quitterName);
+  const inA = raw.teamA.includes(qid);
+  if(!inA && !raw.teamB.includes(qid)){ matchFixMessage = `${quitterName} did not play in this match.`; renderGamesTab(); return; }
+  const sets = raw.sets.map(s => inA ? [s.teamB, s.teamA] : [s.teamA, s.teamB]);
+  const teamA = inA ? raw.teamB.slice() : raw.teamA.slice();
+  const teamB = inA ? raw.teamA.slice() : raw.teamB.slice();
+  const unaffected = teamB.filter(n => n !== qid);
+  const corrected = { id: raw.id, date: raw.date, sourceIndex: raw.sourceIndex, teamA, teamB, sets,
+    outcome: RatingEngine.OUTCOME.A_WINS, type: raw.type || 'doubles', drawSideAssignmentArbitrary: false,
+    forfeit: { by: qid, unaffected } };
+  const show = (ids) => ids.map(id => (V3_STATE.players[id] && V3_STATE.players[id].displayName) || id).join(' & ');
+  await stageMatchCorrection({ type: 'edit', match: corrected },
+    `Forfeit on ${raw.date}: ${quitterName} quit. A loss for ${quitterName}${unaffected.length ? ` (${show(unaffected)} untouched)` : ''}, a win for ${show(teamA)}, at ${sets.map(s => s.join('-')).join(', ')}.`);
+}
+
+async function removeForfeit(matchId){
+  const raw = ((V3_RECORD && V3_RECORD.matches) || []).find(d => d.id === matchId);
+  if(!raw || !raw.forfeit) return;
+  const corrected = { ...RatingStore.matchFromDoc(raw) };
+  delete corrected.forfeit;
+  await stageMatchCorrection({ type: 'edit', match: corrected },
+    `Remove the forfeit on ${raw.date}: counted for all four players, as played.`);
+}
+
 async function stageMatchCorrection(change, describe){
   matchFixBusy = true; matchFixMessage = 'Replaying…'; renderGamesTab();
   try {

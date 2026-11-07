@@ -125,14 +125,20 @@
   // Converts a stored v3 match into the shape the existing application reads.
   // Team A is the winning side for every decided match; a draw carries isDraw
   // and its side assignment is arbitrary but fixed.
+  //
+  // A forfeit (doc.forfeit): the player who quit is on the losing side; his
+  // partner is left out of the sides here, so every record, table, head to
+  // head and partnership counts the match for the three it affects and not
+  // for him. `forfeit` says who quit and who was left out, for display.
   function toLegacyMatchShape(doc, alias) {
     const isDraw = doc.outcome === Engine.OUTCOME.DRAW;
-    return {
+    const out = new Set((doc.forfeit && doc.forfeit.unaffected) || []);
+    const shape = {
       id: doc.id,
       date: doc.date,
       sourceIndex: doc.sourceIndex,
-      winners: Names.mapTeam(alias, doc.teamA),
-      losers: Names.mapTeam(alias, doc.teamB),
+      winners: Names.mapTeam(alias, doc.teamA.filter((n) => !out.has(n))),
+      losers: Names.mapTeam(alias, doc.teamB.filter((n) => !out.has(n))),
       sets: doc.sets.map((s) => [s.teamA, s.teamB]),
       type: doc.type || 'doubles',
       note: '',
@@ -140,6 +146,10 @@
       isDraw: isDraw,
       _v3: true,
     };
+    if (doc.forfeit) {
+      shape.forfeit = { by: Names.mapTeam(alias, [doc.forfeit.by])[0], unaffected: Names.mapTeam(alias, doc.forfeit.unaffected || []) };
+    }
+    return shape;
   }
 
   // Ordering is pinned to (date, sourceIndex) exactly as the engine orders it,

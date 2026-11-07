@@ -99,6 +99,8 @@
       outcome: match.outcome,
       type: match.type ?? null,
       drawSideAssignmentArbitrary: !!match.drawSideAssignmentArbitrary,
+      // Only on a forfeit, so every other stored match is exactly as before.
+      ...(match.forfeit ? { forfeit: { by: match.forfeit.by, unaffected: (match.forfeit.unaffected || []).slice() } } : {}),
     };
   }
 
@@ -113,6 +115,7 @@
       outcome: doc.outcome,
       type: doc.type,
       drawSideAssignmentArbitrary: doc.drawSideAssignmentArbitrary,
+      ...(doc.forfeit ? { forfeit: { by: doc.forfeit.by, unaffected: (doc.forfeit.unaffected || []).slice() } } : {}),
     };
   }
 
