@@ -19,7 +19,7 @@ function parseQuickEntryText(text){
     .concat(Object.keys(tagOverridesState || {}).filter(n => !archived.has(n))))];
   const now = new Date();
   const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  return ResultParse.parse(text, { directory, me: submissionIdentity() || null, today });
+  return ResultParse.parse(text, { directory, me: submissionIdentity() || null, today, aliases: clubNameAliases() });
 }
 
 function renderAddGameSets(){
@@ -49,7 +49,12 @@ function checkForNewPlayers(){
   // tier; asking again here would overwrite it with this picker's default.
   const known = new Set(PLAYERS.map(p=>p.name.toLowerCase())
     .concat(Object.keys(tagOverridesState || {}).filter(n => tagOverridesState[n] && tagOverridesState[n].tier).map(n => n.toLowerCase())));
-  const newNames = names.filter(n=>!known.has(n.toLowerCase()));
+  // Another spelling of a player is that player, and said so (nameSpellings.js).
+  const readAs = names.filter(n => canonicalPlayerName(n).toLowerCase() !== n.toLowerCase());
+  let note = document.getElementById('agNameNote');
+  if(!note){ note = document.createElement('div'); note.id = 'agNameNote'; note.className = 'section-sub'; document.getElementById('agNewPlayerRow').before(note); }
+  note.textContent = readAs.map(n => `“${n}” is read as ${canonicalPlayerName(n)}.`).join(' ');
+  const newNames = names.filter(n=>!known.has(canonicalPlayerName(n).toLowerCase()));
   const row = document.getElementById('agNewPlayerRow');
   const box = document.getElementById('agNewPlayerTiers');
   if(newNames.length===0){ row.style.display='none'; box.innerHTML=''; return; }
@@ -80,10 +85,11 @@ async function submitNewGame(){
   const date = document.getElementById('agDate').value;
   const isSingles = document.querySelector('#agTypeToggle .fg-toggle-btn.active').dataset.type === 'singles';
   const isDraw = document.querySelector('#agOutcomeToggle .fg-toggle-btn.active').dataset.outcome === 'draw';
-  const a1 = document.getElementById('agA1').value.trim();
-  const a2 = document.getElementById('agA2').value.trim();
-  const b1 = document.getElementById('agB1').value.trim();
-  const b2 = document.getElementById('agB2').value.trim();
+  // Typed names as the club knows them: "Jordz" is Jords, "jords" is Jords.
+  const a1 = canonicalPlayerName(document.getElementById('agA1').value);
+  const a2 = canonicalPlayerName(document.getElementById('agA2').value);
+  const b1 = canonicalPlayerName(document.getElementById('agB1').value);
+  const b2 = canonicalPlayerName(document.getElementById('agB2').value);
 
   if(!date || !a1 || !b1 || (!isSingles && (!a2 || !b2))){
     msg.textContent = 'Fill in the date and all player names.'; return;
