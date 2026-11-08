@@ -28,7 +28,7 @@ function canonicalPlayerName(typed){
   const t = String(typed || '').trim();
   if(!t) return t;
   const low = t.toLowerCase();
-  const directory = allPlayerNames();
+  const directory = entryPlayerNames();
   const exact = directory.find(n => n.toLowerCase() === low);
   if(exact) return exact;
   const aka = clubNameAliases()[low];
@@ -57,7 +57,7 @@ function nameSpellingsHtml(){
       }).join('') : '<div class="section-sub">None yet.</div>'}
       <div class="fg-row" style="margin-top:6px;">
         <input id="aliasTyped" class="fg-select" placeholder="How it gets written, e.g. Jordz" style="margin-bottom:6px;" />
-        <select id="aliasPlayer" class="fg-select"><option value="">…is this player</option>${allPlayerNames().slice().sort().map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('')}</select>
+        <select id="aliasPlayer" class="fg-select"><option value="">…is this player</option>${entryPlayerNames().slice().sort().map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('')}</select>
       </div>
       <div class="fg-row"><button class="preset-btn" id="aliasAdd">+ Add spelling</button></div>
       <div id="aliasMessage" class="section-sub"></div>
@@ -71,7 +71,7 @@ function wireNameSpellings(){
     const typed = document.getElementById('aliasTyped').value.trim();
     const player = document.getElementById('aliasPlayer').value;
     if(!typed || !player){ msg().textContent = 'Type the spelling and choose the player.'; return; }
-    if(allPlayerNames().some(n => n.toLowerCase() === typed.toLowerCase())){ msg().textContent = `${typed} is already a player's name.`; return; }
+    if(entryPlayerNames().some(n => n.toLowerCase() === typed.toLowerCase())){ msg().textContent = `${typed} is already a player's name.`; return; }
     const next = { ...(nameAliasesState || {}), [typed.toLowerCase()]: player };
     if(!(await saveNameAliases(next))){ msg().textContent = `Save failed (${lastStorageError || 'unknown error'}).`; return; }
     nameAliasesState = next;

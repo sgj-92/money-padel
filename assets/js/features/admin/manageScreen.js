@@ -501,7 +501,11 @@ function renderPlayerTagsList(){
   const S = PlayerStatus.STATUS;
   const groups = PlayerStatus.ALL.map(st => ({ st, rows: PLAYERS.filter(p => p.status === st).sort((a,b)=>a.name.localeCompare(b.name)) }))
     .filter(g => g.rows.length);
-  box.innerHTML = groups.map(g => `<div class="ptag-group-head" data-status-group="${g.st}">${PlayerStatus.LABEL[g.st]} · ${g.rows.length}</div>`
+  const waiting = awaitingFirstGame();
+  const waitingHtml = waiting.length ? `<div class="ptag-group-head" data-status-group="awaiting">Waiting for their first game · ${waiting.length}</div>`
+    + waiting.map(n => `<div class="ptag-row"><div class="ptag-summary" style="cursor:default;"><span style="min-width:0;"><span class="ptag-name">${escapeHtml(n)}</span>
+        <span class="ptag-meta">Starts in Tier ${escapeHtml(tagOverridesState[n].tier)} · rated from their first approved result</span></span></div></div>`).join('') : '';
+  box.innerHTML = waitingHtml + groups.map(g => `<div class="ptag-group-head" data-status-group="${g.st}">${PlayerStatus.LABEL[g.st]} · ${g.rows.length}</div>`
     + g.rows.map(p=>{
     const startingTier = STARTING_TIER_MAP[p.name] || '';
     const open = !!openPlayerTags[p.name];

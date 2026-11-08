@@ -74,3 +74,26 @@ maybe('the "Who are you?" sheet is never a trap: it says when nobody is in it ye
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+maybe('players added but not yet rated are shown as waiting for their first game: Admin, Add a game, the rankings', async () => {
+  const club = { moneypadel_player_tags: { Shaun: { tier: 'A', active: true }, George: { tier: 'A', active: true }, Fred: { tier: 'A', active: true }, Jeremy: { tier: 'A', active: true } } };
+  const app = await H.open({ path: 'index.html?club=padelchampionships', record: EMPTY, club });
+  try {
+    const r = await app.run(async () => {
+      legacyTabBtn('power').click();
+      await new Promise((res) => setTimeout(res, 50));
+      const power = document.getElementById('empty').innerText;
+      legacyTabBtn('games').click();
+      const suggested = [...document.querySelectorAll('#playerNamesList option')].map((o) => o.value);
+      isUnlocked = true; adminRole = 'owner'; adminOpenSections.players = true; renderManage();
+      const admin = document.getElementById('playerTagsList').innerText;
+      return { waiting: awaitingFirstGame(), power, suggested, admin };
+    });
+    assert.deepStrictEqual(r.waiting, ['Fred', 'George', 'Jeremy', 'Shaun']);
+    assert.match(r.power, /No ratings yet\.\s*4 players waiting for their first game: Fred, George, Jeremy, Shaun\./);
+    assert.deepStrictEqual(r.suggested, ['Fred', 'George', 'Jeremy', 'Shaun'], 'Add a game offers them');
+    assert.match(r.admin, /Waiting for their first game · 4/);
+    assert.match(r.admin, /Jeremy\s*Starts in Tier A/);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});

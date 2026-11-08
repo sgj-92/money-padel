@@ -218,6 +218,8 @@ function render(){
   // Only the rankings list owns this message; a render that lands while
   // another screen is showing (the data arriving under League) must not leak it.
   empty.style.display = (rows.length || list.style.display === 'none') ? 'none' : 'block';
+  const waiting = awaitingFirstGame();
+  empty.innerHTML = (!PLAYERS.length && waiting.length) ? `No ratings yet.${awaitingFirstGameHtml()}` : 'No players match that filter.';
 
   if(selectedMonth !== 'all'){
     const noteWrapper = document.createElement('div');

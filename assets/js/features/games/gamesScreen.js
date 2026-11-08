@@ -281,7 +281,7 @@ or a team per line with 🏆 and the sets"></textarea>
       <input id="agB1" list="playerNamesList" class="fg-select" placeholder="Player name" style="margin-bottom:6px;" />
       <input id="agB2" list="playerNamesList" class="fg-select" placeholder="Partner (leave blank for singles)" />
     </div>
-    <datalist id="playerNamesList">${allPlayerNames().map(n=>`<option value="${n}">`).join('')}</datalist>
+    <datalist id="playerNamesList">${entryPlayerNames().map(n=>`<option value="${n}">`).join('')}</datalist>
     <div class="fg-row"><label class="fg-label" id="agSetsLabel">Set scores (Team A – Team B)</label>
       <div id="agSets"></div>
       <button class="preset-btn" id="agAddSet" style="margin-top:6px;">+ Add set</button>
