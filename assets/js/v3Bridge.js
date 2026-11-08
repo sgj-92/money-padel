@@ -49,7 +49,10 @@
 
   // backend: anything with getAll(collection). Browser passes a Firestore
   // compat backend; tests pass an in-memory one.
-  async function load(backend) {
+  // `allowEmpty`: a community that has not played yet (config/club.js
+  // recordStartsEmpty) has an empty record, which is a start, not a failed
+  // read. For a community with a record, empty still means something broke.
+  async function load(backend, { allowEmpty } = {}) {
     const state = createState();
     let docs;
     try {
@@ -58,10 +61,11 @@
       state.error = 'Could not read v3 player state: ' + (e && e.message ? e.message : String(e));
       return state;
     }
-    if (!docs || docs.length === 0) {
+    if ((!docs || docs.length === 0) && !allowEmpty) {
       state.error = 'The v3 players collection is empty. Has the backfill been run?';
       return state;
     }
+    docs = docs || [];
     // The documents exactly as stored, kept beside the shapes the app uses.
     // Verifying that the record still replays to itself needs the stored form,
     // and re-reading 34 documents to get back what was just read would be a
@@ -156,9 +160,9 @@
   // so the application and the rating it displays walk the same sequence.
   // `collect`, when given, receives the documents as stored -- the shape the
   // replay verifier needs, which the legacy shape below has already lost.
-  async function loadMatches(backend, collect, alias) {
-    const docs = await backend.getAll('matches');
-    if (!docs || docs.length === 0) throw new Error('The v3 matches collection is empty.');
+  async function loadMatches(backend, collect, alias, { allowEmpty } = {}) {
+    const docs = (await backend.getAll('matches')) || [];
+    if (docs.length === 0 && !allowEmpty) throw new Error('The v3 matches collection is empty.');
     if (collect) collect.raw = docs;
     return docs
       .map((d) => toLegacyMatchShape(d, alias))
@@ -168,9 +172,9 @@
   // The Rating Journey. Read once per session for the monthly views, never for
   // ordinary player state -- that still comes from the compact `players`
   // collection. 633 documents today, growing ~120 a month.
-  async function loadJourney(backend, collect, alias) {
-    const docs = await backend.getAll('ratingJourney');
-    if (!docs || docs.length === 0) throw new Error('The ratingJourney collection is empty.');
+  async function loadJourney(backend, collect, alias, { allowEmpty } = {}) {
+    const docs = (await backend.getAll('ratingJourney')) || [];
+    if (docs.length === 0 && !allowEmpty) throw new Error('The ratingJourney collection is empty.');
     if (collect) collect.raw = docs;
     // Every screen that reads the journey -- the Rating Journey, the monthly
     // views, tier history, match facts -- looks a player up by what they are

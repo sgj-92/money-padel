@@ -76,9 +76,8 @@ const CLUBS = {
 
   // Dubai (Shaun, 4 Nov). Its addresses (5 Nov): padelchamps.sgj.luxe and
   // pcstandings.sgj.luxe, once they point at Vercel; until then, and on any
-  // address no community claims, ?club=padelchampionships. No Firebase
-  // project yet, so no data. Events, Americano and the Invitational group
-  // come later (Ledger, 4 Nov).
+  // address no community claims, ?club=padelchampionships. Events, Americano
+  // and the Invitational group come next (Ledger, 8 Nov).
   padelchampionships: {
     id: 'padelchampionships',
     name: 'Padel Championships',
@@ -96,6 +95,8 @@ const CLUBS = {
     hosts: [/^padelchamps\./i],
     standingsHosts: [/^pcstandings\./i],
     standingsDomain: 'pcstandings.sgj.luxe',
+    // A new community: its record starts empty (v3Bridge allowEmpty).
+    recordStartsEmpty: true,
     // "Royal Amethyst" (Shaun, 5 Nov): deep violet in place of Money Padel's
     // black and gold; Tier S in silver. Every text colour 7:1 or better on
     // bg2 (text 15.3, text-dim 7.4, accent-bright 11.1). ui/components/clubTheme.js.
@@ -123,7 +124,16 @@ const CLUBS = {
     adminAccounts: true,
     legacyAdminPassword: false,
     dataScripts: [],
-    firebase: null,
+    // The old MP - Dashboard project, emptied and reused (Shaun, 8 Nov: the
+    // account is at its project limit). Its id stays mp---dashboard.
+    firebase: {
+      apiKey: 'AIzaSyAYDCghLPhMLpHaxTbbC8Rm2sV09UlPKOw',
+      authDomain: 'mp---dashboard.firebaseapp.com',
+      projectId: 'mp---dashboard',
+      storageBucket: 'mp---dashboard.firebasestorage.app',
+      messagingSenderId: '10882600309',
+      appId: '1:10882600309:web:4e3a8e186f465cc35bd73c',
+    },
   },
 };
 

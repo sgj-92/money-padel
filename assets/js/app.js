@@ -729,15 +729,15 @@ async function loadV3State(){
     // in order -- see RatingStore.prefetchedBackend for why that is now free.
     const backend = RatingStore.prefetchedBackend(
       RatingStore.firestoreCompatBackend(db), ['players', 'matches', 'ratingJourney']);
-    V3_STATE = await PerfTrace.timeAsync('read players', V3Bridge.load(backend));
+    V3_STATE = await PerfTrace.timeAsync('read players', V3Bridge.load(backend, { allowEmpty: !!CLUB.recordStartsEmpty }));
     if(V3_STATE.loaded){
       try {
         const rawMatches = {};
         const rawJourney = {};
-        V3_MATCHES = await PerfTrace.timeAsync('read matches', V3Bridge.loadMatches(backend, rawMatches, V3_STATE.alias));
+        V3_MATCHES = await PerfTrace.timeAsync('read matches', V3Bridge.loadMatches(backend, rawMatches, V3_STATE.alias, { allowEmpty: !!CLUB.recordStartsEmpty }));
         // Loaded at start-up rather than lazily because the app opens on a
         // monthly view, so a lazy read would fire immediately anyway.
-        V3_JOURNEY = await PerfTrace.timeAsync('read ratingJourney', V3Bridge.loadJourney(backend, rawJourney, V3_STATE.alias));
+        V3_JOURNEY = await PerfTrace.timeAsync('read ratingJourney', V3Bridge.loadJourney(backend, rawJourney, V3_STATE.alias, { allowEmpty: !!CLUB.recordStartsEmpty }));
         // Tiers come from v3 state, NOT from TIER_MAP. TIER_MAP is still {} at
         // this point -- rebuildMapsFromState() has not run yet -- and an empty
         // map made tierAsOf() answer `undefined` for every player who was not
@@ -757,6 +757,7 @@ async function loadV3State(){
         // day. Sampling dates to find that out would miss a second change in
         // the same month.
         V3_TIER_HISTORY = TierHistory.create({
+          allowEmpty: !!CLUB.recordStartsEmpty,
           currentTiers: V3Bridge.tierMap(V3_STATE),
           changes: TierHistory.changesFromJourney(V3_JOURNEY),
         });
