@@ -603,6 +603,7 @@ function buildViewerSelector(){
     <div class="viewer-selector-sub">Choose your player to personalise your experience.</div>
     <input type="text" id="viewerSearchInput" class="viewer-search" placeholder="Search players…">
     <div id="viewerPlayerList" class="viewer-player-list"></div>
+    <button type="button" class="viewer-skip" id="viewerSkipBtn">Not now</button>
   `;
   overlay.appendChild(panel);
   document.body.appendChild(overlay);
@@ -613,7 +614,10 @@ function buildViewerSelector(){
     // people in the group now: an archived player is not offered.
     const names = livePlayerNames();
     const filtered = filter ? names.filter(n=>n.toLowerCase().includes(filter.toLowerCase())) : names;
-    listEl.innerHTML = filtered.map(n=>`<button class="viewer-player-btn" data-name="${n}">${n}</button>`).join('');
+    listEl.innerHTML = filtered.length
+      ? filtered.map(n=>`<button class="viewer-player-btn" data-name="${n}">${n}</button>`).join('')
+      // A new community has nobody to choose yet (Padel Championships, 8 Nov).
+      : `<div class="viewer-empty">${names.length ? 'No player by that name.' : `No players yet. An Admin adds them in More › Admin › Player tags.`}</div>`;
     listEl.querySelectorAll('.viewer-player-btn').forEach(btn=>{
       btn.onclick = ()=>{
         setCurrentViewer(btn.dataset.name);
@@ -625,6 +629,11 @@ function buildViewerSelector(){
   }
   renderList('');
   document.getElementById('viewerSearchInput').addEventListener('input', (e)=> renderList(e.target.value));
+  // Never a trap: anyone can look around first, and choose later from More.
+  document.getElementById('viewerSkipBtn').onclick = ()=>{
+    overlay.classList.remove('show');
+    setTimeout(()=> overlay.remove(), 250);
+  };
   overlay.classList.add('show');
 }
 
@@ -734,7 +743,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
           _originalOpenSheet.apply(this, arguments);
           renderPremiumProfile(name, matchFilter);
         };
-        if(!getCurrentViewer()) buildViewerSelector();
+        // Not on a community with nobody in it yet: there is no one to choose.
+        if(!getCurrentViewer() && livePlayerNames().length) buildViewerSelector();
       }
       // If Home is already the active section by the time data is ready (or
       // becomes active later), keep the dashboard in sync with the viewer.
