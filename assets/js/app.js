@@ -1986,6 +1986,31 @@ function livePlayerNames(){
 }
 // The name older call sites use. Live players only, like livePlayerNames().
 function allPlayerNames(){ return livePlayerNames(); }
+
+// Added in Admin › Player tags with a starting tier, but no rated game yet: a
+// player only has a rating -- and so a place in the record -- from their first
+// approved game. On a new community that is everyone (Padel Championships, 8
+// Nov: "I added three players but I can't see them"). Not archived ones.
+function awaitingFirstGame(){
+  const rated = new Set(PLAYERS.map(p => p.name.toLowerCase()));
+  return Object.keys(tagOverridesState || {})
+    .filter(n => { const t = tagOverridesState[n]; return t && t.tier && t.active !== false && !t.archived && !rated.has(n.toLowerCase()); })
+    .sort((a, b) => a.localeCompare(b));
+}
+
+// Every name a result can be entered for: the live players and those
+// waiting for their first game.
+function entryPlayerNames(){
+  return [...new Set(livePlayerNames().concat(awaitingFirstGame()))].sort((a, b) => a.localeCompare(b));
+}
+
+// "Waiting for their first game: …" -- said wherever an empty list would
+// otherwise suggest nobody exists.
+function awaitingFirstGameHtml(){
+  const names = awaitingFirstGame();
+  if(!names.length) return '';
+  return `<div class="awaiting-first-game"><b>${names.length} player${names.length === 1 ? '' : 's'} waiting for their first game:</b> ${names.map(escapeHtml).join(', ')}. A player is rated from their first approved result.</div>`;
+}
 // One player's status, by any name they are shown under; null if unknown.
 function playerStatusOf(name){
   const p = PLAYERS.find(x => x.name === name);

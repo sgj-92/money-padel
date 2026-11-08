@@ -676,3 +676,7 @@
 .match-note-editor{ margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .match-note-check{ display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); margin-bottom: 6px; }
 .match-note-editor textarea{ width: 100%; resize: vertical; font-size: 16px; font-family: var(--font-interface); line-height: 1.4; }
+
+/* Players added but not yet rated (app.js awaitingFirstGame). */
+.awaiting-first-game{ margin: 10px 0; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px;
+  font-size: 13px; line-height: 1.45; color: var(--text-soft); text-align: left; }

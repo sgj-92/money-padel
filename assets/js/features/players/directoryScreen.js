@@ -62,7 +62,7 @@ function renderPlayersTab(){
 
   if(rows.length === 0){
     html += `<div class="pdir-countbar"><span class="pdir-count">0 players · filtered</span></div>`;
-    html += `<div class="section-sub">No players match that filter.</div>`;
+    html += `<div class="section-sub">${!PLAYERS.length && awaitingFirstGame().length ? 'No ratings yet.' : 'No players match that filter.'}</div>${awaitingFirstGameHtml()}`;
     box.innerHTML = html;
     wirePlayersControls();
     return;

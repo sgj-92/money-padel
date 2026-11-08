@@ -554,7 +554,7 @@ function buildEditFormHtml(id){
       <input id="edB1" list="playerNamesList2" class="fg-select" style="margin-bottom:6px;" value="${m.losers[0]||''}" />
       <input id="edB2" list="playerNamesList2" class="fg-select" value="${m.losers[1]||''}" style="${isSingles?'display:none;':''}" />
     </div>
-    <datalist id="playerNamesList2">${allPlayerNames().map(n=>`<option value="${n}">`).join('')}</datalist>
+    <datalist id="playerNamesList2">${entryPlayerNames().map(n=>`<option value="${n}">`).join('')}</datalist>
     <div class="fg-row"><label class="fg-label">Set scores</label><div id="edSets"></div></div>
     <div class="fg-row" style="display:flex; gap:8px;">
       <button class="tab-btn active" id="edSubmit" style="flex:1;">Save changes</button>
