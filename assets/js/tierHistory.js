@@ -83,11 +83,12 @@
     return initial;
   }
 
-  function create({ currentTiers, changes = AUTHORITATIVE_TIER_CHANGES }) {
+  function create({ currentTiers, changes = AUTHORITATIVE_TIER_CHANGES, allowEmpty = false }) {
     // A tier history built on no current tiers answers `undefined` for every
     // player and looks like it worked. That is exactly how the application
-    // shipped with every historical tier missing, so it is refused here.
-    if (!currentTiers || Object.keys(currentTiers).length === 0) {
+    // shipped with every historical tier missing, so it is refused here --
+    // unless the community has no players yet (allowEmpty: a new community).
+    if (!currentTiers || (Object.keys(currentTiers).length === 0 && !allowEmpty)) {
       throw new Error('TierHistory.create requires currentTiers; an empty map silently erases every historical tier.');
     }
     const ordered = sortChanges(changes);
