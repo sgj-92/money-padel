@@ -74,3 +74,53 @@ maybe('a table that scrolls sideways comes out at its full width', async () => {
     assert.ok(r.w >= 900 * 2, `full width at 2x: ${r.w}`);
   } finally { await app.close(); }
 });
+
+maybe('drag the box, drag a corner past the bottom of the screen (the page scrolls with it), draw a fresh area; the picture is that area', async () => {
+  const app = await H.open({ viewport: { width: 390, height: 844 }, now: '2026-09-21T10:00:00.000Z' });
+  try {
+    const page = app.page;
+    await app.run(async () => {
+      gamesMonth = 'all';
+      document.querySelector('#tabrow .tab-btn[data-tab="games"]').click();
+      await new Promise((res) => setTimeout(res, 100));
+      document.getElementById('shellCaptureBtn').click();
+      const card = document.querySelectorAll('#gamesView [data-game-card]')[1];
+      card.scrollIntoView({ block: 'start' }); window.scrollBy(0, -140);
+      card.querySelector('.cc-title').click();
+    });
+    const box = await page.$('.capture-box');
+    const b0 = await box.boundingBox();
+    const scrollStart = await app.run(() => scrollY);
+    // Move: drag the middle of the box down 40px.
+    await page.mouse.move(b0.x + b0.width / 2, b0.y + b0.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(b0.x + b0.width / 2, b0.y + b0.height / 2 + 40, { steps: 5 });
+    await page.mouse.up();
+    const moved = await app.run(() => ({ ...captureState.rect }));
+    // Resize: drag the bottom-right corner to the bottom edge and hold: the page scrolls, the area grows past the screen.
+    const se = await (await page.$('.capture-handle-se')).boundingBox();
+    const scroll0 = await app.run(() => scrollY);
+    await page.mouse.move(se.x + 13, se.y + 13);
+    await page.mouse.down();
+    await page.mouse.move(se.x + 13, 835, { steps: 5 });
+    await page.waitForTimeout(700);
+    await page.mouse.up();
+    const grown = await app.run(() => ({ rect: { ...captureState.rect }, scrolled: scrollY }));
+    const cv = await app.run(async () => { const c = await captureAreaPicture(captureState.rect); return { w: c.width, h: c.height }; });
+    // Draw: a fresh area.
+    await app.run(() => document.querySelector('[data-cap="draw"]').click());
+    await page.mouse.move(40, 200);
+    await page.mouse.down();
+    await page.mouse.move(300, 420, { steps: 6 });
+    await page.mouse.up();
+    const drawn = await app.run(() => ({ rect: { ...captureState.rect }, sy: scrollY, layer: !!document.querySelector('.capture-draw') }));
+    assert.ok(Math.abs(moved.top - (b0.y + scrollStart + 40)) <= 2, `moved down 40px: ${moved.top} vs ${b0.y + scrollStart + 40}`);
+    assert.ok(grown.scrolled > scroll0, 'the page scrolled while the corner was held at the edge');
+    assert.ok(grown.rect.top + grown.rect.height > scroll0 + 844, 'the area now runs past the bottom of the first screen');
+    assert.ok(cv.h >= grown.rect.height * 2, `the picture holds the whole area: ${cv.h} for ${grown.rect.height}`);
+    assert.ok(Math.abs(cv.w - (grown.rect.width * 2 + 64)) <= 4, 'its width is the area\'s, framed');
+    assert.deepStrictEqual([Math.round(drawn.rect.left), Math.round(drawn.rect.top - drawn.sy), Math.round(drawn.rect.width), Math.round(drawn.rect.height)], [40, 200, 260, 220]);
+    assert.strictEqual(drawn.layer, false, 'drawing ends when the finger lifts');
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});

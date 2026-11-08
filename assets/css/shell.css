@@ -370,3 +370,15 @@ body.standings-mode .section-subnav-item svg{ display: none; }
 .capture-preview{ flex: 1 1 auto; min-height: 0; overflow: auto; border-radius: 10px; border: 1px solid var(--line); background: var(--bg0); }
 .capture-preview img{ display: block; width: 100%; height: auto; }
 .capture-size{ font-size: 11px; color: var(--text-dim); text-align: center; margin: 6px 0 2px; }
+
+/* Dragging and drawing the capture area (Shaun, 8 Nov). */
+.capture-box{ pointer-events: auto; touch-action: none; cursor: move; }
+.capture-handle{ position: absolute; width: 26px; height: 26px; border-radius: 50%; background: var(--gold-bright);
+  border: 3px solid var(--bg0); box-shadow: 0 1px 6px rgba(0,0,0,0.5); touch-action: none; }
+.capture-handle-nw{ left: -13px; top: -13px; cursor: nwse-resize; }
+.capture-handle-ne{ right: -13px; top: -13px; cursor: nesw-resize; }
+.capture-handle-sw{ left: -13px; bottom: -13px; cursor: nesw-resize; }
+.capture-handle-se{ right: -13px; bottom: -13px; cursor: nwse-resize; }
+.capture-draw{ position: fixed; inset: 0; z-index: 9999; touch-action: none; cursor: crosshair; background: rgba(0,0,0,0.15); }
+.capture-box{ transition: none; }
+.capture-dragging .capture-bar{ opacity: 0; pointer-events: none; transition: opacity .15s; }
