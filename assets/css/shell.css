@@ -348,3 +348,25 @@ body.standings-mode .section-subnav-item svg{ display: none; }
 .viewer-skip{ display: block; margin: 12px auto 0; min-height: 44px; padding: 0 18px; background: none; border: 0;
   color: var(--text-dim); font-family: var(--font-interface); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .viewer-empty{ padding: 14px 4px; color: var(--text-dim); font-size: 13.5px; text-align: center; }
+
+/* ---- Capture: any part of the app as a picture (ui/components/capture.js) ---- */
+.shell-capture-btn{ flex: none; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+  margin-left: 6px; background: none; border: 0; border-radius: 10px; color: var(--text-dim); cursor: pointer; }
+.shell-capture-btn:hover, body.capture-mode .shell-capture-btn{ color: var(--gold-bright); background: rgba(var(--gold-rgb),0.08); }
+.capture-box{ position: absolute; z-index: 9998; pointer-events: none; border: 2px solid var(--gold-bright); border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.45); transition: all .12s ease; }
+.capture-bar{ position: fixed; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); z-index: 10000;
+  padding: 10px 12px; background: var(--bg2); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+  font-family: var(--font-interface); }
+.capture-msg{ font-size: 13px; color: var(--text-soft); margin-bottom: 8px; text-align: center; }
+.capture-actions{ display: flex; gap: 6px; margin-top: 6px; }
+.capture-actions button{ flex: 1; min-height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg1);
+  color: var(--text); font-family: var(--font-interface); font-size: 14px; cursor: pointer; }
+.capture-actions button:disabled{ opacity: .4; cursor: default; }
+.capture-actions .capture-go{ background: var(--gold); border-color: var(--gold); color: #17130c; font-weight: 600; }
+.capture-sheet{ position: fixed; inset: 0; z-index: 10001; background: rgba(0,0,0,0.7); display: flex; align-items: flex-end; justify-content: center; }
+.capture-sheet-panel{ width: 100%; max-width: 560px; max-height: 92vh; display: flex; flex-direction: column; padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--bg1); border-radius: 18px 18px 0 0; border-top: 1px solid var(--line); }
+.capture-preview{ flex: 1 1 auto; min-height: 0; overflow: auto; border-radius: 10px; border: 1px solid var(--line); background: var(--bg0); }
+.capture-preview img{ display: block; width: 100%; height: auto; }
+.capture-size{ font-size: 11px; color: var(--text-dim); text-align: center; margin: 6px 0 2px; }

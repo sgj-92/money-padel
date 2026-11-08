@@ -234,8 +234,12 @@ function buildShellDom(){
     <div class="brand-mark"><img src="${CLUB.logo}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'nav-icon-fallback',textContent:${escapeHtml(JSON.stringify(CLUB.monogram))}}))"></div>
     <div class="brand-wordmark">${clubWordmarkHtml()}</div>
     <div class="shell-section-title" id="shellSectionTitle">Rankings</div>
+    <button type="button" class="shell-capture-btn" id="shellCaptureBtn" aria-label="Make a picture of part of the screen" title="Make a picture">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    </button>
   `;
   document.body.insertBefore(header, document.body.firstChild);
+  header.querySelector('#shellCaptureBtn').onclick = () => (captureState ? endCapture() : startCapture());
 
   // Visible section subnav mount point, right under the header.
   const subnav = document.createElement('div');
