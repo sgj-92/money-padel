@@ -2046,6 +2046,9 @@ Shaun's decisions, including where an agent recommended otherwise.
 
 | Decision | Note |
 |---|---|
+| Padel Invitational: members-only list, games count in the main rating (8 Nov) | Shaun chose CCode's recommendation. Invitational games feed each player's one Power Rating; only signed-in Invitational members see the match list and the Invitational table; others see ratings move, marked as including Invitational games. Needs **member sign-in** (Firebase Auth, members as well as Admins). |
+| Americano rounds rated lighter, by points share (8 Nov) | A round is rated like a match on its points share (e.g. 16–8 = 67%), weighted about **one third** of a full match (K and evidence), the weight a tunable constant to be checked on real data. Shaun chose the recommendation over full-match and not-rated. Rating-methodology change: CChat to challenge. |
+| Ranking events award place points to a quarterly Championship table (8 Nov) | Event matches count in the rating as usual; finishing places award points (proposed 1st 100, 2nd 70, 3rd 50, then descending — table to confirm with Shaun) to a quarterly Championship table beside the Race. |
 | GitHub Pages switched off (7 Nov) | Shaun: "nobody uses it". Vercel is the only host. Two GitHub Pages deploys of `91ccf46` timed out on GitHub's side (build passed); the live Vercel app was unaffected. |
 | A forfeit: loss for the player who quit, win for the opponents, partner untouched (7 Nov) | Shaun chose both halves: opponents' win and the quitter's loss rated at the score as it stood (CCode's recommendation), over "nothing for the opponents" and over a 6-0 6-0 or record-only penalty. The partner still counts in the pair's expectation. `765cf0f`. |
 | Admin sign-in with each Admin's own email and password; Firestore rules, Admins write (5 Nov) | Supersedes "Beta Firestore: permanent open read/write, no auth" below for writes. Members keep four open documents (submissions, Upcoming, challenges, notes). `e5bc4fe`, live with Shaun's console steps; shared password off `f9d99dc`. |
@@ -3111,6 +3114,8 @@ with Shaun.**
 
 ### RESOLVED 5 Nov — Shaun: Firebase console steps for Admin sign-in done; shared password off (`f9d99dc`)
 Money Padel project `mp-dashboard-beta-v3`: enable Email/Password, untick self sign-up, add each Admin's account, add their `admins` entry (role owner/board), check sign-in in the app, tell CCode, publish `firestore.rules`. CCode then removes the shared password (`legacyAdminPassword: false`). Until then nothing changes for anyone.
+
+### RESOLVED 8 Nov — Padel Championships decisions 1–4 (Shaun): see the Decisions Log (Invitational members-only + main rating; Americano lighter by points share; events → quarterly place points). Still open: the place-points table; Firebase setup of the reused `mp---dashboard` project (8 Nov check: still holds the 10 old Money Padel documents, so the steps are not done yet).
 
 ### OPEN 4 Nov — Padel Championships: decisions before steps 2–4 (Shaun; CGPT to shape events/Americano, CChat to challenge)
 1. **Invitational results and the rating:** count towards everyone's Power Rating (CCode recommends yes: one player, one rating; the strongest results are the best Tier A evidence), or kept out?
