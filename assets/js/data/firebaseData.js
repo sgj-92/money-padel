@@ -178,15 +178,16 @@ async function savePublishedReview(doc){
 // only ever bought four round trips where one would do. See init() for the
 // same argument applied to the whole of start-up.
 async function loadStoredData(){
-  const [extraMatches, tagOverrides, matchEdits, deletedIds, matchAttribution, matchNotes] = await Promise.all([
+  const [extraMatches, tagOverrides, matchEdits, deletedIds, matchAttribution, matchNotes, nameAliases] = await Promise.all([
     fsGetJson(STORAGE_KEY_MATCHES, [], 'matches'),
     fsGetJson(STORAGE_KEY_TAGS, {}, 'tags'),
     fsGetJson(STORAGE_KEY_EDITS, {}, 'edits'),
     fsGetJson(STORAGE_KEY_DELETED, [], 'deleted ids'),
     fsGetJson(MatchAttribution.STORAGE_KEY, {}, 'match attribution'),
     fsGetJson(MatchNote.STORAGE_KEY, {}, 'match notes'),
+    fsGetJson('moneypadel_name_aliases', {}, 'name spellings'),
   ]);
-  return {extraMatches, tagOverrides, matchEdits, deletedIds, matchAttribution, matchNotes};
+  return {extraMatches, tagOverrides, matchEdits, deletedIds, matchAttribution, matchNotes, nameAliases};
 }
 
 async function loadMyName(){

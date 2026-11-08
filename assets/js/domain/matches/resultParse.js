@@ -272,9 +272,9 @@
     if (!teams) return res;
 
     // Names against the directory.
-    const resolved = teams.map((side) => side.map((n) => FP().resolveName(n, directory, o.me || null)));
+    const resolved = teams.map((side) => side.map((n) => FP().resolveName(n, directory, o.me || null, o.aliases || null)));
     const names = resolved.map((side) => side.map((r) => {
-      if (r.status === 'ok') return r.name;
+      if (r.status === 'ok') { if (r.alias) out.notes.push(`Read "${r.text}" as ${r.name}.`); return r.name; }
       if (r.status === 'suggested') { out.warnings.push(`Read "${r.text}" as ${r.options[0]} — change it below if that's wrong.`); return r.options[0]; }
       if (r.status === 'ambiguous') { out.problems.push(`"${r.text}" could be ${r.options.join(' or ')} — pick the right one below.`); return r.text; }
       if (r.status === 'no-self') { out.problems.push(`"${r.text}" needs you to choose who you are first.`); return r.text; }

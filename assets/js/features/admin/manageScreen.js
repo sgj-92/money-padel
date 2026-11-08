@@ -83,6 +83,7 @@ function renderManage(){
     <div class="fg-row"><button class="preset-btn" id="npAdd">+ Add player</button></div>
     <div id="npMessage" class="section-sub"></div>
   </div>`
+    + nameSpellingsHtml()
     + `<div class="section-heading">Existing players</div>`
     + `<div class="section-sub" style="font-size:10.5px;">Tap a player to change their tier, the tier they started at, or whether they are active.</div>`
     + `<div class="fg-controls" style="padding-top:2px; padding-bottom:2px;"><div id="playerTagsList"></div></div>`);
@@ -172,6 +173,7 @@ function renderManage(){
 
   wireReviewSection();
   wireHistoricalAdjustment();
+  wireNameSpellings();
   wireMoveDecision();
   wireBoardPackSection();
   wirePotmSection();

@@ -623,7 +623,7 @@ function wireBulk(box){
     const by = submissionIdentity();
     const viewer = getCurrentViewer();
     if(!by){ bulkDraft.message = 'Choose who you are first — the games are requested in your name.'; renderWishlist(); return; }
-    const rows = FixtureParse.parse(bulkDraft.text, { directory: allPlayerNames(), me: viewer ? viewer.name : null });
+    const rows = FixtureParse.parse(bulkDraft.text, { directory: allPlayerNames(), me: viewer ? viewer.name : null , aliases: clubNameAliases() });
     if(!rows.length){ bulkDraft.message = 'Nothing to check yet — write one game per line.'; renderWishlist(); return; }
     Object.assign(bulkDraft, { rows, by, me: viewer ? viewer.name : null, choices: {}, skip: {}, editing: {}, message: '' });
     renderWishlist();

@@ -101,6 +101,9 @@ const SUBMITTERS = [
 ];
 
 return {
+  // Other spellings of players' names, read as the player wherever a result
+  // is typed (features/games/nameSpellings.js). Admins add more in Player tags.
+  nameAliases: { Jordz: 'Jords' },
   baseMatches: BASE_MATCHES,
   baseTiers: BASE_TIERS,
   baseActive: BASE_ACTIVE,

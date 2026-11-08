@@ -32,8 +32,26 @@
   const SELF = ['me', 'myself', 'i', 'moi'];
   const BULLET = /^\s*(?:[-*•·]+|\d+[.)]|\(\d+\))\s*/;
 
+  // Letters to change to turn one name into another (insert, delete, swap one).
+  function editDistance(a, b) {
+    if (Math.abs(a.length - b.length) > 1) return 2;
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      }
+    }
+    return d[a.length][b.length];
+  }
+
   // Every way one typed name can be read against the directory.
-  function resolveName(text, directory, me) {
+  //
+  // `aliases` is the club's list of other spellings ({ jordz: 'Jords' },
+  // Shaun 8 Nov): a known one is the player, read without asking. A name one
+  // letter away from exactly one player ("Rishii") is offered as them -- read
+  // that way and said so, never silently -- rather than taken for a new player.
+  function resolveName(text, directory, me, aliases) {
     const t = String(text || '').trim();
     const low = t.toLowerCase();
     if (!t) return { text: t, status: 'missing', name: null, options: [] };
@@ -41,6 +59,9 @@
       return me ? { text: t, status: 'ok', name: me, self: true, options: [] }
         : { text: t, status: 'no-self', name: null, options: [] };
     }
+    const aka = aliases && aliases[low];
+    const akaName = aka ? directory.find((n) => n.toLowerCase() === String(aka).toLowerCase()) : null;
+    if (akaName && !directory.some((n) => n.toLowerCase() === low)) return { text: t, status: 'ok', name: akaName, alias: true, options: [] };
     const exact = directory.filter((n) => n.toLowerCase() === low);
     if (exact.length === 1) return { text: t, status: 'ok', name: exact[0], options: [] };
     if (exact.length > 1) return { text: t, status: 'ambiguous', name: null, options: exact };
@@ -52,11 +73,16 @@
     });
     if (near.length > 1) return { text: t, status: 'ambiguous', name: null, options: near };
     if (near.length === 1) return { text: t, status: 'suggested', name: null, options: near };
+    if (low.length >= 4) {
+      const close = directory.filter((n) => n.length >= 4 && editDistance(n.toLowerCase(), low) === 1);
+      if (close.length === 1) return { text: t, status: 'suggested', name: null, options: close, typo: true };
+      if (close.length > 1) return { text: t, status: 'ambiguous', name: null, options: close };
+    }
     return { text: t, status: 'unknown', name: null, options: [] };
   }
 
   // One line into one proposed game, with every problem named.
-  function parseLine(raw, lineNo, directory, me) {
+  function parseLine(raw, lineNo, directory, me, aliases) {
     const line = String(raw).replace(BULLET, '').trim();
     const row = { lineNo, text: String(raw).trim(), sides: [[], []], problems: [] };
     const parts = line.split(SIDES);
@@ -70,7 +96,7 @@
     row.sides.forEach((side, i) => {
       if (side.some((x) => !x)) row.problems.push({ kind: 'incomplete', message: `Side ${i ? 'B' : 'A'} has a gap where a name should be.` });
     });
-    row.sides = row.sides.map((side) => side.filter(Boolean).map((x) => resolveName(x, directory, me)));
+    row.sides = row.sides.map((side) => side.filter(Boolean).map((x) => resolveName(x, directory, me, aliases)));
     const counts = row.sides.map((s) => s.length);
     if (counts[0] !== 2 || counts[1] !== 2) {
       const total = counts[0] + counts[1];
@@ -87,7 +113,7 @@
     return String(text || '').split(/\r?\n/)
       .map((l, i) => ({ l, i }))
       .filter(({ l }) => l.trim())
-      .map(({ l, i }) => parseLine(l, i + 1, directory, o.me || null));
+      .map(({ l, i }) => parseLine(l, i + 1, directory, o.me || null, o.aliases || null));
   }
 
   // Where a row stands once the person's choices are applied: the four names
