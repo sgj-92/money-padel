@@ -56,3 +56,21 @@ maybe('day one: every screen draws with nobody in it; players are added; the fir
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+maybe('the "Who are you?" sheet is never a trap: it says when nobody is in it yet, and Not now closes it', async () => {
+  const app = await H.open({ path: 'index.html?club=padelchampionships', record: EMPTY });
+  try {
+    const r = await app.run(async () => {
+      buildViewerSelector();
+      const sheet = document.getElementById('viewerSelectorSheet');
+      const text = sheet.innerText;
+      document.getElementById('viewerSkipBtn').click();
+      await new Promise((res) => setTimeout(res, 300));
+      return { text, gone: !document.getElementById('viewerSelectorSheet'), viewer: getCurrentViewer() };
+    });
+    assert.match(r.text, /No players yet\. An Admin adds them in More › Admin › Player tags\./);
+    assert.match(r.text, /Not now/);
+    assert.deepStrictEqual([r.gone, r.viewer], [true, null]);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
