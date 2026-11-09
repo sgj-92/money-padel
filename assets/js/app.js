@@ -1282,9 +1282,11 @@ function computeMonthlySummaryStats(month, { splitByTier } = {}){
     const game = (result) => ({ id: raw.id, date: raw.date, winners: raw.winners.slice(), losers: raw.losers.slice(), sets: raw.sets, isDraw: false, result });
     raw.winners.forEach(n=>{ const a = A(n, raw.date); a.wins++; a.games_w += enriched.games_winner; a.games_l += enriched.games_loser; a.list.push(game('W')); });
     raw.losers.forEach(n=>{ const a = A(n, raw.date); a.losses++; a.games_w += enriched.games_loser; a.games_l += enriched.games_winner; a.list.push(game('L')); });
-    raw.sets.forEach(([x,y])=>{
-      if(y === 0) raw.losers.forEach(n=>A(n, raw.date).doughnuts++);
-      if(x === 0) raw.winners.forEach(n=>A(n, raw.date).doughnuts++);
+    // A doughnut is a 6-0 set (doughnutsData.js doughnutSide).
+    raw.sets.forEach((set)=>{
+      const side = doughnutSide(set);
+      if(side === 'A') raw.losers.forEach(n=>A(n, raw.date).doughnuts++);
+      if(side === 'B') raw.winners.forEach(n=>A(n, raw.date).doughnuts++);
     });
   });
 
@@ -1302,9 +1304,10 @@ function computeMonthlySummaryStats(month, { splitByTier } = {}){
     const drawn = { id: m.id, date: m.date, winners: m.winners.slice(), losers: m.losers.slice(), sets: m.sets, isDraw: true, result: 'D' };
     m.winners.forEach(n=>{ const a = A(n, m.date); a.draws++; a.games_w += team1Games; a.games_l += team2Games; a.list.push(drawn); });
     m.losers.forEach(n=>{ const a = A(n, m.date); a.draws++; a.games_w += team2Games; a.games_l += team1Games; a.list.push(drawn); });
-    m.sets.forEach(([x,y])=>{
-      if(y === 0) m.losers.forEach(n=>A(n, m.date).doughnuts++);
-      if(x === 0) m.winners.forEach(n=>A(n, m.date).doughnuts++);
+    m.sets.forEach((set)=>{
+      const side = doughnutSide(set);
+      if(side === 'A') m.losers.forEach(n=>A(n, m.date).doughnuts++);
+      if(side === 'B') m.winners.forEach(n=>A(n, m.date).doughnuts++);
     });
   });
 

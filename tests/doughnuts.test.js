@@ -24,9 +24,10 @@ const install = (app) => app.run(() => {
   window.dnMonth = (m) => { const s = document.getElementById('doughnutMonthSelect'); s.value = m; s.dispatchEvent(new Event('change')); };
   window.dnView = (v) => document.getElementById(v === 'list' ? 'doughnutViewList' : 'doughnutViewPlayer').click();
   window.dnListIds = () => [...dnBody().querySelectorAll('.doughnut-result')].map((b) => b.dataset.matchId);
-  // Independently of the app's code: every approved match with a set on 0.
+  // Independently of the app's code: every approved match with a 6-0 set
+  // (a doughnut is 6-0 only -- Shaun, 9 Nov).
   window.truthIds = (month) => getAllApprovedMatches()
-    .filter((m) => (month === 'all' || m.date.slice(0, 7) === month) && m.sets.some(([x, y]) => x === 0 || y === 0))
+    .filter((m) => (month === 'all' || m.date.slice(0, 7) === month) && m.sets.some(([x, y]) => (x === 6 && y === 0) || (x === 0 && y === 6)))
     .map((m) => m.id);
 });
 
@@ -45,7 +46,7 @@ maybe('D7: By Player is still there, with the same totals, sort and per-player g
       // The same totals, computed here from the raw record.
       const truth = {};
       getAllApprovedMatches().forEach((m) => {
-        const wGave = m.sets.some(([, y]) => y === 0), lGave = m.sets.some(([x]) => x === 0);
+        const wGave = m.sets.some(([x, y]) => x === 6 && y === 0), lGave = m.sets.some(([x, y]) => x === 0 && y === 6);
         const T = (n) => (truth[n] = truth[n] || { given: 0, received: 0 });
         if (wGave) { m.winners.forEach((n) => T(n).given++); m.losers.forEach((n) => T(n).received++); }
         if (lGave) { m.losers.forEach((n) => T(n).given++); m.winners.forEach((n) => T(n).received++); }
@@ -77,7 +78,7 @@ maybe('D7: the Doughnut List holds exactly the qualifying matches — no more, n
       for (const m of ['all', ...getAvailableMonths()]) {
         dnMonth(m);
         const ids = dnListIds();
-        const nonDoughnuts = getAllApprovedMatches().filter((x) => !x.sets.some(([a, b]) => a === 0 || b === 0)).map((x) => x.id);
+        const nonDoughnuts = getAllApprovedMatches().filter((x) => !x.sets.some(([a, b]) => (a === 6 && b === 0) || (a === 0 && b === 6))).map((x) => x.id);
         out[m] = { ids: ids.slice().sort(), truth: truthIds(m).sort(), leaked: ids.filter((id) => nonDoughnuts.includes(id)) };
       }
       return out;
@@ -219,12 +220,12 @@ maybe('D7: the doughnut definition and every total are unchanged — only where 
   const app = await open();
   try {
     const r = await app.run(() => {
-      // The definition exactly as it stood before D7, run on the same record.
+      // The definition (D7, narrowed to 6-0 sets on 9 Nov), written out independently and run on the same record.
       const agg = {};
       const A = (n) => (agg[n] = agg[n] || { given: 0, received: 0 });
       const process = (m) => {
         let w = false, l = false;
-        m.sets.forEach(([x, y]) => { if (y === 0) w = true; if (x === 0) l = true; });
+        m.sets.forEach(([x, y]) => { if (x === 6 && y === 0) w = true; if (x === 0 && y === 6) l = true; });
         if (w) { m.losers.forEach((n) => A(n).received++); m.winners.forEach((n) => A(n).given++); }
         if (l) { m.winners.forEach((n) => A(n).received++); m.losers.forEach((n) => A(n).given++); }
       };
@@ -238,5 +239,28 @@ maybe('D7: the doughnut definition and every total are unchanged — only where 
     const before = Object.fromEntries(Object.entries(r.before).filter(([, v]) => v.given + v.received > 0));
     assert.deepStrictEqual(r.now, before);
     assert.ok(r.summaryTotal > 0, 'the monthly summary still counts doughnuts');
+  } finally { await app.close(); }
+});
+
+// Shaun, 9 Nov: "only games that are listed as 6-0 should be considered a
+// doughnut. I can see a game that ended 3-0 shown there."
+const DH = require('./helpers/uiHarness.js');
+(DH.available() ? test : test.skip)('a doughnut is a 6-0 set: 3-0, 4-0 and 7-0 are not; the list, By Player and the monthly count agree', async () => {
+  const app = await DH.open({ now: '2026-09-21T10:00:00.000Z' });
+  try {
+    const r = await app.run(() => {
+      const sides = [[6, 0], [0, 6], [3, 0], [0, 4], [7, 0], [6, 1], [10, 0]].map((s) => doughnutSide(s));
+      const all = doughnutMatches('all');
+      const notSixLove = all.filter((m) => !m.sets.some((s) => doughnutSide(s)));
+      const listed = all.every((m) => m.shutoutSets.every((t) => t === '6-0' || t === '0-6'));
+      const stats = computeDoughnutStats('all');
+      const given = Object.values(stats).reduce((t, s) => t + (s.given || 0), 0);
+      return { sides, notSixLove: notSixLove.length, listed, given };
+    });
+    assert.deepStrictEqual(r.sides, ['A', 'B', null, null, null, null, null]);
+    assert.strictEqual(r.notSixLove, 0, 'every listed match has a 6-0 set');
+    assert.ok(r.listed, 'and only 6-0 sets are named');
+    assert.ok(r.given > 0);
+    assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
