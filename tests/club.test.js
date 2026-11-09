@@ -18,6 +18,11 @@ test('the address chooses the community; every address Money Padel has used stay
   const at = (hostname, search = '') => C.resolveClub({ hostname, search }).id;
   ['moneypadel.sgj.luxe', 'mpstandings.sgj.luxe', 'mpr.sgj.luxe', 'mp-dashboard-new-ratings.vercel.app',
     'money-padel-git-redesign-sgj-92.vercel.app', 'localhost', '127.0.0.1'].forEach((h) => assert.strictEqual(at(h), 'moneypadel', h));
+  ['padelchamps.sgj.luxe', 'pcstandings.sgj.luxe'].forEach((h) => assert.strictEqual(at(h), 'padelchampionships', h));
+  Object.values(C.CLUBS).forEach((c) => (c.standingsHosts || []).forEach((re) => {
+    const h = re.source.replace(/^\^|\\/g, '') + 'sgj.luxe';
+    assert.strictEqual(at(h), c.id, `${h}: a standings address belongs to its community`);
+  }));
   // ?club= only where no community claims the address: a laptop, the tests.
   assert.strictEqual(at('localhost', '?club=padelchampionships'), 'padelchampionships');
   assert.strictEqual(at('moneypadel.sgj.luxe', '?club=padelchampionships'), 'moneypadel', 'a community\'s own domain cannot be turned into another\'s');
