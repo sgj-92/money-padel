@@ -1,6 +1,6 @@
 // ===================== DOUGHNUTS: THE DEFINITION =====================
 // doughnutMatches(month) is THE doughnut definition (D7): every match, decided
-// or drawn, with a set that finished with a side on 0. The By Player totals
+// or drawn, with a 6-0 set (doughnutSide, below). The By Player totals
 // and the Doughnut List both read it.
 //
 // Extracted from shell.js unchanged (docs/architecture/PARALLEL_DEVELOPMENT_SPLIT.md).
@@ -11,15 +11,27 @@
 // same Elo expected-score formula already used elsewhere in the app for
 // predicted outcomes -- just orchestrated for "best partner + best opposing
 // pair for that team", which the existing functions don't directly return.
-// Doughnut leaderboard -- who's dished out and copped a 6-0 (or similar
-// shutout set), all-time. Extends the existing "doughnuts received" concept
-// already used in the monthly Summary (a set lost 0-x) with its natural
+// Doughnut leaderboard -- who's dished out and copped a 6-0 set,
+// all-time. Extends the existing "doughnuts received" concept
+// already used in the monthly Summary (a set lost 0-6) with its natural
 // missing other half, "doughnuts given" -- same underlying match data and
 // the same per-set shutout check, just crediting the opposite side too.
+// A doughnut is a set that finished 6-0 (Shaun, 9 Nov: "only games that are
+// listed as 6-0 should be considered a doughnut. I can see a game that ended
+// 3-0"). Not a short set that ended with a side on 0 -- 3-0 or 4-0 -- and not
+// a tie-break. -> 'A' when the first side won it 6-0, 'B' when the second
+// did, null otherwise. Everything that counts doughnuts asks this.
+function doughnutSide(set){
+  const [x, y] = set || [];
+  if(x === 6 && y === 0) return 'A';
+  if(x === 0 && y === 6) return 'B';
+  return null;
+}
+
 // THE doughnut definition, once: every match -- decided or drawn -- with at
-// least one set that finished with a side on 0, and in which direction. Both
-// Doughnuts views read it: By Player aggregates it, the Doughnut List shows it
-// as it is. `month` is 'YYYY-MM' or 'all'.
+// least one 6-0 set, and in which direction. Both Doughnuts views read it: By
+// Player aggregates it, the Doughnut List shows it as it is. `month` is a
+// period key or 'all'.
 function doughnutMatches(month){
   const out = [];
   function processMatch(m){
@@ -30,9 +42,10 @@ function doughnutMatches(month){
     // the match reference now).
     let winnersGaveShutout = false, losersGaveShutout = false;
     const shutoutSets = [];
-    m.sets.forEach(([x,y])=>{
-      if(y === 0){ winnersGaveShutout = true; shutoutSets.push(`${x}-${y}`); }
-      if(x === 0){ losersGaveShutout = true; shutoutSets.push(`${x}-${y}`); }
+    m.sets.forEach((set)=>{
+      const side = doughnutSide(set);
+      if(side === 'A'){ winnersGaveShutout = true; shutoutSets.push(set.join('-')); }
+      if(side === 'B'){ losersGaveShutout = true; shutoutSets.push(set.join('-')); }
     });
     if(!winnersGaveShutout && !losersGaveShutout) return;
     // isDraw travels with the match. Without it the drill-down had no way to

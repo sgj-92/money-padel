@@ -159,7 +159,7 @@
       modal.id = 'doughnutModal';
       modal.innerHTML = `<div class="shell-more-panel">
         <h3>Doughnuts</h3>
-        <div class="section-sub" style="font-size:11.5px; margin-bottom:12px;">Every 6-0 (or similar shutout set) -- given and received. By Player totals them; the Doughnut List shows each one. Tap a player or a result to see the games.</div>
+        <div class="section-sub" style="font-size:11.5px; margin-bottom:12px;">Every 6-0 set -- given and received. By Player totals them; the Doughnut List shows each one. Tap a player or a result to see the games.</div>
         <div id="doughnutModalBody"></div>
       </div>`;
       document.body.appendChild(modal);
