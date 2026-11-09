@@ -3,8 +3,10 @@
 // "add everyone's name in a list, then the rows to vote are Tier S, A, B
 // and C". This counts it.
 //
-//   * One ballot per voter: a later ballot under the same name (any case)
-//     replaces the earlier one. The poll runs on trust, like "Who are you?".
+//   * One ballot per voter, cast with their own code (Shaun, 9 Nov: "each
+//     person their own personal code and once it's used, it can't be reused
+//     again"). Should two ever carry the same name, the later counts.
+//   * Nobody votes for themselves (Shaun, 9 Nov); such a vote is not counted.
 //   * A voter may skip anyone they cannot judge; a skip is not a vote.
 //   * The suggested tier is the MIDDLE vote (the median, S above A above B
 //     above C): one outlier cannot drag a player up or down, and a split
@@ -42,15 +44,16 @@
       if (!b || !b.voter) return;
       const k = String(b.voter).trim().toLowerCase();
       const prev = latest.get(k);
-      if (!prev || String(b.updatedAt || '') >= String(prev.updatedAt || '')) latest.set(k, b);
+      if (!prev || String(b.createdAt || b.updatedAt || '') >= String(prev.createdAt || prev.updatedAt || '')) latest.set(k, b);
     });
     return [...latest.values()].map((b) => {
       const votes = {};
+      const self = String(b.voter).trim().toLowerCase();
       Object.entries(b.votes || {}).forEach(([p, t]) => {
         const name = onList.get(String(p).toLowerCase());
-        if (name && RANK[t] !== undefined) votes[name] = t;
+        if (name && RANK[t] !== undefined && name.toLowerCase() !== self) votes[name] = t;
       });
-      return { voter: String(b.voter).trim(), updatedAt: b.updatedAt || null, votes };
+      return { voter: String(b.voter).trim(), at: b.createdAt || b.updatedAt || null, votes };
     });
   }
 
@@ -72,5 +75,15 @@
     return { voters: counted.map((b) => b.voter).sort((a, b) => a.localeCompare(b)), rows };
   }
 
-  return { TIERS, parsePlayers, countable, tally, median };
+  // Personal codes: six characters, no 0/O, 1/I/L to misread -- 31^6, about
+  // 887 million, so one cannot be guessed. `random(n)` -> n random integers.
+  const CODE_LETTERS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  function makeCode(random) {
+    return random(6).map((n) => CODE_LETTERS[n % CODE_LETTERS.length]).join('');
+  }
+  function normaliseCode(text) {
+    return String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
+
+  return { TIERS, parsePlayers, countable, tally, median, makeCode, normaliseCode, CODE_LETTERS };
 });

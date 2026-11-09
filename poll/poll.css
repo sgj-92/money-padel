@@ -34,3 +34,7 @@ textarea.poll-select{ resize: vertical; }
 .poll-results th, .poll-results td{ padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: center; }
 .poll-results th:first-child, .poll-results td:first-child{ text-align: left; }
 .poll-results th{ font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .06em; }
+.poll-code{ text-transform: uppercase; letter-spacing: .2em; font-size: 20px; text-align: center; }
+.poll-codecell{ font-family: ui-monospace, Menlo, monospace; letter-spacing: .08em; }
+.poll-mini{ min-height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg2); color: var(--text); font-size: 13px; cursor: pointer; font-family: inherit; }
+.poll-codes{ margin-bottom: 8px; }
