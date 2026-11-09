@@ -141,7 +141,8 @@ const DEFAULT_CLUB_ID = 'moneypadel';
 
 function resolveClub(loc){
   const host = String((loc && loc.hostname) || '');
-  const byHost = Object.values(CLUBS).find(c => (c.hosts || []).some(re => re.test(host)));
+  // Its app address or its standings address (pcstandings.… is Padel Championships).
+  const byHost = Object.values(CLUBS).find(c => (c.hosts || []).concat(c.standingsHosts || []).some(re => re.test(host)));
   if(byHost) return byHost;
   const asked = /(?:^|[?&])club=([a-z0-9_-]+)/i.exec(String((loc && loc.search) || ''));
   if(asked && CLUBS[asked[1]]) return CLUBS[asked[1]];

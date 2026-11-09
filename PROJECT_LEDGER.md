@@ -152,6 +152,8 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Fix, 9 Nov: pcstandings.sgj.luxe opened as Money Padel — DONE (this commit).** `resolveClub` matched only `hosts`; Padel Championships' standings address is in `standingsHosts` only, so pcstandings (standings site and /poll) fell through to Money Padel's project. It now matches either list; `club.test.js` checks every community's standings address.
+
 **Tier poll: personal one-use codes, no self-votes — DONE (this commit), 9 Nov.** Shaun: "assign each person their own personal code and once it's used, it can't be reused again … I also don't want people voting for themselves."
 - Admin › **Make codes** gives each listed player a 6-character code (no 0/O/1/I/L), shown with **Copy link** (`/poll/?code=…`) and **Copy every link**. Voters enter the code or open their link; their own name is not on the ballot; **Send my vote** is final. A used code shows ✔ and **Reset** (deletes that ballot so the code works again).
 - Storage: `tierPollCodes/{code}` {name} and `tierPollBallots/{code}`. **Rules enforce it**: create only (never update), only for an existing code, only while the poll is open, voter must equal the code's name, no vote for the voter; codes/ballots fetchable one at a time, listed only by Admins. Tally also drops self-votes. Supersedes the name-select flow below. **Shaun must re-publish `firestore.rules` in `mp---dashboard`.**
