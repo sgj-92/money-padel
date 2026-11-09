@@ -34,11 +34,30 @@
 
   var random = function (n) { var a = new Uint32Array(n); crypto.getRandomValues(a); return Array.prototype.slice.call(a); };
   var linkFor = function (code) { return location.origin + location.pathname + '?code=' + code; };
+  // What an Admin sends with each link (Shaun, 9 Nov). {name} becomes the
+  // player's name; {link} places the link, otherwise it goes on the end.
+  var DEFAULT_MESSAGE = 'Hi {name}, here’s your personal link for the ' + CLUB.name + ' tier poll. It works once, so please don’t share it.';
+  function messageFor(template, name, code) {
+    var text = String(template || '').replace(/\{name\}/g, name);
+    return /\{link\}/.test(text) ? text.replace(/\{link\}/g, linkFor(code)) : (text.trim() ? text.trim() + '\n' : '') + linkFor(code);
+  }
+  function pollDoc(changes) {
+    return Object.assign({ players: poll.players, open: poll.open, message: poll.message, updatedAt: new Date().toISOString() }, changes);
+  }
+  // A short note at the foot of the screen that something has happened.
+  function toast(text) {
+    var el = document.getElementById('pollToast');
+    if (!el) { el = document.createElement('div'); el.id = 'pollToast'; el.className = 'poll-toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = text;
+    el.classList.add('is-on');
+    clearTimeout(toast.t);
+    toast.t = setTimeout(function () { el.classList.remove('is-on'); }, 2600);
+  }
 
   async function readPoll() {
     var doc = await db.collection('tierPoll').doc(POLL).get();
     var d = doc.exists ? doc.data() : null;
-    return { players: (d && Array.isArray(d.players)) ? d.players : [], open: !!(d && d.open) };
+    return { players: (d && Array.isArray(d.players)) ? d.players : [], open: !!(d && d.open), message: (d && typeof d.message === 'string') ? d.message : DEFAULT_MESSAGE };
   }
 
   // ---- Voting ---------------------------------------------------------------
@@ -72,27 +91,35 @@
 
   function renderGrid() {
     var others = poll.players.filter(function (p) { return p.toLowerCase() !== me.name.toLowerCase(); });
-    shell('<p class="poll-sub">Hi <b>' + esc(me.name) + '</b>. Put each player in the tier you think they play at. Skip anyone you haven’t played. You can vote once, so check before you send.</p>'
+    var skipped = {};
+    shell('<p class="poll-sub">Hi <b>' + esc(me.name) + '</b>. Put each player in the tier you think they play at. If you can’t judge someone, tap <b>Skip</b>. You can vote once, so check before you send.</p>'
       + '<div class="poll-grid" role="table" aria-label="Your votes">'
-      + '<div class="poll-row poll-head" role="row"><span role="columnheader">Player</span>' + TierPoll.TIERS.map(function (t) { return '<span role="columnheader">' + t + '</span>'; }).join('') + '</div>'
+      + '<div class="poll-row poll-head" role="row"><span role="columnheader">Player</span>' + TierPoll.TIERS.map(function (t) { return '<span role="columnheader">' + t + '</span>'; }).join('') + '<span role="columnheader"></span></div>'
       + others.map(function (p) {
         return '<div class="poll-row" role="row" data-player="' + esc(p) + '"><span class="poll-name" role="cell">' + esc(p) + '</span>'
-          + TierPoll.TIERS.map(function (t) { return '<button type="button" role="cell" class="poll-pick" data-tier="' + t + '" aria-pressed="false" aria-label="' + esc(p) + ': Tier ' + t + '">' + t + '</button>'; }).join('') + '</div>';
+          + TierPoll.TIERS.map(function (t) { return '<button type="button" role="cell" class="poll-pick" data-tier="' + t + '" aria-pressed="false" aria-label="' + esc(p) + ': Tier ' + t + '">' + t + '</button>'; }).join('')
+          + '<button type="button" role="cell" class="poll-pick poll-skip" data-skip aria-pressed="false" aria-label="' + esc(p) + ': skip, I can’t judge">Skip</button></div>';
       }).join('') + '</div>'
       + '<p class="poll-count" id="pollCount"></p>'
       + '<button type="button" class="poll-go" id="pollSend">Send my vote</button>'
       + '<p class="poll-msg" id="pollMsg" role="status"></p>');
     var count = function () {
-      var n = Object.keys(votes).length;
-      document.getElementById('pollCount').textContent = n + ' of ' + others.length + ' placed' + (n < others.length ? ' · tap a tier again to skip a player' : '');
+      var n = Object.keys(votes).length, k = Object.keys(skipped).length, left = others.length - n - k;
+      document.getElementById('pollCount').textContent = n + ' placed · ' + k + ' skipped' + (left ? ' · ' + left + ' still to do' : ' · all done');
     };
+    sendVote.left = function () { return others.filter(function (p) { return !votes[p] && !skipped[p]; }); };
     count();
     main.querySelectorAll('.poll-row[data-player]').forEach(function (row) {
       row.querySelectorAll('.poll-pick').forEach(function (b) {
         b.onclick = function () {
           var p = row.getAttribute('data-player'), t = b.getAttribute('data-tier');
-          if (votes[p] === t) delete votes[p]; else votes[p] = t;
-          row.querySelectorAll('.poll-pick').forEach(function (x) { var on = votes[p] === x.getAttribute('data-tier'); x.classList.toggle('is-on', on); x.setAttribute('aria-pressed', String(on)); });
+          if (t) { delete skipped[p]; if (votes[p] === t) delete votes[p]; else votes[p] = t; }
+          else { delete votes[p]; if (skipped[p]) delete skipped[p]; else skipped[p] = true; }
+          row.classList.toggle('is-skipped', !!skipped[p]);
+          row.querySelectorAll('.poll-pick').forEach(function (x) {
+            var on = x.hasAttribute('data-skip') ? !!skipped[p] : votes[p] === x.getAttribute('data-tier');
+            x.classList.toggle('is-on', on); x.setAttribute('aria-pressed', String(on));
+          });
           count();
         };
       });
@@ -102,6 +129,8 @@
 
   async function sendVote() {
     var msg = document.getElementById('pollMsg');
+    var left = sendVote.left ? sendVote.left() : [];
+    if (left.length) { msg.textContent = 'Place or skip everyone first: ' + left.join(', ') + '.'; return; }
     if (!Object.keys(votes).length) { msg.textContent = 'Place at least one player first.'; return; }
     var btn = document.getElementById('pollSend');
     btn.disabled = true; msg.textContent = 'Sending…';
@@ -168,6 +197,9 @@
       + '<p class="poll-msg" id="pollAdminMsg" role="status">The poll is ' + (poll.open ? '<b>open</b>' : '<b>closed</b>') + '.</p>'
       + '<h2>Codes</h2>'
       + '<p class="poll-sub">Send each person their own link (or code) privately. A code works once; resetting it lets that person vote again.</p>'
+      + '<label class="poll-label" for="pollMessage">Message copied with each link</label>'
+      + '<textarea id="pollMessage" class="poll-select" rows="3">' + esc(poll.message) + '</textarea>'
+      + '<p class="poll-hint">{name} becomes the player’s name. The link goes on the end, or wherever you put {link}.</p>'
       + (missing.length ? '<button type="button" class="poll-go" id="pollMakeCodes">Make codes for ' + missing.length + ' player' + (missing.length === 1 ? '' : 's') + '</button>' : '')
       + '<table class="poll-results poll-codes"><thead><tr><th>Player</th><th>Code</th><th>Voted</th><th></th></tr></thead><tbody>'
       + poll.players.map(function (p) {
@@ -191,19 +223,32 @@
     adminBox.innerHTML = html;
     var say = function (s) { document.getElementById('pollAdminMsg').innerHTML = s; };
     var sayCodes = function (s) { document.getElementById('pollCodesMsg').textContent = s; };
-    var copy = function (text, done) {
-      var ok = function () { sayCodes(done); };
+    var copy = function (text, done, button) {
+      var ok = function () {
+        sayCodes(done); toast('✓ ' + done);
+        if (button) {
+          var was = button.textContent;
+          button.textContent = 'Copied ✓'; button.classList.add('is-copied');
+          setTimeout(function () { button.textContent = was; button.classList.remove('is-copied'); }, 2600);
+        }
+      };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, function () { window.prompt('Copy this:', text); });
       else window.prompt('Copy this:', text);
     };
+    var box = document.getElementById('pollMessage');
+    var currentMessage = function () { return box.value; };
+    box.onchange = async function () {
+      try { await db.collection('tierPoll').doc(POLL).set(pollDoc({ message: box.value })); poll.message = box.value; toast('✓ Message saved'); }
+      catch (e) { sayCodes('Saving the message failed: ' + e.message); }
+    };
     document.getElementById('pollSave').onclick = async function () {
       var players = TierPoll.parsePlayers(document.getElementById('pollPlayers').value);
-      try { await db.collection('tierPoll').doc(POLL).set({ players: players, open: poll.open, updatedAt: new Date().toISOString() }); }
+      try { await db.collection('tierPoll').doc(POLL).set(pollDoc({ players: players })); }
       catch (e) { say('Save failed: ' + esc(e.message)); return; }
       poll.players = players; render(); renderAdmin();
     };
     document.getElementById('pollToggle').onclick = async function () {
-      try { await db.collection('tierPoll').doc(POLL).set({ players: poll.players, open: !poll.open, updatedAt: new Date().toISOString() }); }
+      try { await db.collection('tierPoll').doc(POLL).set(pollDoc({ open: !poll.open })); }
       catch (e) { say('Save failed: ' + esc(e.message)); return; }
       poll.open = !poll.open; render(); renderAdmin();
     };
@@ -220,7 +265,7 @@
       renderAdmin();
     };
     adminBox.querySelectorAll('[data-copy]').forEach(function (b) {
-      b.onclick = function () { var parts = b.getAttribute('data-copy').split('|'); copy(linkFor(parts[1]), 'Copied ' + parts[0] + '’s link — send it to them privately.'); };
+      b.onclick = function () { var parts = b.getAttribute('data-copy').split('|'); copy(messageFor(currentMessage(), parts[0], parts[1]), 'Copied ' + parts[0] + '’s link — send it to them privately.', b); };
     });
     adminBox.querySelectorAll('[data-reset]').forEach(function (b) {
       b.onclick = async function () {
@@ -231,8 +276,8 @@
     });
     var all = document.getElementById('pollCopyAll');
     if (all) all.onclick = function () {
-      copy(poll.players.filter(function (p) { return codeOf[p.toLowerCase()]; }).map(function (p) { return p + ': ' + linkFor(codeOf[p.toLowerCase()]); }).join('\n'),
-        'Copied every player’s link. Send each person only their own.');
+      copy(poll.players.filter(function (p) { return codeOf[p.toLowerCase()]; }).map(function (p) { return p + ':\n' + messageFor(currentMessage(), p, codeOf[p.toLowerCase()]); }).join('\n\n'),
+        'Copied every player’s link. Send each person only their own.', all);
     };
     document.getElementById('pollUse').onclick = async function () {
       var msg = document.getElementById('pollUseMsg');

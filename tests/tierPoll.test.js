@@ -90,7 +90,12 @@ maybe('the page: an Admin lists the players, makes codes and opens it; a player 
     await page.click('#pollMakeCodes');
     await page.waitForFunction(() => document.querySelectorAll('.poll-codes [data-copy]').length === 4);
     const codes = await app.run(() => Object.fromEntries(window.__writes.filter((w) => w.collection === 'tierPollCodes').map((w) => [w.doc.name, w.id])));
+    await page.fill('#pollMessage', 'Hey {name}! Vote here: {link} (once only)');
+    await page.dispatchEvent('#pollMessage', 'change');
+    await page.waitForFunction(() => /Message saved/.test((document.getElementById('pollToast') || {}).innerText || ''));
     await page.click('.poll-codes [data-copy^="George|"]');
+    const signage = await app.run(() => ({ button: document.querySelector('.poll-codes [data-copy^="George|"]').innerText,
+      toast: document.getElementById('pollToast').innerText }));
     await page.click('#pollCopyAll');
     await page.click('#pollToggle');
     await page.waitForFunction(() => /open/.test(document.getElementById('pollAdminMsg').innerText) && !!document.getElementById('pollCode'));
@@ -103,8 +108,11 @@ maybe('the page: an Admin lists the players, makes codes and opens it; a player 
     const rows = await app.run(() => [...document.querySelectorAll('.poll-row[data-player]')].map((r) => r.dataset.player));
     await page.click('.poll-row[data-player="Shaun"] [data-tier="A"]');
     await page.click('.poll-row[data-player="Fred"] [data-tier="B"]');
+    await page.click('#pollSend');
+    await page.waitForFunction(() => /Place or skip everyone first: Jeremy/.test(document.getElementById('pollMsg').innerText));
     await page.click('.poll-row[data-player="Jeremy"] [data-tier="S"]');
-    await page.click('.poll-row[data-player="Jeremy"] [data-tier="S"]');   // tapped again: skipped
+    await page.click('.poll-row[data-player="Jeremy"] [data-skip]');   // can't judge him
+    const counted = await app.run(() => document.getElementById('pollCount').innerText);
     await page.click('#pollSend');
     await page.waitForFunction(() => /your vote is in/.test(document.getElementById('pollMain').innerText));
     const ballot = await app.run(() => window.__writes.filter((w) => w.collection === 'tierPollBallots').map((w) => ({ id: w.id, ...w.doc })));
@@ -132,8 +140,12 @@ maybe('the page: an Admin lists the players, makes codes and opens it; a player 
     assert.deepStrictEqual(Object.keys(codes).sort(), ['Fred', 'George', 'Jeremy', 'Shaun']);
     assert.strictEqual(new Set(Object.values(codes)).size, 4, 'everyone has their own code');
     Object.values(codes).forEach((c) => assert.match(c, /^[A-HJKMNP-Z2-9]{6}$/));
-    assert.match(copied[0], new RegExp(`/poll/(index\\.html)?\\?code=${codes.George}$`));
-    assert.strictEqual(copied[1].split('\n').length, 4);
+    assert.match(copied[0], new RegExp(`^Hey George! Vote here: \\S+/poll/(index\\.html)?\\?code=${codes.George} \\(once only\\)$`));
+    assert.strictEqual(copied[1].split('\n\n').length, 4);
+    assert.match(copied[1], /^Shaun:\nHey Shaun! Vote here: /);
+    assert.deepStrictEqual(signage, { button: 'Copied ✓', toast: '✓ Copied George’s link — send it to them privately.' });
+    assert.strictEqual(counted, '2 placed · 1 skipped · all done');
+    assert.strictEqual(await app.run(async () => (await firebase.firestore().collection('tierPoll').doc('current').get()).data().message), 'Hey {name}! Vote here: {link} (once only)');
     assert.deepStrictEqual(rows, ['Shaun', 'Fred', 'Jeremy'], 'George is not on his own ballot');
     assert.strictEqual(ballot.length, 1, 'one vote per code');
     assert.deepStrictEqual([ballot[0].id, ballot[0].voter, ballot[0].votes], [codes.George, 'George', { Shaun: 'A', Fred: 'B' }]);
