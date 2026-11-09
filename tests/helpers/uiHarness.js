@@ -170,7 +170,7 @@ async function open(options = {}) {
                 if (held) await held();
                 window.__reads.push({ collection: name, started, ended: Date.now() });
                 if (failReads) fail();
-                return { docs: Object.values(data[name] || {}).map((v) => ({ data: () => v })) };
+                return { docs: Object.entries(data[name] || {}).map(([id, v]) => ({ id, data: () => v })) };
               },
             };
           },
@@ -255,6 +255,9 @@ async function open(options = {}) {
         // (published Player Packs in playerPacks, say): { name: { id: value } }.
         ...Object.fromEntries(Object.entries(options.collections || {}).map(([name, docs]) => [name,
           Object.fromEntries(Object.entries(docs).map(([k, v]) => [k, { value: JSON.stringify(v), updatedAt: 0 }]))])),
+        // `options.documents` seeds collections whose documents are plain
+        // fields, stored exactly as given: { name: { id: fields } }.
+        ...(options.documents || {}),
       };
     })(),
     failReads: !!options.failReads,

@@ -51,15 +51,23 @@ service cloud.firestore {
     // report (healthReport.js).
     match /healthReports/{id}     { allow read, write: if true; }
 
-    // The tier poll (poll/): the list and whether it is open are an Admin's;
-    // anyone may cast or change a ballot, and only an Admin may read them,
-    // so nobody sees how anyone else voted.
+    // The tier poll (poll/). The list and whether it is open are an Admin's.
+    // Each player votes with their own code (Shaun, 9 Nov): a ballot is filed
+    // under the code, so it can be cast ONCE (create, never update), only with
+    // a code an Admin made, only under that code's name, never for oneself,
+    // and only while the poll is open. Codes and ballots can be fetched by
+    // someone holding the code, never listed; only an Admin sees them all.
     match /tierPoll/{id}          { allow read: if true; allow write: if isAdmin(); }
-    match /tierPollBallots/{id} {
-      allow create, update: if request.resource.data.keys().hasOnly(['poll', 'voter', 'votes', 'updatedAt'])
-        && request.resource.data.voter is string && request.resource.data.voter.size() > 0 && request.resource.data.voter.size() <= 60
-        && request.resource.data.votes is map && request.resource.data.votes.size() <= 200;
-      allow read, delete: if isAdmin();
+    match /tierPollCodes/{code}   { allow get: if true; allow list, write: if isAdmin(); }
+    match /tierPollBallots/{code} {
+      allow get: if true;
+      allow list, delete: if isAdmin();
+      allow create: if exists(/databases/$(database)/documents/tierPollCodes/$(code))
+        && get(/databases/$(database)/documents/tierPoll/current).data.open == true
+        && request.resource.data.keys().hasOnly(['poll', 'voter', 'votes', 'createdAt'])
+        && request.resource.data.voter == get(/databases/$(database)/documents/tierPollCodes/$(code)).data.name
+        && request.resource.data.votes is map && request.resource.data.votes.size() <= 200
+        && !(request.resource.data.voter in request.resource.data.votes.keys());
     }
 
     // Who is an Admin. Each Admin may read their own entry (the app checks it
