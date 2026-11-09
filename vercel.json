@@ -4,7 +4,7 @@
   "buildCommand": "node scripts/stamp-build.js",
   "redirects": [
     {
-      "source": "/((?!assets/|review(?:/|$)).+)",
+      "source": "/((?!assets/|review(?:/|$)|poll(?:/|$)).+)",
       "has": [
         {
           "type": "host",
@@ -15,7 +15,7 @@
       "permanent": false
     },
     {
-      "source": "/((?!assets/|review(?:/|$)).+)",
+      "source": "/((?!assets/|review(?:/|$)|poll(?:/|$)).+)",
       "has": [
         {
           "type": "host",
@@ -33,6 +33,11 @@
     {
       "source": "/review",
       "destination": "/review/",
+      "permanent": false
+    },
+    {
+      "source": "/poll",
+      "destination": "/poll/",
       "permanent": false
     }
   ]

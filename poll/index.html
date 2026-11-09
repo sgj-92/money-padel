@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  // Served as /poll (no trailing slash), the relative links below would
+  // resolve beside this folder: normalise first, as the review page does.
+  (function () {
+    var p = location.pathname;
+    if (!/\/$/.test(p) && !/\.html$/.test(p)) location.replace(p + '/' + location.search + location.hash);
+  })();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0a08">
+<meta name="robots" content="noindex">
+<title>Tier poll</title>
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/app.css">
+<link rel="stylesheet" href="poll.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<!-- The community, its colours, before anything is drawn. -->
+<script src="../assets/js/config/club.js"></script>
+<script src="../assets/js/ui/components/clubTheme.js"></script>
+<script>ClubTheme.apply(document);</script>
+</head>
+<body class="poll-page">
+  <header class="poll-top">
+    <img class="poll-mark" id="pollMark" alt="">
+    <span class="poll-brand" id="pollBrand"></span>
+  </header>
+  <main class="poll-main" id="pollMain" aria-live="polite"><p class="poll-sub">Loading…</p></main>
+  <section class="poll-admin" id="pollAdmin"></section>
+  <script src="../assets/js/data/firebaseData.js"></script>
+  <script src="../assets/js/data/adminAuth.js"></script>
+  <script src="tierPoll.js"></script>
+  <script src="poll.js"></script>
+</body>
+</html>

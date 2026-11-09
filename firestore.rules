@@ -51,6 +51,17 @@ service cloud.firestore {
     // report (healthReport.js).
     match /healthReports/{id}     { allow read, write: if true; }
 
+    // The tier poll (poll/): the list and whether it is open are an Admin's;
+    // anyone may cast or change a ballot, and only an Admin may read them,
+    // so nobody sees how anyone else voted.
+    match /tierPoll/{id}          { allow read: if true; allow write: if isAdmin(); }
+    match /tierPollBallots/{id} {
+      allow create, update: if request.resource.data.keys().hasOnly(['poll', 'voter', 'votes', 'updatedAt'])
+        && request.resource.data.voter is string && request.resource.data.voter.size() > 0 && request.resource.data.voter.size() <= 60
+        && request.resource.data.votes is map && request.resource.data.votes.size() <= 200;
+      allow read, delete: if isAdmin();
+    }
+
     // Who is an Admin. Each Admin may read their own entry (the app checks it
     // at sign-in); nobody may write it -- the console does that.
     match /admins/{uid} {

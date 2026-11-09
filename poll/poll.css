@@ -1,0 +1,36 @@
+/* ===================== THE TIER POLL PAGE (poll/) ===================== */
+body.poll-page{ background: var(--bg0); color: var(--text); font-family: var(--font-interface); margin: 0; min-height: 100vh; }
+.poll-top{ display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.poll-mark{ width: 28px; height: 28px; }
+.poll-brand{ font-family: var(--font-prestige); letter-spacing: .12em; text-transform: uppercase; font-size: 15px; color: var(--text); }
+.poll-main, .poll-admin{ max-width: 560px; margin: 0 auto; padding: 16px; }
+.poll-main h1, .poll-admin h2{ font-family: var(--font-prestige); font-weight: 400; margin: 6px 0 8px; }
+.poll-main h1{ font-size: 28px; }
+.poll-admin{ border-top: 1px solid var(--line); margin-top: 16px; }
+.poll-sub{ color: var(--text-soft); font-size: 14px; line-height: 1.45; margin: 0 0 12px; }
+.poll-admin h2 .poll-sub{ font-size: 13px; font-family: var(--font-interface); }
+.poll-label{ display: block; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); margin: 14px 0 6px; }
+.poll-select{ width: 100%; box-sizing: border-box; min-height: 46px; padding: 10px 12px; margin-bottom: 8px; font-size: 16px; color: var(--text);
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; font-family: inherit; }
+textarea.poll-select{ resize: vertical; }
+.poll-grid{ margin: 14px 0 6px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.poll-row{ display: grid; grid-template-columns: minmax(0, 1fr) repeat(4, 48px); align-items: center; gap: 4px; padding: 6px 8px; border-top: 1px solid var(--line); }
+.poll-row:first-child{ border-top: 0; }
+.poll-head{ background: var(--bg1); font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .06em; }
+.poll-head span:not(:first-child){ text-align: center; }
+.poll-name{ font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.poll-name em{ color: var(--text-dim); font-style: normal; font-size: 12px; }
+.poll-pick{ min-height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg1); color: var(--text-soft);
+  font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.poll-pick.is-on{ background: var(--gold); border-color: var(--gold); color: var(--bg0); }
+.poll-count{ font-size: 13px; color: var(--text-dim); margin: 6px 0 10px; }
+.poll-go{ width: 100%; min-height: 48px; border-radius: 12px; border: 0; background: var(--gold); color: var(--bg0); font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.poll-go:disabled{ opacity: .45; cursor: default; }
+.poll-alt{ background: var(--bg2); color: var(--text); border: 1px solid var(--line); }
+.poll-actions{ display: flex; gap: 8px; }
+.poll-msg{ font-size: 14px; color: var(--gold-bright); min-height: 1.2em; margin: 8px 0; }
+.poll-link{ background: none; border: 0; color: var(--text-dim); text-decoration: underline; font-size: 13px; cursor: pointer; padding: 8px 0; }
+.poll-results{ width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0 10px; }
+.poll-results th, .poll-results td{ padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: center; }
+.poll-results th:first-child, .poll-results td:first-child{ text-align: left; }
+.poll-results th{ font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .06em; }
