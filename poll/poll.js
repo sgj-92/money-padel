@@ -184,7 +184,8 @@
     var codes = await readAll('tierPollCodes');
     var ballots = (await readAll('tierPollBallots')).filter(function (b) { return b.poll === POLL; });
     var codeOf = {};
-    codes.forEach(function (c) { if (c.name) codeOf[c.name.toLowerCase()] = c.id; });
+    var codeDoc = {};
+    codes.forEach(function (c) { if (c.name) { codeOf[c.name.toLowerCase()] = c.id; codeDoc[c.id] = c; } });
     var used = {};
     ballots.forEach(function (b) { used[b.id] = true; });
     var missing = poll.players.filter(function (p) { return !codeOf[p.toLowerCase()]; });
@@ -201,10 +202,12 @@
       + '<textarea id="pollMessage" class="poll-select" rows="3">' + esc(poll.message) + '</textarea>'
       + '<p class="poll-hint">{name} becomes the player’s name. The link goes on the end, or wherever you put {link}.</p>'
       + (missing.length ? '<button type="button" class="poll-go" id="pollMakeCodes">Make codes for ' + missing.length + ' player' + (missing.length === 1 ? '' : 's') + '</button>' : '')
-      + '<table class="poll-results poll-codes"><thead><tr><th>Player</th><th>Code</th><th>Voted</th><th></th></tr></thead><tbody>'
+      + '<table class="poll-results poll-codes"><thead><tr><th>Player</th><th>Code</th><th>Sent</th><th>Voted</th><th></th></tr></thead><tbody>'
       + poll.players.map(function (p) {
         var code = codeOf[p.toLowerCase()];
         return '<tr><td>' + esc(p) + '</td><td class="poll-codecell">' + (code ? esc(code) : '—') + '</td>'
+          // Sent: the Admin's own note that the link has gone to them.
+          + '<td>' + (code ? '<input type="checkbox" class="poll-sent" data-sent="' + esc(code) + '" aria-label="Link sent to ' + esc(p) + '"' + (codeDoc[code].sent ? ' checked' : '') + '>' : '') + '</td>'
           + '<td>' + (code && used[code] ? '✔︎' : '') + '</td>'
           + '<td>' + (code ? (used[code] ? '<button type="button" class="poll-mini" data-reset="' + esc(code) + '">Reset</button>'
             : '<button type="button" class="poll-mini" data-copy="' + esc(p) + '|' + esc(code) + '">Copy link</button>') : '') + '</td></tr>';
@@ -266,6 +269,15 @@
     };
     adminBox.querySelectorAll('[data-copy]').forEach(function (b) {
       b.onclick = function () { var parts = b.getAttribute('data-copy').split('|'); copy(messageFor(currentMessage(), parts[0], parts[1]), 'Copied ' + parts[0] + '’s link — send it to them privately.', b); };
+    });
+    adminBox.querySelectorAll('[data-sent]').forEach(function (box) {
+      box.onchange = async function () {
+        var c = codeDoc[box.getAttribute('data-sent')];
+        var doc = { name: c.name, createdAt: c.createdAt || null, sent: box.checked, sentAt: box.checked ? new Date().toISOString() : null };
+        try { await db.collection('tierPollCodes').doc(c.id).set(doc); c.sent = box.checked; }
+        catch (e) { box.checked = !box.checked; sayCodes('Saving failed: ' + e.message); return; }
+        toast(box.checked ? '✓ Marked ' + c.name + '’s link as sent' : c.name + ' unmarked');
+      };
     });
     adminBox.querySelectorAll('[data-reset]').forEach(function (b) {
       b.onclick = async function () {

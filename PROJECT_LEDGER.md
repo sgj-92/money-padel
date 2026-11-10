@@ -152,6 +152,8 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Tier poll: Sent tick box — DONE (this commit), 10 Nov.** Shaun: a tick box for Admins to note the link has been sent. Codes table has a **Sent** column; the tick is saved on `tierPollCodes/{code}` (`sent`, `sentAt`; Admin-only write under the existing rules, no re-publish). 1044 / 1044.
+
 **Tier poll: link message, "Copied" signal, explicit Skip — DONE (this commit), 9 Nov.** Shaun: custom message with each copied link; show that it copied; let voters clearly skip.
 - Admin › Codes has **Message copied with each link** (`{name}`, `{link}`; link appended if no `{link}`), saved on `tierPoll/current.message`; every write of that doc now keeps players/open/message together. Copy link / Copy every link turn the button to "Copied ✓" and show a toast.
 - Ballot rows have a **Skip** button; Send needs every player placed or skipped (count line: "N placed · N skipped · N still to do"). Skips are not stored (ballot fields unchanged, so no rules change). 1044 / 1044.
