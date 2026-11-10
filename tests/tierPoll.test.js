@@ -97,6 +97,9 @@ maybe('the page: an Admin lists the players, makes codes and opens it; a player 
     const signage = await app.run(() => ({ button: document.querySelector('.poll-codes [data-copy^="George|"]').innerText,
       toast: document.getElementById('pollToast').innerText }));
     await page.click('#pollCopyAll');
+    await page.check('[data-sent="' + codes.George + '"]');
+    await page.waitForFunction(() => /Marked George/.test(document.getElementById('pollToast').innerText));
+    const sent = await app.run((c) => window.__writes.filter((w) => w.collection === 'tierPollCodes' && w.id === c).slice(-1)[0].doc, codes.George);
     await page.click('#pollToggle');
     await page.waitForFunction(() => /open/.test(document.getElementById('pollAdminMsg').innerText) && !!document.getElementById('pollCode'));
     // A wrong code.
@@ -144,6 +147,7 @@ maybe('the page: an Admin lists the players, makes codes and opens it; a player 
     assert.strictEqual(copied[1].split('\n\n').length, 4);
     assert.match(copied[1], /^Shaun:\nHey Shaun! Vote here: /);
     assert.deepStrictEqual(signage, { button: 'Copied ✓', toast: '✓ Copied George’s link — send it to them privately.' });
+    assert.deepStrictEqual([sent.name, sent.sent, typeof sent.sentAt], ['George', true, 'string'], 'the tick is kept on his code');
     assert.strictEqual(counted, '2 placed · 1 skipped · all done');
     assert.strictEqual(await app.run(async () => (await firebase.firestore().collection('tierPoll').doc('current').get()).data().message), 'Hey {name}! Vote here: {link} (once only)');
     assert.deepStrictEqual(rows, ['Shaun', 'Fred', 'Jeremy'], 'George is not on his own ballot');
