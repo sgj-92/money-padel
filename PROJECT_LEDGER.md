@@ -152,6 +152,8 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Tier poll: voted players first — DONE (this commit), 10 Nov.** Shaun: voted players to the top so he can see who they're waiting for. Codes table lists voted then not-voted (list order within each), with "N voted · waiting for M" above it. 1044 / 1044.
+
 **Tier poll: Sent tick box — DONE (this commit), 10 Nov.** Shaun: a tick box for Admins to note the link has been sent. Codes table has a **Sent** column; the tick is saved on `tierPollCodes/{code}` (`sent`, `sentAt`; Admin-only write under the existing rules, no re-publish). 1044 / 1044.
 
 **Tier poll: link message, "Copied" signal, explicit Skip — DONE (this commit), 9 Nov.** Shaun: custom message with each copied link; show that it copied; let voters clearly skip.

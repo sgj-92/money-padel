@@ -188,6 +188,11 @@
     codes.forEach(function (c) { if (c.name) { codeOf[c.name.toLowerCase()] = c.id; codeDoc[c.id] = c; } });
     var used = {};
     ballots.forEach(function (b) { used[b.id] = true; });
+    // Voted first (Shaun, 10 Nov), so who is still to vote is together at the
+    // foot; each group keeps the list's order.
+    var hasVoted = function (p) { var c = codeOf[p.toLowerCase()]; return !!(c && used[c]); };
+    var byVoted = poll.players.filter(hasVoted).concat(poll.players.filter(function (p) { return !hasVoted(p); }));
+    var votedCount = poll.players.filter(hasVoted).length;
     var missing = poll.players.filter(function (p) { return !codeOf[p.toLowerCase()]; });
     var t = TierPoll.tally(poll.players, ballots);
     var html = '<h2>Admin <span class="poll-sub">· ' + esc(signedInAdmin.email) + '</span></h2>'
@@ -202,8 +207,9 @@
       + '<textarea id="pollMessage" class="poll-select" rows="3">' + esc(poll.message) + '</textarea>'
       + '<p class="poll-hint">{name} becomes the player’s name. The link goes on the end, or wherever you put {link}.</p>'
       + (missing.length ? '<button type="button" class="poll-go" id="pollMakeCodes">Make codes for ' + missing.length + ' player' + (missing.length === 1 ? '' : 's') + '</button>' : '')
+      + '<p class="poll-sub" id="pollWaiting">' + (votedCount + ' voted · ' + (byVoted.length - votedCount ? 'waiting for ' + (byVoted.length - votedCount) : 'everyone has voted')) + '</p>'
       + '<table class="poll-results poll-codes"><thead><tr><th>Player</th><th>Code</th><th>Sent</th><th>Voted</th><th></th></tr></thead><tbody>'
-      + poll.players.map(function (p) {
+      + byVoted.map(function (p) {
         var code = codeOf[p.toLowerCase()];
         return '<tr><td>' + esc(p) + '</td><td class="poll-codecell">' + (code ? esc(code) : '—') + '</td>'
           // Sent: the Admin's own note that the link has gone to them.

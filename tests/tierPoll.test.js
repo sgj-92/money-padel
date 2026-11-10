@@ -129,6 +129,8 @@ maybe('the page: an Admin lists the players, makes codes and opens it; a player 
     // Results, then starting tiers.
     await page.waitForFunction(() => /1 of 4 voted/.test(document.getElementById('pollAdmin').innerText));
     const results = await app.run(() => [...document.querySelectorAll('.poll-results:not(.poll-codes) tbody tr')].map((tr) => [...tr.children].map((td) => td.innerText)));
+    const codeOrder = await app.run(() => [...document.querySelectorAll('.poll-codes tbody tr')].map((tr) => tr.children[0].innerText));
+    const waiting = await app.run(() => document.getElementById('pollWaiting').innerText);
     const georgeRow = await app.run(() => [...document.querySelectorAll('.poll-codes tbody tr')].find((tr) => tr.children[0].innerText === 'George').innerText);
     await page.click('#pollUse');
     await page.waitForFunction(() => /Set as starting tiers/.test(document.getElementById('pollUseMsg').innerText));
@@ -155,6 +157,8 @@ maybe('the page: an Admin lists the players, makes codes and opens it; a player 
     assert.deepStrictEqual([ballot[0].id, ballot[0].voter, ballot[0].votes], [codes.George, 'George', { Shaun: 'A', Fred: 'B' }]);
     assert.deepStrictEqual(Object.keys(ballot[0]).filter((k) => k !== 'id').sort(), ['createdAt', 'poll', 'voter', 'votes'], 'exactly the fields the rules allow');
     assert.match(georgeRow, /✔/);
+    assert.deepStrictEqual(codeOrder, ['George', 'Shaun', 'Fred', 'Jeremy'], 'who has voted comes first');
+    assert.strictEqual(waiting, '1 voted · waiting for 3');
     assert.deepStrictEqual(results.find((r) => r[0] === 'Shaun'), ['Shaun', '·', '1', '·', '·', 'Tier A']);
     assert.deepStrictEqual(results.find((r) => r[0] === 'Jeremy'), ['Jeremy', '·', '·', '·', '·', '—']);
     assert.deepStrictEqual(tags, { Shaun: { tier: 'A', active: true }, Fred: { tier: 'B', active: true } });
