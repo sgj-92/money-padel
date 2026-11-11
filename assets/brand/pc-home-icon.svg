@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Padel Championships' home-screen icon: its trophy mark on Royal
+       Amethyst's night purple. Full-bleed: the phone rounds the corners. -->
+  <defs>
+    <radialGradient id="g" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#2a1d4a"/>
+      <stop offset="1" stop-color="#0b0812"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#g)"/>
+  <g transform="translate(96 88) scale(10)">
+    <path d="M8.6 5.2 C5 5.2 3.6 7.2 4 9.6 C4.5 12.4 7 14 9.8 14.2" fill="none" stroke="#a585ff" stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M23.4 5.2 C27 5.2 28.4 7.2 28 9.6 C27.5 12.4 25 14 22.2 14.2" fill="none" stroke="#a585ff" stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M8 3.2 H24 V9.6 C24 15 20.6 18.6 16 18.6 C11.4 18.6 8 15 8 9.6 Z" fill="#a585ff"/>
+    <path d="M16 6.1 L17.15 8.45 L19.7 8.8 L17.85 10.6 L18.3 13.15 L16 11.95 L13.7 13.15 L14.15 10.6 L12.3 8.8 L14.85 8.45 Z" fill="#0b0812"/>
+    <rect x="14.6" y="18.4" width="2.8" height="5" fill="#a585ff"/>
+    <rect x="10.2" y="23.2" width="11.6" height="2.6" rx="0.9" fill="#d4c4ff"/>
+    <rect x="8.6" y="26.6" width="14.8" height="2.4" rx="1" fill="#d4c4ff"/>
+  </g>
+</svg>

@@ -88,6 +88,9 @@ const CLUBS = {
     productName: 'Padel Championships',
     fileSlug: 'padel-championships',
     logo: 'assets/brand/pc-mark.svg',
+    // Its icon on a phone's Home Screen (Shaun, 11 Nov). PNG: iPhones do not
+    // use an SVG here. Money Padel's is the one written into index.html.
+    homeIcon: { 180: 'assets/brand/pc-home-180.png', 512: 'assets/brand/pc-home-512.png' },
     monogram: 'PC',
     // Shaun, 5 Nov: judged by the quarter; 4 matches in it to qualify.
     period: { months: 3, noun: 'quarter' },
