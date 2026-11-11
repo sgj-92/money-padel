@@ -2081,7 +2081,12 @@ function fmtRelative(iso){
 function submissionIdentity(){
   const viewer = (typeof getCurrentViewer === 'function') ? getCurrentViewer() : null;
   if(viewer && viewer.name) return viewer.name;
-  return (currentUserName && currentUserName.trim()) || '';
+  if(currentUserName && currentUserName.trim()) return currentUserName.trim();
+  // A signed-in Admin is someone already: the name on their Admin entry.
+  // A new community's Admin has no player to choose until a game is rated
+  // (Padel Championships, 11 Nov), so this is how they approve the first.
+  const admin = (typeof signedInAdmin !== 'undefined' && isUnlocked) ? signedInAdmin : null;
+  return (admin && admin.name && String(admin.name).trim()) || '';
 }
 
 // Shown inside a flow that is about to record who did something, and nowhere
