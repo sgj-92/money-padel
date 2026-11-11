@@ -134,9 +134,14 @@
   // partner is left out of the sides here, so every record, table, head to
   // head and partnership counts the match for the three it affects and not
   // for him. `forfeit` says who quit and who was left out, for display.
+  //
+  // Late (doc.late): the match as counted -- the late side a set down. The
+  // late player's on-time partner is rated on the match as played, so, as
+  // with a forfeit, he is left out of the sides and every table; `late` says
+  // who was late, who was on time and how it was played, for display.
   function toLegacyMatchShape(doc, alias) {
     const isDraw = doc.outcome === Engine.OUTCOME.DRAW;
-    const out = new Set((doc.forfeit && doc.forfeit.unaffected) || []);
+    const out = new Set(((doc.forfeit && doc.forfeit.unaffected) || []).concat((doc.late && doc.late.onTime) || []));
     const shape = {
       id: doc.id,
       date: doc.date,
@@ -152,6 +157,11 @@
     };
     if (doc.forfeit) {
       shape.forfeit = { by: Names.mapTeam(alias, [doc.forfeit.by])[0], unaffected: Names.mapTeam(alias, doc.forfeit.unaffected || []) };
+    }
+    if (doc.late) {
+      const by = doc.late.by || [];
+      shape.late = { by: Names.mapTeam(alias, by), onTime: Names.mapTeam(alias, doc.late.onTime || []),
+        lateSide: doc.teamA.some((n) => by.includes(n)) ? 'A' : 'B', playedOutcome: doc.late.playedOutcome };
     }
     return shape;
   }

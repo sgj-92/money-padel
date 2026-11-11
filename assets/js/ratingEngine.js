@@ -143,8 +143,21 @@
     const unaffected = {};
     ((match.forfeit && match.forfeit.unaffected) || []).forEach((n) => { unaffected[n] = true; });
 
-    function applyTo(team, teamResidual, teamExpected, teamActual, side) {
+    // Late (Shaun, 11 Nov): a team whose player arrived late starts a set
+    // down, so the match is stored at that result -- a set given to the
+    // opponents, no games added (Shaun chose). The late player and the
+    // opponents are rated on it. The late player's partner was on time: he is
+    // rated on the match as it was PLAYED (late.playedOutcome, same sets),
+    // against the same expectation.
+    const onTime = {};
+    ((match.late && match.late.onTime) || []).forEach((n) => { onTime[n] = true; });
+    const played = match.late && match.late.playedOutcome ? actualScores(sets, match.late.playedOutcome) : null;
+
+    function applyTo(team, sideResidual, teamExpected, sideActual, side) {
       team.filter((name) => !unaffected[name]).forEach((name) => {
+        const asPlayed = !!(played && onTime[name]);
+        const teamActual = asPlayed ? (side === 'A' ? played.a : played.b) : sideActual;
+        const teamResidual = asPlayed ? teamActual - teamExpected : sideResidual;
         const s = state[name];
         const preMatchRating = s.rating;
         const evidenceBefore = s.effectiveEvidence;

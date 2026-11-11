@@ -101,7 +101,13 @@
       drawSideAssignmentArbitrary: !!match.drawSideAssignmentArbitrary,
       // Only on a forfeit, so every other stored match is exactly as before.
       ...(match.forfeit ? { forfeit: { by: match.forfeit.by, unaffected: (match.forfeit.unaffected || []).slice() } } : {}),
+      // Only on a match someone arrived late for (ratingEngine.js).
+      ...(match.late ? { late: lateCopy(match.late) } : {}),
     };
+  }
+
+  function lateCopy(l) {
+    return { by: (l.by || []).slice(), onTime: (l.onTime || []).slice(), playedOutcome: l.playedOutcome };
   }
 
   function matchFromDoc(doc) {
@@ -116,6 +122,7 @@
       type: doc.type,
       drawSideAssignmentArbitrary: doc.drawSideAssignmentArbitrary,
       ...(doc.forfeit ? { forfeit: { by: doc.forfeit.by, unaffected: (doc.forfeit.unaffected || []).slice() } } : {}),
+      ...(doc.late ? { late: lateCopy(doc.late) } : {}),
     };
   }
 

@@ -450,6 +450,7 @@ or a team per line with 🏆 and the sets"></textarea>
         </div>
         <div class="section-sub" style="margin-top:4px; font-size:10.5px;">${MATCH_CORRECTION_NOTE}</div>
         ${matchForfeitPanelHtml(m)}
+        ${matchLatePanelHtml(m)}
         ${matchNoteEditorHtml(m.id)}`}
         ${hasStagedFix ? buildMatchFixConfirmHtml() : ''}
       </div>` : ''}
@@ -707,6 +708,17 @@ or a team per line with 🏆 and the sets"></textarea>
       withGameAnchor(btn.dataset.forfeitStage, () => stageForfeit(btn.dataset.forfeitStage, who));
     };
   });
+  box.querySelectorAll('[data-late-stage]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const who = [...btn.closest('[data-late-panel]').querySelectorAll('[data-late-who]:checked')].map(x => x.value);
+      if(!who.length){ matchFixMessage = 'Tick who was late.'; renderGamesTab(); return; }
+      managingGameId = btn.dataset.lateStage;
+      withGameAnchor(btn.dataset.lateStage, () => stageLate(btn.dataset.lateStage, who));
+    };
+  });
+  box.querySelectorAll('[data-late-remove]').forEach(btn=>{
+    btn.onclick = ()=>{ managingGameId = btn.dataset.lateRemove; withGameAnchor(btn.dataset.lateRemove, () => removeLate(btn.dataset.lateRemove)); };
+  });
   box.querySelectorAll('[data-forfeit-remove]').forEach(btn=>{
     btn.onclick = ()=>{ managingGameId = btn.dataset.forfeitRemove; withGameAnchor(btn.dataset.forfeitRemove, () => removeForfeit(btn.dataset.forfeitRemove)); };
   });
@@ -714,6 +726,7 @@ or a team per line with 🏆 and the sets"></textarea>
     // A forfeit's sides leave the partner out, so the ordinary correction
     // form cannot see him: remove the forfeit first, then correct the match.
     if(matchForfeitOf(btn.dataset.edit)){ btn.onclick = ()=>{ matchFixMessage = 'This match is a forfeit. Remove the forfeit first, then correct it.'; renderGamesTab(); }; return; }
+    if(matchLateOf(btn.dataset.edit)){ btn.onclick = ()=>{ matchFixMessage = 'This match has a late penalty. Remove it first, then correct the match.'; renderGamesTab(); }; return; }
     btn.onclick = ()=> openGameEditor(btn.dataset.edit);
   });
   // One card's actions open at a time. Tapping Manage again closes it, and a
