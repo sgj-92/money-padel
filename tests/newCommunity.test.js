@@ -75,6 +75,34 @@ maybe('the "Who are you?" sheet is never a trap: it says when nobody is in it ye
   } finally { await app.close(); }
 });
 
+maybe('a new community\'s first game can be approved: players added but not yet rated can be chosen, and a signed-in Admin is someone already', async () => {
+  const club = { moneypadel_player_tags: { Shaun: { tier: 'A', active: true }, George: { tier: 'A', active: true }, Fred: { tier: 'A', active: true }, Mohamed: { tier: 'B', active: true } } };
+  const app = await H.open({ path: 'index.html?club=padelchampionships', record: EMPTY, club });
+  try {
+    const r = await app.run(async () => {
+      buildViewerSelector();
+      const offered = [...document.querySelectorAll('#viewerPlayerList .viewer-player-btn')].map((b) => b.dataset.name);
+      document.getElementById('viewerSkipBtn').click();
+      await new Promise((res) => setTimeout(res, 300));
+      // Nobody chosen; the Admin is signed in.
+      currentUserName = ''; signedInAdmin = { uid: 'u1', email: 's@x', role: 'owner', name: 'Shaun' }; isUnlocked = true; adminRole = 'owner';
+      const prompted = []; window.prompt = (q) => { prompted.push(q); return null; };
+      extraMatchesState.push({ id: 'sub_1', date: '2026-11-10', winners: ['Fred', 'Shaun'], losers: ['George', 'Mohamed'], sets: [[5, 7], [6, 3], [6, 1], [6, 3]],
+        type: 'doubles', note: '', status: 'pending', submittedBy: 'Shaun', submittedAt: '2026-11-10T20:00:00Z' });
+      legacyTabBtn('games').click();
+      await prepareApproval('sub_1');
+      const ready = !!approvalPlan && approvalPlan.approvedBy;
+      await commitApproval();
+      return { offered, prompted, ready, message: approvalMessage };
+    });
+    assert.deepStrictEqual(r.offered, ['Fred', 'George', 'Mohamed', 'Shaun'], 'the players the Admin added');
+    assert.deepStrictEqual(r.prompted, [], 'nobody is asked their name');
+    assert.strictEqual(r.ready, 'Shaun', 'approved by the signed-in Admin');
+    assert.match(r.message, /^Rated as 2026-11-10-1\./);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
+
 maybe('players added but not yet rated are shown as waiting for their first game: Admin, Add a game, the rankings', async () => {
   const club = { moneypadel_player_tags: { Shaun: { tier: 'A', active: true }, George: { tier: 'A', active: true }, Fred: { tier: 'A', active: true }, Jeremy: { tier: 'A', active: true } } };
   const app = await H.open({ path: 'index.html?club=padelchampionships', record: EMPTY, club });

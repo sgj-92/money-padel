@@ -82,7 +82,10 @@ test('live surfaces ask the shared rule, never the full player list', () => {
   // "Who are you?", the directory, Compare and Find a Game draw their names
   // from livePlayers()/livePlayerNames(); name fields from allPlayerNames(),
   // which is the same live list.
-  assert.match(read('shell.js'), /const names = livePlayerNames\(\);/);
+  // The chooser also offers players added but not yet rated, whose list is
+  // built on the same rule (entryPlayerNames = livePlayerNames + waiting).
+  assert.match(read('shell.js'), /const names = typeof entryPlayerNames === 'function' \? entryPlayerNames\(\) : livePlayerNames\(\);/);
+  assert.match(read('app.js'), /function entryPlayerNames\(\)\{\n  return \[\.\.\.new Set\(livePlayerNames\(\)\.concat\(awaitingFirstGame\(\)\)\)\]/);
   assert.match(read('features/players/directoryScreen.js'), /let rows = livePlayers\(\);/);
   assert.match(read('features/players/h2hScreen.js'), /const names = livePlayerNames\(\);/);
   assert.match(read('features/play/findGameScreen.js'), /livePlayers\(\)\.sort/);

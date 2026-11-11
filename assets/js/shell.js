@@ -615,8 +615,9 @@ function buildViewerSelector(){
   function renderList(filter){
     const listEl = document.getElementById('viewerPlayerList');
     // Real player data only -- never a second hard-coded list -- and only the
-    // people in the group now: an archived player is not offered.
-    const names = livePlayerNames();
+    // people in the group now: an archived player is not offered. Players
+    // added but not yet rated are people too (Padel Championships, 11 Nov).
+    const names = typeof entryPlayerNames === 'function' ? entryPlayerNames() : livePlayerNames();
     const filtered = filter ? names.filter(n=>n.toLowerCase().includes(filter.toLowerCase())) : names;
     listEl.innerHTML = filtered.length
       ? filtered.map(n=>`<button class="viewer-player-btn" data-name="${n}">${n}</button>`).join('')
@@ -748,7 +749,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
           renderPremiumProfile(name, matchFilter);
         };
         // Not on a community with nobody in it yet: there is no one to choose.
-        if(!getCurrentViewer() && livePlayerNames().length) buildViewerSelector();
+        if(!getCurrentViewer() && (typeof entryPlayerNames === 'function' ? entryPlayerNames() : livePlayerNames()).length) buildViewerSelector();
       }
       // If Home is already the active section by the time data is ready (or
       // becomes active later), keep the dashboard in sync with the viewer.
