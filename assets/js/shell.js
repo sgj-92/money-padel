@@ -91,8 +91,33 @@ function applyClubIdentity(){
   document.title = CLUB.appTitle;
   const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]');
   if(appleTitle) appleTitle.setAttribute('content', CLUB.homeScreenTitle);
+  applyHomeScreenIcon();
   const tag = document.querySelector('#legacyHeader .tag');
   if(tag) tag.textContent = `${CLUB.name} · ${CLUB.resultsGroup}`;
+}
+
+// A community with its own Home Screen icon (CLUB.homeIcon) replaces Money
+// Padel's in the page's icon links and its manifest -- the manifest too,
+// because a phone takes the saved name and icon from it as well. The links
+// are replaced, not edited, so nothing holds on to the first ones.
+function applyHomeScreenIcon(){
+  const icon = CLUB.homeIcon;
+  if(!icon) return;
+  const abs = (p) => new URL(p, location.href).href;
+  const swap = (rel, attrs) => {
+    document.querySelectorAll(`link[rel="${rel}"]`).forEach(l => l.remove());
+    const l = document.createElement('link');
+    l.rel = rel;
+    Object.entries(attrs).forEach(([k, v]) => l.setAttribute(k, v));
+    document.head.appendChild(l);
+  };
+  const bg = (CLUB.theme && CLUB.theme.themeColor) || '#0b0a08';
+  const manifest = { name: CLUB.homeScreenTitle, short_name: CLUB.homeScreenTitle, start_url: abs('./'), display: 'standalone',
+    background_color: bg, theme_color: bg,
+    icons: [{ src: abs(icon[180]), sizes: '180x180', type: 'image/png' }, { src: abs(icon[512]), sizes: '512x512', type: 'image/png' }] };
+  swap('icon', { href: icon[180], type: 'image/png' });
+  swap('apple-touch-icon', { href: icon[180], sizes: '180x180' });
+  swap('manifest', { href: 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest)) });
 }
 
 function enterStandingsMode(){

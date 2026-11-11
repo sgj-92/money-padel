@@ -164,3 +164,28 @@ maybe('Money Padel\'s colours resolve exactly as before; Padel Championships is 
   assert.deepStrictEqual(await look('index.html?club=padelchampionships'),
     { gold: '#a585ff', bg0: '#0b0812', wash: 'rgba(165, 133, 255, 0.5)', meta: '#0b0812', logo: 'assets/brand/pc-mark.svg' });
 });
+
+maybe('Padel Championships has its own Home Screen icon and name; Money Padel keeps its own', async () => {
+  const read = async (p) => {
+    const app = await H.open({ path: p });
+    try {
+      return await app.run(() => {
+        const href = (rel) => [...document.querySelectorAll(`link[rel="${rel}"]`)].map((l) => l.getAttribute('href'));
+        const m = href('manifest');
+        return { touch: href('apple-touch-icon'), icon: href('icon'), manifests: m.length,
+          manifest: JSON.parse(decodeURIComponent(m[0].replace(/^data:application\/manifest\+json,/, ''))),
+          title: document.querySelector('meta[name="apple-mobile-web-app-title"]').content, errors: [] };
+      });
+    } finally { await app.close(); }
+  };
+  const pc = await read('index.html?club=padelchampionships');
+  assert.deepStrictEqual([pc.touch, pc.icon, pc.manifests], [['assets/brand/pc-home-180.png'], ['assets/brand/pc-home-180.png'], 1]);
+  assert.strictEqual(pc.title, 'Padel Champs');
+  assert.strictEqual(pc.manifest.name, 'Padel Champs');
+  assert.deepStrictEqual(pc.manifest.icons.map((i) => [i.src.replace(/^.*\/assets\//, 'assets/'), i.sizes]),
+    [['assets/brand/pc-home-180.png', '180x180'], ['assets/brand/pc-home-512.png', '512x512']]);
+  ['pc-home-180.png', 'pc-home-512.png'].forEach((f) => assert.ok(fs.existsSync(path.join(ROOT, 'assets/brand', f)), f));
+  const mp = await read('index.html');
+  assert.match(mp.touch[0], /^data:image\/png;base64,/, 'Money Padel: the icon in index.html, untouched');
+  assert.strictEqual(mp.manifest.name, 'MP Beta v3');
+});
