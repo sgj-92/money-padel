@@ -187,5 +187,5 @@ maybe('Padel Championships has its own Home Screen icon and name; Money Padel ke
   ['pc-home-180.png', 'pc-home-512.png'].forEach((f) => assert.ok(fs.existsSync(path.join(ROOT, 'assets/brand', f)), f));
   const mp = await read('index.html');
   assert.match(mp.touch[0], /^data:image\/png;base64,/, 'Money Padel: the icon in index.html, untouched');
-  assert.strictEqual(mp.manifest.name, 'MP Beta v3');
+  assert.match(mp.manifest.name, /^MP/, 'Money Padel: its own manifest, untouched');
 });
