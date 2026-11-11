@@ -164,6 +164,53 @@ async function removeForfeit(matchId){
     `Remove the forfeit on ${raw.date}: counted for all four players, as played.`);
 }
 
+// Late (Shaun, 11 Nov): the side with a late player starts a set down -- a
+// set to the opponents, no games added. The match is stored at that result,
+// turned round if the opponents now lead; the on-time partner keeps the match
+// as played (late.playedOutcome, in the stored orientation).
+async function stageLate(matchId, lateNames){
+  const raw = ((V3_RECORD && V3_RECORD.matches) || []).find(d => d.id === matchId);
+  if(!raw){ matchFixMessage = 'That match is not in the record.'; renderGamesTab(); return; }
+  const ids = [...new Set(lateNames.map(playerIdFor))];
+  if(!ids.length){ matchFixMessage = 'Tick who was late.'; renderGamesTab(); return; }
+  const inA = ids.filter(id => raw.teamA.includes(id)), inB = ids.filter(id => raw.teamB.includes(id));
+  if(inA.length + inB.length !== ids.length){ matchFixMessage = 'Everyone ticked must have played in this match.'; renderGamesTab(); return; }
+  if(inA.length && inB.length){ matchFixMessage = 'Tick late players from one side only: if both sides were late, neither starts a set down.'; renderGamesTab(); return; }
+  const lateA = inA.length > 0;
+  const O = RatingEngine.OUTCOME;
+  const setsA = raw.sets.filter(s => s.teamA > s.teamB).length, setsB = raw.sets.filter(s => s.teamB > s.teamA).length;
+  const cA = setsA + (lateA ? 0 : 1), cB = setsB + (lateA ? 1 : 0);
+  const turn = cB > cA;
+  const flip = (o) => o === O.A_WINS ? O.B_WINS : (o === O.B_WINS ? O.A_WINS : o);
+  const teamA = turn ? raw.teamB.slice() : raw.teamA.slice();
+  const teamB = turn ? raw.teamA.slice() : raw.teamB.slice();
+  const sets = raw.sets.map(s => turn ? [s.teamB, s.teamA] : [s.teamA, s.teamB]);
+  const outcome = cA === cB ? O.DRAW : O.A_WINS;
+  const lateTeam = lateA ? raw.teamA : raw.teamB;
+  const corrected = { id: raw.id, date: raw.date, sourceIndex: raw.sourceIndex, teamA, teamB, sets, outcome,
+    type: raw.type || 'doubles', drawSideAssignmentArbitrary: outcome === O.DRAW,
+    late: { by: ids, onTime: lateTeam.filter(n => !ids.includes(n)), playedOutcome: turn ? flip(raw.outcome) : raw.outcome } };
+  const show = (list) => list.map(id => (V3_STATE.players[id] && V3_STATE.players[id].displayName) || id).join(' & ');
+  const counted = outcome === O.DRAW ? `a draw, ${cA}–${cB} in sets` : `${Math.max(cA, cB)}–${Math.min(cA, cB)} to ${show(teamA)}`;
+  const onTime = corrected.late.onTime;
+  await stageMatchCorrection({ type: 'edit', match: corrected },
+    `Late on ${raw.date}: ${show(ids)} arrived late, so the side starts a set down. Counted as ${counted}${onTime.length ? `; ${show(onTime)} rated on the match as played` : ''}.`);
+}
+
+async function removeLate(matchId){
+  const raw = ((V3_RECORD && V3_RECORD.matches) || []).find(d => d.id === matchId);
+  if(!raw || !raw.late) return;
+  const O = RatingEngine.OUTCOME;
+  const played = raw.late.playedOutcome;
+  const turn = played === O.B_WINS;   // the record keeps a decided match's winners as Team A
+  const corrected = { id: raw.id, date: raw.date, sourceIndex: raw.sourceIndex,
+    teamA: turn ? raw.teamB.slice() : raw.teamA.slice(), teamB: turn ? raw.teamA.slice() : raw.teamB.slice(),
+    sets: raw.sets.map(s => turn ? [s.teamB, s.teamA] : [s.teamA, s.teamB]),
+    outcome: played === O.DRAW ? O.DRAW : O.A_WINS, type: raw.type || 'doubles', drawSideAssignmentArbitrary: played === O.DRAW };
+  await stageMatchCorrection({ type: 'edit', match: corrected },
+    `Remove the late penalty on ${raw.date}: counted for all four players, as played.`);
+}
+
 async function stageMatchCorrection(change, describe){
   matchFixBusy = true; matchFixMessage = 'Replaying…'; renderGamesTab();
   try {

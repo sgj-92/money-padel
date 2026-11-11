@@ -216,6 +216,23 @@ reproduce the published figures.
 **If true play order is ever recoverable** (timestamps, a submission log, the
 original screenshots' order), canonical ordering should switch to it.
 
+## Results decided by a club rule (forfeit, late arrival)
+
+Two Admin-applied rules store a match at a result other than the one played.
+Both keep all players in the match and the pair's expectation unchanged; they
+differ only in which result each player is rated on.
+
+- **Forfeit** (Shaun, 7 Nov; `match.forfeit`): the player who quit loses and the
+  opponents win, at the score as it stood. The partner gets no rating event, no
+  evidence and no match counted.
+- **Late arrival** (Shaun, 11 Nov; `match.late`): the late player's side starts
+  a set down. The extra set changes the result only, and **no games are added**,
+  so game share stays as played. The match is stored at the counted result, and
+  the late player and the opponents are rated on it. The on-time partner is
+  rated on the match **as played** (`late.playedOutcome`, same sets, same
+  expectation). In the app, both kinds of partner are left out of the tables and
+  records (v3Bridge).
+
 ## Data scope
 
 The authoritative match history is the CSV export. The April/May 2026 block (50
