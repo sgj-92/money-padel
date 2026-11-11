@@ -158,6 +158,8 @@
   }
   .fg-row{ margin-bottom:10px; }
   .fg-row:last-child{ margin-bottom:0; }
+  .fg-swap-row{ display:flex; justify-content:center; margin:-2px 0 8px; }
+  .fg-swap{ min-height:36px; padding:6px 14px; font-size:13px; }
   .fg-label{
     display:block; font-size:11px; color:var(--text-dim);
     text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px;

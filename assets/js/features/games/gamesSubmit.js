@@ -22,6 +22,20 @@ function parseQuickEntryText(text){
   return ResultParse.parse(text, { directory, me: submissionIdentity() || null, today, aliases: clubNameAliases() });
 }
 
+// Winners and losers entered the wrong way round (Shaun, 11 Nov): one tap
+// swaps the two teams, and every set score with them, so each score stays
+// with the pair that won it. `prefix` is the form's ('ag' Add a game, 'ed'
+// Edit).
+function swapTeamsButtonHtml(id){
+  return `<div class="fg-swap-row"><button type="button" class="preset-btn fg-swap" id="${id}" aria-label="Swap Team A and Team B">⇅ Swap teams</button></div>`;
+}
+function swapTeamInputs(prefix){
+  [['A1','B1'], ['A2','B2']].forEach(([a, b]) => {
+    const x = document.getElementById(prefix + a), y = document.getElementById(prefix + b);
+    const v = x.value; x.value = y.value; y.value = v;
+  });
+}
+
 function renderAddGameSets(){
   const box = document.getElementById('agSets');
   box.innerHTML = addGameSets.map((s,i)=>`
