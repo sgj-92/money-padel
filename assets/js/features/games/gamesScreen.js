@@ -277,6 +277,7 @@ or a team per line with 🏆 and the sets"></textarea>
       <input id="agA1" list="playerNamesList" class="fg-select" placeholder="Player name" style="margin-bottom:6px;" />
       <input id="agA2" list="playerNamesList" class="fg-select" placeholder="Partner (leave blank for singles)" />
     </div>
+    ${swapTeamsButtonHtml('agSwapTeams')}
     <div class="fg-row"><label class="fg-label" id="agTeamBLabel">Team B (losers)</label>
       <input id="agB1" list="playerNamesList" class="fg-select" placeholder="Player name" style="margin-bottom:6px;" />
       <input id="agB2" list="playerNamesList" class="fg-select" placeholder="Partner (leave blank for singles)" />
@@ -659,6 +660,12 @@ or a team per line with 🏆 and the sets"></textarea>
   ['agA1','agA2','agB1','agB2'].forEach(id=>{
     document.getElementById(id).addEventListener('input', checkForNewPlayers);
   });
+  document.getElementById('agSwapTeams').onclick = ()=>{
+    swapTeamInputs('ag');
+    addGameSets = addGameSets.map(x => ({ w: x.l, l: x.w }));
+    renderAddGameSets();
+    checkForNewPlayers();
+  };
 
   document.getElementById('agSubmit').onclick = submitNewGame;
 

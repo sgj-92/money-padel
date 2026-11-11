@@ -550,6 +550,7 @@ function buildEditFormHtml(id){
       <input id="edA1" list="playerNamesList2" class="fg-select" style="margin-bottom:6px;" value="${m.winners[0]||''}" />
       <input id="edA2" list="playerNamesList2" class="fg-select" value="${m.winners[1]||''}" style="${isSingles?'display:none;':''}" />
     </div>
+    ${swapTeamsButtonHtml('edSwapTeams')}
     <div class="fg-row"><label class="fg-label" id="edTeamBLabel">Team B${isDraw?'':' (losers)'}</label>
       <input id="edB1" list="playerNamesList2" class="fg-select" style="margin-bottom:6px;" value="${m.losers[0]||''}" />
       <input id="edB2" list="playerNamesList2" class="fg-select" value="${m.losers[1]||''}" style="${isSingles?'display:none;':''}" />
@@ -605,6 +606,12 @@ function wireEditForm(id){
       document.getElementById('edB2').style.display = isSingles ? 'none' : 'block';
     };
   });
+
+  document.getElementById('edSwapTeams').onclick = ()=>{
+    swapTeamInputs('ed');
+    editSets = editSets.map(x => [x[1], x[0]]);
+    renderEditSets();
+  };
 
   document.querySelectorAll('#edOutcomeToggle .fg-toggle-btn').forEach(b=>{
     b.onclick = ()=>{
