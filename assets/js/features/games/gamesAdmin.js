@@ -714,7 +714,10 @@ function wireEditForm(id){
         id: newId,
         date,
         sourceIndex: Number(String(newId).slice(date.length + 1)) || 1,
-        teamA: winners, teamB: losers, sets,
+        // The record's own identities: the form shows display names, and a
+        // renamed player (Stormzy, shown as "Stormz") is still filed under
+        // their identity (12 Nov: the save was refused as a new player).
+        teamA: winners.map(n => playerIdFor(canonicalPlayerName(n))), teamB: losers.map(n => playerIdFor(canonicalPlayerName(n))), sets,
         outcome: isDraw ? RatingEngine.OUTCOME.DRAW : RatingEngine.OUTCOME.A_WINS,
         type: isSingles ? 'singles' : 'doubles',
         drawSideAssignmentArbitrary: !!isDraw,
