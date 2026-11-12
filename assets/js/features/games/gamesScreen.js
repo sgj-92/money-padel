@@ -158,6 +158,13 @@ function closeGameEditor(id, fn){
       // game stays exactly where it is.
       const card = gameCardEl(id);
       if(card && nowTop !== null) window.scrollBy(0, card.getBoundingClientRect().top - nowTop);
+      // The next stage is the confirmation under the form: bring it, or the
+      // reason it was refused, into view (12 Nov: "not sure where it's went").
+      const next = document.getElementById('matchFixCommitBtn') || document.getElementById('edMessage');
+      if(next && next.scrollIntoView){
+        const r = next.getBoundingClientRect();
+        if(r.top < 0 || r.bottom > window.innerHeight - 80) next.scrollIntoView({ block: 'center' });
+      }
       return;
     }
     gameEditReturn = null;
@@ -685,6 +692,18 @@ or a team per line with 🏆 and the sets"></textarea>
   if(matchFixMessage){
     const msg = document.getElementById('gamesMessage');
     if(msg) msg.innerHTML = `<span style="color:${/failed|cannot|Nothing was changed/.test(matchFixMessage)?'var(--red)':'var(--gold-bright)'};">${matchFixMessage}</span>`;
+    // And beside what was pressed: the top of the screen is out of sight from
+    // a game being edited or managed further down (12 Nov: Save changes
+    // "isn't showing the next stage" -- it had been refused, up there).
+    if(!matchFixBusy && !matchFixPlan && !/^(Corrected|Removed) and replayed/.test(matchFixMessage)){
+      const ed = editingMatchId && document.getElementById('edMessage');
+      const card = managingGameId && gameCardEl(managingGameId);
+      const slot = ed || (card && (card.querySelector('[data-late-panel]') || card.querySelector('[data-forfeit-panel]')));
+      if(slot){
+        const near = ed || slot.appendChild(Object.assign(document.createElement('div'), { className: 'section-sub match-fix-near' }));
+        near.innerHTML = `<span style="color:var(--red);">${escapeHtml(matchFixMessage)}</span>`;
+      }
+    }
   }
 
   box.querySelectorAll('[data-approve]').forEach(btn=>{
