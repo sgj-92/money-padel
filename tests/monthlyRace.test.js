@@ -381,3 +381,39 @@ maybe('a match\'s stakes and win chance stay hidden until its Details button is 
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+maybe('Hard, Even and Fav beside the Race: the Merit Table\'s own counts for the same player and tier, and they open the wins behind them', async () => {
+  const app = await withRace({ now: NOW, viewport: { width: 390, height: 844 } });
+  try {
+    const r = await app.run(() => {
+      openRace();
+      TIER_ORDER_LIST.forEach((t) => { raceTierOpen[t] = true; });
+      renderMonthlyRace();
+      const head = [...document.querySelector('#summaryContent table thead tr').children].map((th) => th.textContent.trim());
+      const tierAt = (n, d) => historicalTierOf(n, d);
+      const merit = {};
+      MeritTable.build(meritMatches(summaryMonth), tierAt, { tierForRow: tierAt }).table.forEach((m) => { merit[`${m.playerId}|${m.tier}`] = [m.hardWins, m.evenWins, m.easyWins]; });
+      const shown = {};
+      TIER_ORDER_LIST.forEach((t) => {
+        const body = document.getElementById('raceTierBody' + t);
+        if (!body) return;
+        body.querySelectorAll('tbody tr:not(.merit-drill)').forEach((tr) => {
+          const c = [...tr.children].map((td) => td.textContent.trim());
+          shown[`${c[1]}|${t}`] = c.slice(6, 9).map((x) => (x === '–' ? 0 : Number(x)));
+        });
+      });
+      // Open someone's hard wins.
+      const btn = document.querySelector('#summaryContent .merit-count[data-kind="hard"]');
+      let drill = null;
+      if (btn) { btn.click(); drill = document.querySelector('#summaryContent .merit-drill .merit-drill-head').textContent; }
+      return { head, merit, shown, drill, who: btn && btn.dataset.player, wide: document.documentElement.scrollWidth };
+    });
+    assert.deepStrictEqual(r.head, ['#', 'Player', 'P', 'W', 'D', 'L', 'Hard', 'Even', 'Fav', 'Race']);
+    assert.ok(Object.keys(r.shown).length > 0);
+    for (const [k, v] of Object.entries(r.shown)) assert.deepStrictEqual(v, r.merit[k] || [0, 0, 0], k);
+    assert.ok(r.who, 'someone has a hard win to open');
+    assert.match(r.drill, new RegExp(`^${r.who} · \\d+ wins? against a stronger pairing$`));
+    assert.strictEqual(r.wide, 390, 'fits a phone');
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});

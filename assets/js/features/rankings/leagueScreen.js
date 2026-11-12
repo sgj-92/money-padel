@@ -789,9 +789,28 @@ function wireRaceStakes(content){
   });
 }
 
-function buildRaceTableHtml(rows, ranked){
+// Hard / Even / Fav beside the Race (Shaun, 12 Nov): the Merit Table's own
+// counts for the same player, tier and month -- wins against a stronger, an
+// evenly matched and a weaker pairing -- never recomputed here.
+function raceMeritIndex(month){
+  const tierAt = (n, d) => historicalTierOf(n, d);
+  const index = {};
+  MeritTable.build(meritMatches(month), tierAt, { tierForRow: tierAt }).table
+    .forEach(r => { index[`${r.playerId}\u0000${r.tier}`] = r; });
+  return index;
+}
+
+function raceMeritCell(m, r, kind){
+  const n = m ? (kind === 'hard' ? m.hardWins : kind === 'even' ? m.evenWins : m.easyWins) : 0;
+  return tableCountCell(raceDrill, r.playerId, r.tier, kind, n,
+    { zero: `<span style="color:var(--text-dim);">–</span>`, colour: kind === 'hard' ? 'var(--green)' : 'var(--text-dim)' });
+}
+
+function buildRaceTableHtml(rows, ranked, merit){
+  const COLS = 10;
   let html = `<div class="callout-card" style="padding:0;">
     <table class="merit-table race-table" style="width:100%; border-collapse:collapse; font-size:11px;">
+      <colgroup><col style="width:6%;"><col><col style="width:7%;"><col style="width:7%;"><col style="width:6%;"><col style="width:7%;"><col style="width:9%;"><col style="width:9%;"><col style="width:8%;"><col style="width:13%;"></colgroup>
       <thead><tr style="background:var(--bg2); text-align:left;">
       <th style="padding:7px 2px 7px 7px;">#</th>
       <th style="padding:7px 2px;">Player</th>
@@ -799,11 +818,15 @@ function buildRaceTableHtml(rows, ranked){
       <th style="padding:7px 2px; text-align:center;">W</th>
       <th style="padding:7px 2px; text-align:center;">D</th>
       <th style="padding:7px 2px; text-align:center;">L</th>
+      <th style="padding:7px 2px; text-align:center;" title="Wins against a stronger pairing">Hard</th>
+      <th style="padding:7px 2px; text-align:center;" title="Wins against an evenly matched pairing">Even</th>
+      <th style="padding:7px 2px; text-align:center;" title="Wins against a weaker pairing">Fav</th>
       <th style="padding:7px 7px 7px 3px; text-align:right; color:var(--gold-bright);">Race</th>
       </tr></thead><tbody>`;
   rows.forEach((r,i)=>{
     const key = `${r.playerId}\u0000${r.tier}`;
     const open = raceDrill === key;
+    const mr = merit ? merit[key] : null;
     html += `<tr style="border-top:1px solid var(--line);">
       <td style="padding:7px 2px 7px 7px; color:var(--text-dim);">${ranked ? i+1 : '–'}</td>
       <td style="padding:7px 2px;"><span class="request-player-link" data-player="${escapeHtml(r.playerId)}" style="text-decoration:underline; cursor:pointer; font-weight:700;">${escapeHtml(r.playerId)}</span></td>
@@ -811,11 +834,14 @@ function buildRaceTableHtml(rows, ranked){
       <td style="padding:7px 2px; text-align:center; color:var(--green);">${tableCountCell(raceDrill, r.playerId, r.tier, 'wins', r.wins, { plain: true, colour: 'var(--green)' })}</td>
       <td style="padding:7px 2px; text-align:center; color:var(--text-dim);">${tableCountCell(raceDrill, r.playerId, r.tier, 'draws', r.draws, { plain: true, colour: 'var(--text-dim)' })}</td>
       <td style="padding:7px 2px; text-align:center; color:var(--red);">${tableCountCell(raceDrill, r.playerId, r.tier, 'losses', r.losses, { plain: true, colour: 'var(--red)' })}</td>
+      <td style="padding:7px 2px; text-align:center;">${raceMeritCell(mr, r, 'hard')}</td>
+      <td style="padding:7px 2px; text-align:center;">${raceMeritCell(mr, r, 'even')}</td>
+      <td style="padding:7px 2px; text-align:center;">${raceMeritCell(mr, r, 'favoured')}</td>
       <td style="padding:7px 7px 7px 3px; text-align:right;"><button type="button" class="merit-count race-score${open ? ' is-open' : ''}${r.score < 0 ? ' is-neg' : ''}"
         data-player="${escapeHtml(r.playerId)}" data-tier="${escapeHtml(r.tier)}" aria-expanded="${open}">${racePoints(r.score)}</button></td>
     </tr>`;
     if(open){
-      html += `<tr class="merit-drill"><td colspan="7" style="padding:0;">
+      html += `<tr class="merit-drill"><td colspan="${COLS}" style="padding:0;">
         <div class="merit-drill-body">
           <div class="merit-drill-head">${escapeHtml(r.playerId)} · Tier ${escapeHtml(r.tier)} race · ${r.played} match${r.played===1?'':'es'}</div>
           ${r.matches.map(d => raceDrillRowHtml(d, r.tier)).join('')}
@@ -828,10 +854,18 @@ function buildRaceTableHtml(rows, ranked){
     const kind = Object.keys(TABLE_COUNT_KINDS).find(k => raceDrill === tableDrillKey(r.playerId, r.tier, k));
     if(kind){
       const games = TABLE_COUNT_KINDS[kind].of(r.matches);
-      html += tableDrillRowHtml(7,
+      html += tableDrillRowHtml(COLS,
         `${escapeHtml(r.playerId)} · ${TABLE_COUNT_KINDS[kind].label} · ${escapeHtml(tableDrillContext(r.tier))} · ${games.length} match${games.length === 1 ? '' : 'es'}`,
         games, (d) => raceDrillRowHtml(d, r.tier));
     }
+    // Hard / Even / Fav open the wins behind them, told the Merit Table's way.
+    ['hard','even','favoured'].forEach(k=>{
+      if(!mr || raceDrill !== tableDrillKey(r.playerId, r.tier, k)) return;
+      const list = mr[k];
+      html += tableDrillRowHtml(COLS,
+        `${escapeHtml(r.playerId)} · ${list.length} win${list.length===1?'':'s'} against ${k === 'even' ? 'an evenly matched' : k === 'hard' ? 'a stronger' : 'a weaker'} pairing`,
+        list, (d)=> meritDrillRowHtml(d, r.playerId), (a,b)=> a.date < b.date ? 1 : -1);
+    });
   });
   html += `</tbody></table></div>`;
   return html;
@@ -848,6 +882,7 @@ function renderMonthlyRace(){
   }
   const label = monthLabel(summaryMonth);
   const { table, unresolved } = PerfTrace.time('MonthlyRace.build', ()=> buildMonthlyRace(summaryMonth));
+  const merit = raceMeritIndex(summaryMonth);
 
   html += `<div class="section-heading" style="margin-top:6px;">🏁 ${label} Monthly Race</div>`;
   html += `<div class="section-sub" style="margin:2px 0 0;">Best Month: harder wins earn more, harder losses cost less.</div>`;
@@ -867,11 +902,11 @@ function renderMonthlyRace(){
     const qualified = rows.filter(r => r.qualified);
     const provisional = rows.filter(r => !r.qualified);
     html += `<div id="raceTierBody${tier}">`;
-    if(qualified.length) html += buildRaceTableHtml(qualified, true);
+    if(qualified.length) html += buildRaceTableHtml(qualified, true, merit);
     else html += `<div class="race-noq">No qualifier this month</div>`;
     if(provisional.length){
       html += `<div class="race-prov-head">Provisional · fewer than ${raceMinMatches()} matches</div>`;
-      html += buildRaceTableHtml(provisional, false);
+      html += buildRaceTableHtml(provisional, false, merit);
     }
     html += `</div>`;
   });
