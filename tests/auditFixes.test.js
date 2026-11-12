@@ -345,7 +345,10 @@ maybe('D6: every Monthly Race P/W/D/L cell opens exactly the matches it counts, 
         document.querySelectorAll('#summaryContent tbody tr:not(.merit-drill) td').forEach((td) => {
           if (td.textContent.trim() === '0' && td.querySelector('button')) zeroButtons++;
         });
+        // P / W / D / L. Hard / Even / Fav (12 Nov) are the Merit Table's,
+        // checked in monthlyRace.test.js.
         const cells = [...document.querySelectorAll('#summaryContent .merit-count[data-kind]')]
+          .filter((b) => ['played', 'wins', 'draws', 'losses'].includes(b.dataset.kind))
           .map((b) => ({ player: b.dataset.player, tier: b.dataset.tier, kind: b.dataset.kind, n: Number(b.textContent) }));
         cells.forEach((c) => {
           const btn = [...document.querySelectorAll('#summaryContent .merit-count[data-kind]')].find((b) => b.dataset.player === c.player && b.dataset.tier === c.tier && b.dataset.kind === c.kind);
