@@ -222,3 +222,59 @@ maybe('Ask Claude: a refusal from the server is shown, and the question is kept 
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+test('saved conversations are Admins\' only: read and written by an Admin, never public', () => {
+  const rules = fs.readFileSync(path.join(ROOT, 'firestore.rules'), 'utf8');
+  assert.match(rules, /match \/askClaude\/\{id\}\s*\{ allow read, write: if isAdmin\(\); \}/);
+  assert.ok(!/'askClaude'/.test(rules.split('match /moneypadel/{key}')[1].split('}')[0]), 'not a member document');
+});
+
+maybe('Ask Claude keeps every conversation: listed newest first, reopened to carry on, deleted when done', async () => {
+  const app = await H.open({ accounts: { 's@x': { password: 'pw', uid: 'u1' } }, admins: { u1: { role: 'owner', name: 'Shaun' } }, signedIn: 's@x',
+    documents: { askClaude: { '20261101-old': { title: 'Longest streak in October?', by: 'Kaz', createdAt: '2026-11-01T10:00:00Z', updatedAt: '2026-11-01T10:00:00Z',
+      turns: [{ role: 'user', text: 'Longest streak in October?', at: 't' }, { role: 'assistant', text: 'Len, 6 wins.', at: 't' }] } } } });
+  try {
+    const r = await app.run(async () => {
+      const sent = [];
+      window.fetch = async (url, opts) => { const b = JSON.parse(opts.body); sent.push(b); return { ok: true, status: 200, json: async () => ({ answer: `Answer to ${b.question}` }) }; };
+      window.confirm = () => true;
+      const wait = async (f) => { for (let k = 0; k < 100 && !f(); k++) await new Promise((res) => setTimeout(res, 20)); };
+      await wait(() => signedInAdmin);
+      isUnlocked = true; adminRole = 'owner';
+      document.querySelector('#tabrow .tab-btn[data-tab="manage"]').click();
+      adminOpenSections.ask = true; renderManage();
+      await wait(() => document.querySelector('[data-ask-open]'));
+      const before = [...document.querySelectorAll('.ask-saved-row')].map((e) => e.innerText.replace(/\s+/g, ' ').trim());
+      // A new question is saved.
+      document.getElementById('askClaudeQ').value = 'Most 6-0 sets?';
+      await sendAskClaude();
+      const saved = window.__writes.filter((w) => w.collection === 'askClaude').map((w) => ({ id: w.id, ...w.doc }));
+      // New question: both are listed, newest first.
+      document.getElementById('askClaudeNew').click();
+      const listed = [...document.querySelectorAll('.ask-saved-title')].map((e) => e.textContent);
+      // Reopen the old one and carry on: the history goes with the follow-up, and the same conversation is updated.
+      document.querySelector('[data-ask-open="20261101-old"]').click();
+      const reopened = [...document.querySelectorAll('.ask-a-text')].map((e) => e.innerText);
+      document.getElementById('askClaudeQ').value = 'And in November?';
+      await sendAskClaude();
+      const updated = window.__writes.filter((w) => w.collection === 'askClaude' && w.id === '20261101-old').slice(-1)[0].doc;
+      // Delete the first.
+      document.getElementById('askClaudeNew').click();
+      const firstId = saved[0].id;
+      document.querySelector(`[data-ask-del="${firstId}"]`).click();
+      await wait(() => !document.querySelector(`[data-ask-del="${firstId}"]`));
+      const deleted = window.__writes.some((w) => w.collection === 'askClaude' && w.id === firstId && w.deleted);
+      return { before, saved, listed, reopened, followUp: sent[1], updated, deleted, left: [...document.querySelectorAll('.ask-saved-title')].map((e) => e.textContent) };
+    });
+    assert.match(r.before[0], /^Longest streak in October\? 1 Nov · Kaz ✕$/);
+    assert.strictEqual(r.saved.length, 1);
+    assert.deepStrictEqual([r.saved[0].title, r.saved[0].by, r.saved[0].turns.map((t) => t.text)], ['Most 6-0 sets?', 'Shaun', ['Most 6-0 sets?', 'Answer to Most 6-0 sets?']]);
+    assert.deepStrictEqual(r.listed, ['Most 6-0 sets?', 'Longest streak in October?'], 'newest first');
+    assert.deepStrictEqual(r.reopened, ['Len, 6 wins.']);
+    assert.deepStrictEqual(r.followUp.history, [{ role: 'user', text: 'Longest streak in October?' }, { role: 'assistant', text: 'Len, 6 wins.' }]);
+    assert.deepStrictEqual([r.updated.by, r.updated.turns.length, r.updated.createdAt], ['Kaz', 4, '2026-11-01T10:00:00Z'], 'the same conversation, carried on');
+    assert.ok(r.deleted);
+    assert.deepStrictEqual(r.left, ['Longest streak in October?']);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
