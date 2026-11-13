@@ -4,5 +4,8 @@
   "description": "Money Padel Prestige v3 beta — static dashboard plus the sequential-v1 rating engine.",
   "scripts": {
     "test": "node --test \"tests/*.test.js\""
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0"
   }
 }

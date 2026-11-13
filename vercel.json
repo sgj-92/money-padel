@@ -4,7 +4,7 @@
   "buildCommand": "node scripts/stamp-build.js",
   "redirects": [
     {
-      "source": "/((?!assets/|review(?:/|$)|poll(?:/|$)).+)",
+      "source": "/((?!assets/|api/|review(?:/|$)|poll(?:/|$)).+)",
       "has": [
         {
           "type": "host",
@@ -15,7 +15,7 @@
       "permanent": false
     },
     {
-      "source": "/((?!assets/|review(?:/|$)|poll(?:/|$)).+)",
+      "source": "/((?!assets/|api/|review(?:/|$)|poll(?:/|$)).+)",
       "has": [
         {
           "type": "host",
@@ -40,5 +40,10 @@
       "destination": "/poll/",
       "permanent": false
     }
-  ]
+  ],
+  "functions": {
+    "api/ask.js": {
+      "maxDuration": 120
+    }
+  }
 }
