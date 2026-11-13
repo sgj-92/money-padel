@@ -52,3 +52,9 @@ textarea.poll-select{ resize: vertical; }
 .poll-toast.is-on{ opacity: 1; transform: translate(-50%, 0); }
 .poll-row.is-skipped .poll-pick:not(.poll-skip){ opacity: .35; }
 .poll-sent{ width: 22px; height: 22px; accent-color: var(--gold); cursor: pointer; }
+/* Who voted what (Admins). */
+.poll-who{ margin: 10px 0 12px; }
+.poll-who-block{ padding: 10px 0; border-top: 1px solid var(--line); }
+.poll-who-name{ font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.poll-who-line{ font-size: 14px; line-height: 1.5; color: var(--text-soft); }
+.poll-who-tier{ display: inline-block; min-width: 22px; color: var(--gold); }

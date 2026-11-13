@@ -177,3 +177,57 @@ maybe('a personal link opens straight to that player\'s ballot', async () => {
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+test('who voted what: the counted ballots both ways round — no self-votes, skips listed, strongest first', () => {
+  const players = ['Shaun', 'George', 'Fred'];
+  const b = T.breakdown(players, [
+    { voter: 'George', votes: { Shaun: 'A', Fred: 'S', George: 'S' } },
+    { voter: 'Fred', votes: { Shaun: 'B' } },
+    { voter: 'Shaun', votes: { Fred: 'A', George: 'C' } },
+  ]);
+  const row = (p) => b.byPlayer.find((r) => r.player === p);
+  assert.deepStrictEqual(row('Shaun'), { player: 'Shaun', tiers: { S: [], A: ['George'], B: ['Fred'], C: [] }, skipped: [] });
+  assert.deepStrictEqual(row('George'), { player: 'George', tiers: { S: [], A: [], B: [], C: ['Shaun'] }, skipped: ['Fred'] }, 'his own S is not a vote; Fred skipped him');
+  assert.deepStrictEqual(b.byVoter.map((v) => [v.voter, v.votes.map((x) => `${x.player} ${x.tier}`)]),
+    [['Fred', ['Shaun B']], ['George', ['Fred S', 'Shaun A']], ['Shaun', ['Fred A', 'George C']]]);
+});
+
+maybe('the Admin sees who voted what, by player or by voter, and can copy it; a voter never does', async () => {
+  const accounts = { 'shaun@example.com': { password: 'pw', uid: 'u1' } };
+  const admins = { u1: { role: 'owner', name: 'Shaun' } };
+  const documents = {
+    tierPoll: { current: { players: ['Shaun', 'George', 'Fred'], open: true } },
+    tierPollCodes: { AAAAAA: { name: 'George' }, BBBBBB: { name: 'Fred' }, CCCCCC: { name: 'Shaun' } },
+    tierPollBallots: {
+      AAAAAA: { poll: 'current', voter: 'George', votes: { Shaun: 'A', Fred: 'S' }, createdAt: '1' },
+      BBBBBB: { poll: 'current', voter: 'Fred', votes: { Shaun: 'B' }, createdAt: '2' },
+    },
+  };
+  const app = await H.open({ path: 'poll/index.html?club=padelchampionships', readyWhen: () => window.__pollReady, accounts, admins, documents, viewport: { width: 390, height: 844 } });
+  try {
+    const page = app.page;
+    const voterSees = await app.run(() => document.body.innerText);
+    await app.run(() => {
+      window.__copied = [];
+      Object.defineProperty(navigator, 'clipboard', { value: { writeText: (t) => { window.__copied.push(t); return Promise.resolve(); } }, configurable: true });
+    });
+    await page.click('#pollAdminOpen');
+    await page.fill('#pollEmail', 'shaun@example.com'); await page.fill('#pollPassword', 'pw');
+    await page.click('#pollSignIn');
+    await page.waitForSelector('#pollWho');
+    const byPlayer = await app.run(() => document.getElementById('pollWho').innerText.replace(/\n+/g, ' | '));
+    await page.click('#pollWhoVoter');
+    await page.waitForFunction(() => document.getElementById('pollWhoVoter').classList.contains('poll-alt') === false);
+    const byVoter = await app.run(() => document.getElementById('pollWho').innerText.replace(/\n+/g, ' | '));
+    await page.click('#pollWhoCopy');
+    await page.waitForFunction(() => window.__copied.length === 1);
+    const copied = await app.run(() => window.__copied[0]);
+    const wide = await app.run(() => document.documentElement.scrollWidth);
+    assert.ok(!/Who voted what/.test(voterSees), 'not on the voters\' page');
+    assert.strictEqual(byPlayer, 'Shaun | A George (1) | B Fred (1) | George | Skipped: Fred | Fred | S George (1)');
+    assert.strictEqual(byVoter, 'Fred | B Shaun (1) | George | S Fred (1) | A Shaun (1)');
+    assert.strictEqual(copied, 'Padel Championships · Tier poll · who voted what\n\nFred\n  B: Shaun\n\nGeorge\n  S: Fred\n  A: Shaun');
+    assert.strictEqual(wide, 390);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});

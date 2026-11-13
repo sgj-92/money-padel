@@ -180,6 +180,50 @@
     catch (e) { return []; }
   }
 
+  // Who voted what: Admins only (the ballots are read with the Admin's
+  // sign-in), by player or by voter, and copyable for the group.
+  var whoView = 'player';
+  function whoVotedHtml(b) {
+    if (!b.byVoter.length) return '';
+    var tierLine = function (t, names) { return names.length ? '<div class="poll-who-line"><b class="poll-who-tier">' + t + '</b> ' + esc(names.join(', ')) + ' <span class="poll-sub">(' + names.length + ')</span></div>' : ''; };
+    var body = whoView === 'player'
+      ? b.byPlayer.map(function (r) {
+        return '<div class="poll-who-block"><div class="poll-who-name">' + esc(r.player) + '</div>'
+          + TierPoll.TIERS.map(function (t) { return tierLine(t, r.tiers[t]); }).join('')
+          + (r.skipped.length ? '<div class="poll-who-line poll-sub">Skipped: ' + esc(r.skipped.join(', ')) + '</div>' : '') + '</div>';
+      }).join('')
+      : b.byVoter.map(function (v) {
+        return '<div class="poll-who-block"><div class="poll-who-name">' + esc(v.voter) + '</div>'
+          + TierPoll.TIERS.map(function (t) { return tierLine(t, v.votes.filter(function (x) { return x.tier === t; }).map(function (x) { return x.player; })); }).join('') + '</div>';
+      }).join('');
+    return '<h2>Who voted what</h2>'
+      + '<div class="poll-actions"><button type="button" class="poll-go' + (whoView === 'player' ? '' : ' poll-alt') + '" id="pollWhoPlayer">By player</button>'
+      + '<button type="button" class="poll-go' + (whoView === 'voter' ? '' : ' poll-alt') + '" id="pollWhoVoter">By voter</button></div>'
+      + '<div class="poll-who" id="pollWho">' + body + '</div>'
+      + '<button type="button" class="poll-go poll-alt" id="pollWhoCopy">Copy who voted what</button>';
+  }
+  function whoVotedText(b) {
+    var lines = [CLUB.name + ' · Tier poll · who voted what', ''];
+    if (whoView === 'player') {
+      b.byPlayer.forEach(function (r) {
+        lines.push(r.player);
+        TierPoll.TIERS.forEach(function (t) { if (r.tiers[t].length) lines.push('  ' + t + ': ' + r.tiers[t].join(', ')); });
+        if (r.skipped.length) lines.push('  Skipped: ' + r.skipped.join(', '));
+        lines.push('');
+      });
+    } else {
+      b.byVoter.forEach(function (v) {
+        lines.push(v.voter);
+        TierPoll.TIERS.forEach(function (t) {
+          var names = v.votes.filter(function (x) { return x.tier === t; }).map(function (x) { return x.player; });
+          if (names.length) lines.push('  ' + t + ': ' + names.join(', '));
+        });
+        lines.push('');
+      });
+    }
+    return lines.join('\n').trim();
+  }
+
   async function renderAdmin() {
     var codes = await readAll('tierPollCodes');
     var ballots = (await readAll('tierPollBallots')).filter(function (b) { return b.poll === POLL; });
@@ -195,6 +239,7 @@
     var votedCount = poll.players.filter(hasVoted).length;
     var missing = poll.players.filter(function (p) { return !codeOf[p.toLowerCase()]; });
     var t = TierPoll.tally(poll.players, ballots);
+    var who = TierPoll.breakdown(poll.players, ballots);
     var html = '<h2>Admin <span class="poll-sub">· ' + esc(signedInAdmin.email) + '</span></h2>'
       + '<label class="poll-label" for="pollPlayers">Players, one per line</label>'
       + '<textarea id="pollPlayers" class="poll-select" rows="8" placeholder="One name per line">' + esc(poll.players.join('\n')) + '</textarea>'
@@ -228,7 +273,8 @@
       }).join('') + '</tbody></table>'
       + '<p class="poll-sub">Suggested is the middle vote: one outlier can’t move it, and an even split goes to the lower tier. Nobody’s vote for themselves is possible.</p>'
       + '<button type="button" class="poll-go" id="pollUse"' + (t.rows.some(function (r) { return r.suggested; }) ? '' : ' disabled') + '>Use as starting tiers</button>'
-      + '<p class="poll-msg" id="pollUseMsg" role="status"></p>';
+      + '<p class="poll-msg" id="pollUseMsg" role="status"></p>'
+      + whoVotedHtml(who);
     adminBox.innerHTML = html;
     var say = function (s) { document.getElementById('pollAdminMsg').innerHTML = s; };
     var sayCodes = function (s) { document.getElementById('pollCodesMsg').textContent = s; };
@@ -297,6 +343,13 @@
       copy(poll.players.filter(function (p) { return codeOf[p.toLowerCase()]; }).map(function (p) { return p + ':\n' + messageFor(currentMessage(), p, codeOf[p.toLowerCase()]); }).join('\n\n'),
         'Copied every player’s link. Send each person only their own.', all);
     };
+    var whoP = document.getElementById('pollWhoPlayer');
+    if (whoP) {
+      whoP.onclick = function () { whoView = 'player'; renderAdmin(); };
+      document.getElementById('pollWhoVoter').onclick = function () { whoView = 'voter'; renderAdmin(); };
+      var whoCopy = document.getElementById('pollWhoCopy');
+      whoCopy.onclick = function () { copy(whoVotedText(who), 'Copied who voted what.', whoCopy); };
+    }
     document.getElementById('pollUse').onclick = async function () {
       var msg = document.getElementById('pollUseMsg');
       var tags = {};
