@@ -85,5 +85,31 @@
     return String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   }
 
-  return { TIERS, parsePlayers, countable, tally, median, makeCode, normaliseCode, CODE_LETTERS };
+  // Who voted what (Shaun, 13 Nov: the group agreed to reveal it). The same
+  // counted ballots as the tally -- no self-votes, only listed players and
+  // S/A/B/C -- seen both ways round.
+  //   byPlayer: [{ player, tiers: { S: [voters], A, B, C }, skipped: [voters] }]
+  //   byVoter:  [{ voter, votes: [{ player, tier }] }]   strongest first
+  function breakdown(players, ballots) {
+    const counted = countable(players, ballots);
+    const byPlayer = players.map((player) => {
+      const tiers = { S: [], A: [], B: [], C: [] };
+      const skipped = [];
+      counted.forEach((b) => {
+        if (b.voter.toLowerCase() === player.toLowerCase()) return;
+        const t = b.votes[player];
+        if (t) tiers[t].push(b.voter); else skipped.push(b.voter);
+      });
+      Object.keys(tiers).forEach((k) => tiers[k].sort((x, y) => x.localeCompare(y)));
+      return { player, tiers, skipped: skipped.sort((x, y) => x.localeCompare(y)) };
+    });
+    const order = new Map(players.map((p, i) => [p, i]));
+    const byVoter = counted.map((b) => ({ voter: b.voter, votes: Object.entries(b.votes)
+      .map(([player, tier]) => ({ player, tier }))
+      .sort((x, y) => RANK[x.tier] - RANK[y.tier] || order.get(x.player) - order.get(y.player)) }))
+      .sort((x, y) => x.voter.localeCompare(y.voter));
+    return { byPlayer, byVoter };
+  }
+
+  return { TIERS, parsePlayers, countable, tally, median, makeCode, normaliseCode, CODE_LETTERS, breakdown };
 });
