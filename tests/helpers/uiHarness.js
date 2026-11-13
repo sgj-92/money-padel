@@ -128,7 +128,9 @@ async function open(options = {}) {
     // sign-outs are logged in window.__auth.
     window.__auth = [];
     const authState = { user: null, listeners: [] };
-    if (signedIn && accounts[signedIn]) authState.user = { uid: accounts[signedIn].uid, email: signedIn };
+    // A signed-in user's ID token is "token-<uid>" (Ask Claude sends it).
+    const userFor = (uid, email) => ({ uid, email, async getIdToken() { return `token-${uid}`; } });
+    if (signedIn && accounts[signedIn]) authState.user = userFor(accounts[signedIn].uid, signedIn);
     const authErr = (code) => Object.assign(new Error(code), { code });
     const authApi = {
       get currentUser() { return authState.user; },
@@ -136,7 +138,7 @@ async function open(options = {}) {
       async signInWithEmailAndPassword(email, password) {
         const a = accounts[email];
         if (!a || a.password !== password) { window.__auth.push({ signIn: email, ok: false }); throw authErr('auth/invalid-credential'); }
-        authState.user = { uid: a.uid, email };
+        authState.user = userFor(a.uid, email);
         window.__auth.push({ signIn: email, ok: true });
         return { user: authState.user };
       },
