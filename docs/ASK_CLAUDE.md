@@ -30,6 +30,14 @@ use it, each asking only about its own record.
 - The old shared Admin password can't be used for this.
 - The key lives only in Vercel. It is never in the app or the page.
 
+## Saved questions
+
+- Every conversation is saved for the community's Admins: Admin › Ask
+  Claude › **Previous questions**.
+- Any Admin can reopen one to keep asking, or delete it (✕).
+- They are stored in the community's own database under `askClaude`, which
+  only Admins can read (firestore.rules). Publish the rules once for this.
+
 ## What is sent
 
 Each question sends the community's record to Anthropic's API:

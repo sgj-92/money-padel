@@ -70,6 +70,10 @@ service cloud.firestore {
         && !(request.resource.data.voter in request.resource.data.votes.keys());
     }
 
+    // Ask Claude's saved conversations (Admin › Ask Claude): Admins only,
+    // read and written; never public.
+    match /askClaude/{id}         { allow read, write: if isAdmin(); }
+
     // Who is an Admin. Each Admin may read their own entry (the app checks it
     // at sign-in); nobody may write it -- the console does that.
     match /admins/{uid} {
