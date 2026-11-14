@@ -25,6 +25,7 @@ function gamesFilterState(){
 //   type         the type actually applied (after the fallback)
 //   focusId      the one selected player's id, or null
 //   record       that player's W/D/L over `games`, or null
+//   records      every selected player's W/D/L over `games`, in filter order
 function getFilteredGamesViewModel(filters){
   const f = filters || gamesFilterState();
   const approved = getDisplayMatches().filter(m => m._status === 'approved');
@@ -38,6 +39,7 @@ function getFilteredGamesViewModel(filters){
   return {
     games: r.games, typeOptions: r.typeOptions, type: r.type, focusId,
     record: focusId === null ? null : GamesFilter.record(r.games, focusId, playerIdFor, MatchOutcome),
+    records: ids.map(id => ({ id, name: displayNameFor(id), rec: GamesFilter.record(r.games, id, playerIdFor, MatchOutcome) })),
   };
 }
 
