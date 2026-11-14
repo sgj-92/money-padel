@@ -169,6 +169,12 @@
   .ask-a-text{ font-size:14px; line-height:1.45; color:var(--text); white-space:pre-wrap; overflow-wrap:anywhere; }
   .ask-copy{ margin-top:8px; padding:4px 12px; font-size:12px; }
   .ask-busy{ font-size:13px; color:var(--gold-bright); margin:6px 0; }
+  .gp-group-table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:6px; }
+  .gp-group-table th{ font-size:11px; color:var(--text-dim); font-weight:600; text-align:center; padding:4px 2px; }
+  .gp-group-table th:first-child, .gp-group-table td:first-child{ text-align:left; }
+  .gp-group-table td{ text-align:center; padding:5px 2px; border-top:1px solid var(--line); }
+  .gp-group-pct{ color:var(--gold-bright); font-weight:700; }
+  .gp-picture-row{ display:flex; align-items:center; gap:10px; margin:8px 0 4px; }
   .ask-saved-row{ display:flex; align-items:stretch; gap:6px; border-top:1px solid var(--line); }
   .ask-saved-open{ flex:1; min-width:0; text-align:left; background:none; border:0; padding:9px 2px; color:var(--text); cursor:pointer; font-family:inherit; }
   .ask-saved-title{ display:block; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

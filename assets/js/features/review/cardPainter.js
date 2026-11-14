@@ -904,5 +904,38 @@
     return cv;
   }
 
-  return { W, SLIDE_H, loadImage, slide, sheet, matchResult, matchup, matchups, nominees, headToHead, headToHeadAll, toBlob, toFile, toPdf, share, save };
+  // A Results filter's breakdown (Shaun, 14 Nov): each chosen player's record
+  // over the filtered games, then the games themselves.
+  function gamesRecord(v, o = {}) {
+    const P = 64, inner = W - 2 * P, RH = 76;
+    const tableH = 64 + v.players.length * RH;
+    const h = P + 56 + 40 + 76 + 10 + 50 + 30 + tableH + 40 + (v.rows.length * 124 + 24) + (v.more ? 70 : 0) + P;
+    const cv = canvas(W, h);
+    const ctx = cv.getContext('2d');
+    background(ctx, W, h);
+    let y = P;
+    brand(ctx, o.brand, v.month, P, y, 56, W - P); y += 56 + 40;
+    font(ctx, 62, { serif: true }); textAt(ctx, fit(ctx, v.title, inner), P, y + 56, { color: C.text }); y += 76 + 10;
+    font(ctx, 32); textAt(ctx, fit(ctx, v.context, inner), P, y + 34, { color: C.soft }); y += 50 + 30;
+    card(ctx, P, y, inner, tableH);
+    ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.03)'; roundRect(ctx, P, y, inner, 64, 28); ctx.fill(); ctx.restore();
+    const cols = [{ k: 'name', x: P + 36, align: 'left' }, { k: 'p', x: P + 430 }, { k: 'w', x: P + 530, tone: 'win' }, { k: 'd', x: P + 630, tone: 'draw' }, { k: 'l', x: P + 730, tone: 'loss' }, { k: 'pct', x: P + inner - 36, align: 'right' }];
+    font(ctx, 26, { weight: 700 });
+    ['Player', 'P', 'W', 'D', 'L', 'Win'].forEach((t, i) => textAt(ctx, t, cols[i].x, y + 42, { color: C.dim, align: cols[i].align || 'center' }));
+    v.players.forEach((r, i) => {
+      const top = y + 64 + i * RH;
+      hline(ctx, P + 24, P + inner - 24, top, C.hair);
+      cols.forEach((c) => {
+        font(ctx, 34, { weight: c.k === 'name' || c.k === 'pct' ? 700 : 400 });
+        const text = c.k === 'name' ? fit(ctx, r.name, 330) : String(r[c.k]);
+        textAt(ctx, text, c.x, top + 50, { color: c.k === 'pct' ? C.bright : (c.tone ? TONE[c.tone] : C.text), align: c.align || 'center' });
+      });
+    });
+    y += tableH + 40;
+    y += rowsCard(ctx, v.rows, P, y, inner);
+    if (v.more) { font(ctx, 30); textAt(ctx, `+ ${v.more} earlier game${v.more === 1 ? '' : 's'} (the player figures above count them all)`, W / 2, y + 50, { color: C.dim, align: 'center' }); }
+    return cv;
+  }
+
+  return { W, SLIDE_H, loadImage, slide, sheet, matchResult, matchup, matchups, nominees, headToHead, headToHeadAll, gamesRecord, toBlob, toFile, toPdf, share, save };
 });

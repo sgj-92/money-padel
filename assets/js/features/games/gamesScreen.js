@@ -91,6 +91,72 @@ function gamesRecordHtml(rec, typeOptions){
   </div>`;
 }
 
+// Two to four players (Shaun, 14 Nov: the breakdown "regardless of number of
+// players"): each one's record over the same games, a row each. Partnerships
+// and sides are ignored, as the filter ignores them.
+function gamesGroupRecordHtml(records, typeOptions){
+  if(!records || records.length < 2) return '';
+  const context = [gamesType === 'all' ? null : gamesTypeLabel(typeOptions), gamesMonthText()].filter(Boolean).map(escapeHtml).join(' · ');
+  return `<div class="gp-record gp-group-record" id="gamesGroupRecord">
+    <div class="gp-record-context">${context}</div>
+    <table class="gp-group-table"><thead><tr><th>Player</th><th>P</th><th>W</th><th>D</th><th>L</th><th>Win</th></tr></thead><tbody>
+    ${records.map(r => `<tr data-player="${escapeHtml(r.name)}"><td>${escapeHtml(r.name)}</td><td>${r.rec.played}</td>
+      <td style="color:var(--green);">${r.rec.wins}</td><td style="color:var(--text-dim);">${r.rec.draws}</td><td style="color:var(--red);">${r.rec.losses}</td>
+      <td class="gp-group-pct">${r.rec.played ? `${r.rec.winpct}%` : '–'}</td></tr>`).join('')}
+    </tbody></table>
+  </div>`;
+}
+
+// A picture of the breakdown and the games behind it, to share (14 Nov).
+function gamesPictureButtonHtml(vm){
+  if(!vm || !vm.records || !vm.records.length || !vm.games.length) return '';
+  return `<div class="gp-picture-row"><button type="button" class="preset-btn" id="gamesPicture">Share picture</button>
+    <span class="section-sub" id="gamesPictureMsg" role="status"></span></div>`;
+}
+
+const GAMES_PICTURE_MAX = 60;
+function gamesPictureView(vm){
+  const shortDate = (date) => {
+    const [y, m, d] = date.split('-');
+    return `${Number(d)} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][Number(m) - 1]}${Number(y) !== new Date().getFullYear() ? ` ${y}` : ''}`;
+  };
+  const focus = vm.records.length === 1 ? vm.records[0].name : null;
+  const word = { win: 'Won', draw: 'Drew', loss: 'Lost' };
+  const names = vm.records.map(r => r.name);
+  return {
+    title: focus ? `${focus}'s games` : `Games with ${PlayerFilter.summary(names)}`,
+    month: gamesMonthText(),
+    context: [gamesType === 'all' ? 'All game types' : gamesTypeLabel(vm.typeOptions), gamesMonthText()].join(' · '),
+    players: vm.records.map(r => ({ name: r.name, p: r.rec.played, w: r.rec.wins, d: r.rec.draws, l: r.rec.losses, pct: r.rec.played ? `${r.rec.winpct}%` : '–' })),
+    // A phone can only hold a picture so tall: the newest 60, and how many more.
+    more: Math.max(0, vm.games.length - GAMES_PICTURE_MAX),
+    rows: vm.games.slice(0, GAMES_PICTURE_MAX).map(m => {
+      const o = focus ? MatchOutcome.outcomeFor(m, focus) : null;
+      return { date: shortDate(m.date), teams: MatchOutcome.describe(m, { perspective: focus || undefined }),
+        score: (m.sets || []).map(s => s.join('-')).join(' ') + MatchNote.mark(MatchNote.forMatch(matchNotesState, m.id)),
+        result: o ? word[o] : '', tone: o || 'draw' };
+    }),
+  };
+}
+
+function wireGamesPicture(vm){
+  const btn = document.getElementById('gamesPicture');
+  if(!btn) return;
+  btn.onclick = async () => {
+    const msg = (t) => { const el = document.getElementById('gamesPictureMsg'); if(el) el.textContent = t; };
+    btn.disabled = true;
+    try {
+      const brand = await CardPainter.loadImage(CLUB.logo);
+      const cv = CardPainter.gamesRecord(gamesPictureView(vm), { brand });
+      const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const file = await CardPainter.toFile(cv, `${CLUB.fileSlug}-games-${slug(vm.records.map(r => r.name).join('-'))}.png`);
+      const outcome = await CardPainter.share([file], { title: `${CLUB.name} — ${gamesPictureView(vm).title}` });
+      msg(outcome === 'shared' ? 'Picture shared.' : outcome === 'saved' ? 'Picture saved — post it from your photos.' : outcome === 'ready' ? 'Picture ready: tap Share picture again.' : '');
+    } catch(e){ msg('Could not make the picture.'); }
+    btn.disabled = false;
+  };
+}
+
 // ---- Editing a game in place -------------------------------------------------
 // The edit form opens inside the game's own card, straight under the game, and
 // every redraw while editing (open, cancel, save, confirm a correction) keeps
@@ -367,6 +433,8 @@ or a team per line with 🏆 and the sets"></textarea>
   // Counted by the view-model from `display` itself -- the list drawn below --
   // never re-queried.
   html += gamesRecordHtml(gamesVm.record, gamesTypeOptions);
+  html += gamesGroupRecordHtml(gamesVm.records, gamesTypeOptions);
+  html += gamesPictureButtonHtml(gamesVm);
   html += `<div class="section-sub">Newest first, grouped by day. Tap a game to see the full breakdown.</div>`;
   const idToIdx = {};
   ALL_MATCHES.forEach((m,i)=>{ idToIdx[m.id] = i; });
@@ -472,6 +540,7 @@ or a team per line with 🏆 and the sets"></textarea>
   }
 
   box.innerHTML = html;
+  wireGamesPicture(gamesVm);
 
   box.querySelectorAll('.game-card-clickable').forEach(el=>{
     el.onclick = (ev)=>{
