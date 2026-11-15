@@ -54,6 +54,7 @@ const TIER_IDX = {S:0,A:1,B:2,C:3};
 let visibilityState = {...VISIBILITY_DEFAULTS};
 
 
+let courtBookingsState = []; // CourtBookings: courts booked, players still to confirm (admin)
 let gameRequestsState = []; // {id, requestedBy, requestedAt, players:[4 names], confirmations:{name:bool}, status:'pending'|'confirmed'|'removed'}
 
 
@@ -2249,7 +2250,7 @@ async function init(){
   // the application has no rating without it and will not invent one -- and it
   // is, because nothing below runs until every one of these has landed.
   const [ , stored, myName, ownerHash, boardHash, unlocked,
-          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords, admin ] =
+          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords, admin, courts ] =
     await PerfTrace.timeAsync('load the record', Promise.all([
       loadV3State(),
       loadStoredData(),
@@ -2265,6 +2266,7 @@ async function init(){
       loadPotmRecords(),
       loadChampionRecords(),
       loadSignedInAdmin(),
+      loadCourtBookings(),
     ]));
   extraMatchesState = stored.extraMatches;
   tagOverridesState = stored.tagOverrides;
@@ -2286,6 +2288,7 @@ async function init(){
   isUnlocked = !!(admin || byPassword) && !isStandingsMode();   // the standings site has no Admin (siteMode.js)
   visibilityState = visibility;
   gameRequestsState = requests;
+  courtBookingsState = Array.isArray(courts) ? courts : [];
   devAreasState = areas;
   challengesState = challenges;
   northSouthResultsState = northSouth;

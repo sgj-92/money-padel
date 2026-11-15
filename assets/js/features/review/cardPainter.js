@@ -815,7 +815,7 @@
   // The app's own look rather than the Board Pack sheet's: a scoreline card,
   // then a card of rows -- date on the left, the teams with the score
   // beneath, the result on the right in green, red or grey.
-  const TONE = { win: '#6fae6f', loss: '#c9574f', draw: C.dim };
+  const TONE = { win: '#6fae6f', loss: '#c9574f', draw: C.dim, open: C.bright };
   function card(ctx, x, y, w, h) {
     ctx.fillStyle = C.surface2; roundRect(ctx, x, y, w, h, 28); ctx.fill();
     ctx.strokeStyle = C.border; ctx.lineWidth = 2; roundRect(ctx, x, y, w, h, 28); ctx.stroke();
@@ -983,9 +983,9 @@
   function weeklyCombined(v, o = {}) {
     const P = 64, inner = W - 2 * P;
     const items = recapItems(v.lines);
-    const g = v.games;
-    const h = P + 56 + 40 + 76 + 10 + 50 + 30 + items.height
-      + 30 + 56 + 50 + 20 + (g.rows.length * 124 + 24) + (g.more ? 70 : 0) + P;
+    const blocks = [v.games, v.fixtures].filter((b) => b && b.rows.length);
+    const blockH = (b) => 30 + 56 + 50 + 20 + (b.rows.length * 124 + 24) + (b.more ? 70 : 0);
+    const h = P + 56 + 40 + 76 + 10 + 50 + 30 + items.height + blocks.reduce((a, b) => a + blockH(b), 0) + P;
     const cv = canvas(W, h);
     const ctx = cv.getContext('2d');
     background(ctx, W, h);
@@ -994,11 +994,13 @@
     font(ctx, 62, { serif: true }); textAt(ctx, v.title, P, y + 56, { color: C.text }); y += 76 + 10;
     font(ctx, 32); textAt(ctx, v.range, P, y + 34, { color: C.soft }); y += 50 + 30;
     y = items.draw(ctx, P, y);
-    y += 30;
-    font(ctx, 44, { serif: true }); textAt(ctx, g.title, P, y + 44, { color: C.text }); y += 56;
-    font(ctx, 30); textAt(ctx, g.subtitle, P, y + 32, { color: C.soft }); y += 50 + 20;
-    y += rowsCard(ctx, g.rows, P, y, inner);
-    if (g.more) { font(ctx, 30); textAt(ctx, `+ ${g.more} more this week`, W / 2, y + 50, { color: C.dim, align: 'center' }); }
+    blocks.forEach((b) => {
+      y += 30;
+      font(ctx, 44, { serif: true }); textAt(ctx, b.title, P, y + 44, { color: C.text }); y += 56;
+      font(ctx, 30); textAt(ctx, b.subtitle, P, y + 32, { color: C.soft }); y += 50 + 20;
+      y += rowsCard(ctx, b.rows, P, y, inner);
+      if (b.more) { font(ctx, 30); textAt(ctx, b.moreText || `+ ${b.more} more this week`, W / 2, y + 50, { color: C.dim, align: 'center' }); y += 70; }
+    });
     return cv;
   }
 

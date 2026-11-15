@@ -46,7 +46,7 @@ function fmtRequestConfirmations(req){
 // each screen should open the same way every time.
 let requestSectionOpen = { challenges: true, forMe: true, mine: true, request: false, bulk: false, adminAdd: false, others: false };
 
-let upcomingSectionOpen = { review: true, attention: true, upcoming: true, calledOut: true, archived: false };
+let upcomingSectionOpen = { review: true, attention: true, upcoming: true, courts: true, calledOut: true, archived: false };
 
 // Which fixture cards are open. Folded by default; emptied on arrival.
 let upcomingOpen = new Set();
@@ -906,6 +906,7 @@ function renderUpcoming(){
   html += section('upcoming', 'upFoldUpcoming', '📅 Upcoming', upcoming,
     'No court-booked games yet. A Called Out game moves here once an admin records its court booking.', 'court booked');
   html += `<div class="mp-divider"></div>`;
+  html += courtsSectionHtml();
   html += section('calledOut', 'upFoldCalledOut', '📣 Called Out', calledOut,
     'Nothing called out. A request lands here once all four players are in.', 'agreed, court not booked');
   // Call-outs nobody organised: 14 days without a booking, or archived by an
@@ -917,6 +918,7 @@ function renderUpcoming(){
   wireRequestPlayerLinks(box);
   wireRequestPredictions(box);
   wireFixtureControls(box);
+  wireCourts(box);
 
   [['upFoldReview','review'], ['upFoldAttention','attention'], ['upFoldUpcoming','upcoming'], ['upFoldCalledOut','calledOut'], ['upFoldArchived','archived']].forEach(([id, key])=>{
     const el = document.getElementById(id);
