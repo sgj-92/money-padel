@@ -95,7 +95,9 @@ const CLUBS = {
     // Shaun, 5 Nov: judged by the quarter; 4 matches in it to qualify.
     period: { months: 3, noun: 'quarter' },
     periodMinMatches: 4,
-    hosts: [/^padelchamps\./i],
+    // padelchamps.… the app; pcr.… the redesign (Vercel Preview, branch
+    // `redesign`), as mpr.… is Money Padel's (Shaun, 15 Nov).
+    hosts: [/^padelchamps\./i, /^pcr\./i],
     standingsHosts: [/^pcstandings\./i],
     standingsDomain: 'pcstandings.sgj.luxe',
     // A new community: its record starts empty (v3Bridge allowEmpty).

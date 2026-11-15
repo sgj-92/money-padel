@@ -186,6 +186,7 @@
   .add-game-body{ border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; background:var(--bg1); }
   .rot-remove{ margin-top:8px; font-size:12px; padding:5px 12px; }
   .rot-actions{ display:flex; gap:8px; }
+  .link-btn{ background:none; border:0; padding:0; color:var(--gold-bright); text-decoration:underline; cursor:pointer; font:inherit; }
   .recap-list{ display:flex; flex-direction:column; gap:8px; margin:8px 0; }
   .recap-item{ display:flex; gap:12px; align-items:flex-start; background:var(--bg1); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
   .recap-icon{ font-size:22px; line-height:1.2; }
