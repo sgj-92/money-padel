@@ -105,3 +105,41 @@ maybe('the recap and the week\'s games can be shared as pictures, and the games 
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 15 Nov: "Open the share sheet when I press share recap picture. And
+// allow me to include or deselect each metric before sending."
+maybe('the recap picture opens the share sheet straight from the tap, with only the lines left ticked', async () => {
+  const app = await H.open({ now: '2026-09-21T10:00:00.000Z', viewport: { width: 390, height: 844 } });
+  try {
+    const r = await app.run(async () => {
+      const shared = [];
+      navigator.canShare = () => true;
+      navigator.share = (data) => { shared.push(data.files.map((f) => f.name)); return Promise.resolve(); };
+      const copied = [];
+      window.copyText = async (t) => { copied.push(t); return true; };
+      document.querySelector('#tabrow .tab-btn[data-tab="summary"]').click();
+      summaryMode = 'weekly'; renderSummary();
+      const { recap } = recapData();
+      // Untick Bad week (and the shock, if there is one this week).
+      const bad = document.querySelector('[data-recap-line="bad"]');
+      bad.checked = false; bad.dispatchEvent(new Event('change'));
+      // Wait for the picture to be made in advance.
+      for (let k = 0; k < 400 && !(recapReady.recap && recapReady.recap.file); k++) await new Promise((res) => setTimeout(res, 20));
+      const drawn = recapChosen(recap).map((l) => l.key);
+      document.getElementById('recapPicture').click();
+      const atOnce = shared.length;    // no waiting: the sheet opens inside the tap
+      await new Promise((res) => setTimeout(res, 50));
+      document.getElementById('recapCopy').click();
+      await new Promise((res) => setTimeout(res, 50));
+      const faded = document.querySelector('[data-recap-line="bad"]').closest('.recap-item').classList.contains('is-off');
+      return { atOnce, shared, drawn, copied, faded, msg: document.getElementById('recapCopyMsg').textContent, kept: localStorage.getItem('recapLinesOff') };
+    });
+    assert.strictEqual(r.atOnce, 1, 'the share sheet is asked for in the same moment as the tap');
+    assert.ok(!r.drawn.includes('bad'), 'Bad week is left off the picture');
+    assert.ok(r.drawn.includes('games'));
+    assert.ok(!/Bad week/.test(r.copied[0]), 'and off the copied text');
+    assert.ok(r.faded);
+    assert.strictEqual(r.kept, '["bad"]', 'remembered on this device');
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});

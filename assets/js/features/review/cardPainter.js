@@ -785,7 +785,10 @@
       try { await navigator.share(data); return 'shared'; }
       catch (e) {
         if (e && e.name === 'AbortError') return 'cancelled';
-        if (e && e.name === 'NotAllowedError') return 'ready';
+        // A phone that can share but would not this time (most often because
+        // the tap that asked is no longer current): try the tap again rather
+        // than drop a download on the reader (Shaun, 15 Nov).
+        return 'ready';
       }
     }
     await save(files);

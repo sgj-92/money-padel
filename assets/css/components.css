@@ -201,6 +201,10 @@
   .recap-score{ color:var(--text-dim); white-space:nowrap; }
   .recap-item{ display:flex; gap:12px; align-items:flex-start; background:var(--bg1); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
   .recap-icon{ font-size:22px; line-height:1.2; }
+  label.recap-item{ cursor:pointer; }
+  .recap-item .recap-body{ flex:1; }
+  .recap-pick{ width:22px; height:22px; accent-color:var(--gold); margin-top:2px; flex:none; }
+  .recap-item.is-off{ opacity:.45; }
   .recap-body{ display:flex; flex-direction:column; gap:2px; font-size:14px; color:var(--text); }
   .recap-body b{ font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--gold-bright); }
   .rot-toggle{ width:100%; text-align:left; background:var(--bg1); border:1px solid var(--line); border-radius:10px; padding:10px 12px; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; display:flex; justify-content:space-between; }
