@@ -30,7 +30,46 @@ let predictShare = { key: null, ready: null, message: '' };
 
 // The matches being predicted, as typed, and which one is open for editing.
 // Kept across redraws of the sheet (Add to Upcoming redraws it).
-let predictBatch = { matches: [{ a1: '', a2: '', b1: '', b2: '' }], open: 0 };
+let predictBatch = { matches: [{ a1: '', a2: '', b1: '', b2: '' }], open: 0, view: -1 };
+let predictPasteMessage = '';
+
+// Several games pasted at once (Shaun, 15 Nov: "players will ask me for 3-4
+// games at a time"): one per line, as people write them -- "Kaz & Len vs Osh
+// & Eli", "Kaz/Len v Osh/Eli". Read by the same reader as Upcoming's paste
+// (FixtureParse), names checked against the club's; whatever cannot be read
+// is said line by line, and a name it cannot place is left as typed for the
+// match's own check to point at.
+function readPastedPredictions(text){
+  const rows = FixtureParse.parse(text, { directory: allPlayerNames(), aliases: (typeof clubNameAliases === 'function') ? clubNameAliases() : null });
+  const games = [], problems = [];
+  rows.forEach(r => {
+    const counts = r.sides.map(sd => sd.length);
+    if(r.problems.length || counts[0] !== 2 || counts[1] !== 2){
+      problems.push(`Line ${r.lineNo}: ${(r.problems[0] && r.problems[0].message) || 'a game needs two on each side.'}`);
+      return;
+    }
+    const pick = (p) => p.name || (p.status === 'suggested' && p.options.length === 1 ? p.options[0] : p.text);
+    const [[a1, a2], [b1, b2]] = r.sides.map(sd => sd.map(pick));
+    games.push({ a1, a2, b1, b2 });
+  });
+  return { games, problems };
+}
+
+function applyPastedPredictions(text){
+  const { games, problems } = readPastedPredictions(text);
+  const kept = predictBatch.matches.filter(m => [m.a1, m.a2, m.b1, m.b2].some(v => String(v || '').trim()));
+  const room = PredictionBatch.MAX - kept.length;
+  const added = games.slice(0, Math.max(0, room));
+  const left = games.length - added.length;
+  if(added.length){
+    predictBatch.matches = kept.concat(added);
+    predictBatch.open = predictBatch.matches.length === 1 ? 0 : -1;
+    predictBatch.view = -1;
+  }
+  predictPasteMessage = [added.length ? `Read ${added.length} game${added.length === 1 ? '' : 's'}. Tap one to open its card.` : (games.length ? '' : 'No games found: write one per line, e.g. Kaz & Len vs Osh & Eli.'),
+    left ? `${left} more didn’t fit: ${PredictionBatch.MAX} at a time.` : '', ...problems].filter(Boolean).join(' ');
+  renderPredictBody();
+}
 
 function predictCanonicalName(n){
   const key = String(n || '').trim().toLowerCase();
@@ -212,14 +251,16 @@ function predictFoldedHtml(i, ev, { actions = true } = {}){
   const line = ev.ok
     ? (() => { const c = matchupCardFor(ev.prediction); return `<span class="pred-fold-teams">${matchupSideHtml(c.teamA)} <span class="mu-amp">vs</span> ${matchupSideHtml(c.teamB)}</span><span class="pred-fold-pct">${c.share.a}% – ${c.share.b}%</span>`; })()
     : `<span class="pred-fold-teams pred-fold-todo">Not finished — ${escapeHtml(ev.reason || PredictionBatch.PROMPT)}</span>`;
-  return `<div class="pred-fold" data-match="${i}">
+  const openable = actions && ev.ok;
+  const viewing = openable && predictBatch.view === i;
+  return `<div class="pred-fold${viewing ? ' is-open' : ''}" data-match="${i}">
     <div class="pred-fold-n">${i + 1}</div>
-    <div class="pred-fold-body">${line}</div>
+    ${openable ? `<button type="button" class="pred-fold-body pred-fold-open" data-pred-view="${i}" aria-expanded="${viewing}">${line}</button>` : `<div class="pred-fold-body">${line}</div>`}
     ${actions ? `<div class="pred-fold-actions">
       <button type="button" class="preset-btn" data-pred-edit="${i}">Edit</button>
       <button type="button" class="preset-btn" data-pred-remove="${i}" aria-label="Remove prediction ${i + 1}">Remove</button>
     </div>` : ''}
-  </div>`;
+  </div>${viewing ? `<div class="pred-quick-card">${matchupCardHtml(matchupCardFor(ev.prediction), { detail: true })}</div>` : ''}`;
 }
 
 function predictEditorHtml(i){
@@ -248,6 +289,11 @@ function renderPredictBody(){
   const { matches, open } = predictBatch;
   const evs = matches.map(predictEvaluate);
   body.innerHTML = `<div class="section-sub" style="font-size:11.5px; margin-bottom:10px;">Pick the four players. ${matches.length > 1 ? 'The predictions share as one card.' : 'The card is ready to share with the group.'} Admin only — nothing is recorded.</div>
+    <details class="pred-paste"${predictPasteMessage ? ' open' : ''}><summary>Paste several games</summary>
+      <textarea id="predPaste" class="fg-select" rows="4" placeholder="One per line, e.g.&#10;Kaz & Len vs Osh & Eli&#10;Max/Jords v PDM/Stormzy"></textarea>
+      <button type="button" class="preset-btn" id="predPasteGo" style="width:100%; margin-top:6px;">Read games</button>
+      ${predictPasteMessage ? `<div class="section-sub" style="color:var(--gold-bright);" role="status">${escapeHtml(predictPasteMessage)}</div>` : ''}
+    </details>
     <datalist id="predNamesList"></datalist>
     <div class="pred-batch">${matches.map((m, i) => i === open ? predictEditorHtml(i) : predictFoldedHtml(i, evs[i])).join('')}</div>
     <div id="predAdd"></div>
@@ -259,7 +305,10 @@ function renderPredictBody(){
     body.querySelectorAll('.pred-slot').forEach(x => { m[x.dataset.slot] = x.value; });
     renderPredictResult();
   }));
-  body.querySelectorAll('[data-pred-edit]').forEach(b => b.onclick = () => { predictBatch.open = Number(b.dataset.predEdit); renderPredictBody(); });
+  body.querySelectorAll('[data-pred-edit]').forEach(b => b.onclick = () => { predictBatch.open = Number(b.dataset.predEdit); predictBatch.view = -1; renderPredictBody(); });
+  body.querySelectorAll('[data-pred-view]').forEach(b => b.onclick = () => { const i = Number(b.dataset.predView); predictBatch.view = predictBatch.view === i ? -1 : i; renderPredictBody(); });
+  const pasteGo = document.getElementById('predPasteGo');
+  if(pasteGo) pasteGo.onclick = () => applyPastedPredictions(document.getElementById('predPaste').value);
   body.querySelectorAll('[data-pred-remove]').forEach(b => b.onclick = () => removePrediction(Number(b.dataset.predRemove)));
   renderPredictResult();
 }
