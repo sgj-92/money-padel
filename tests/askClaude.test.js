@@ -138,9 +138,9 @@ test('the endpoint: POST only, Admins only, says when it is not switched on, and
   assert.deepStrictEqual([r.statusCode, r.body.error], [403, 'Only an Admin can ask Claude.']);
 
   fs1 = firestoreFake({ admin: true });
-  r = fakeRes(); await handler(req('moneypadel.sgj.luxe'), r, { fetch: fs1.fetch, apiKey: '' });
+  r = fakeRes(); await handler(req('moneypadel.sgj.luxe'), r, { fetch: fs1.fetch, apiKey: '', env: { VERCEL_ENV: 'preview', VERCEL_GIT_COMMIT_REF: 'app-features-fixes', VERCEL_GIT_COMMIT_SHA: 'c9ff9a5abcdef' } });
   assert.strictEqual(r.statusCode, 503);
-  assert.match(r.body.error, /ANTHROPIC_API_KEY/);
+  assert.strictEqual(r.body.error, 'Ask Claude isn’t switched on for this deployment (preview deployment, branch app-features-fixes, commit c9ff9a5): ANTHROPIC_API_KEY must be set for this environment in Vercel › Settings › Environment Variables, then redeploy.', 'says which deployment answered');
 
   const pc = firestoreFake({ admin: true });
   let asked = null;
