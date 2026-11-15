@@ -1,0 +1,78 @@
+// ===================== THE WEEKLY RECAP =====================
+// Shaun, 15 Nov: "a weekly recap, showing the number of games played, who had
+// the most wins, biggest shock, number of doughnuts and who gave/received the
+// most, if anyone had a bad week."
+
+const test = require('node:test');
+const assert = require('node:assert');
+const R = require('../assets/js/domain/recap/weeklyRecap.js');
+const H = require('./helpers/uiHarness.js');
+
+const maybe = H.available() ? test : test.skip;
+
+test('a week is Monday to Sunday', () => {
+  assert.deepStrictEqual(['2026-11-09', '2026-11-12', '2026-11-15', '2026-11-16'].map(R.weekStart), ['2026-11-09', '2026-11-09', '2026-11-09', '2026-11-16']);
+  assert.strictEqual(R.weekEnd('2026-11-09'), '2026-11-15');
+  assert.deepStrictEqual(R.weeks([{ date: '2026-11-03' }, { date: '2026-11-14' }, { date: '2026-11-10' }]), ['2026-11-09', '2026-11-02']);
+});
+
+test('the recap: games, most wins, the biggest shock, doughnuts both ways, and a bad week only when it is one', () => {
+  const m = (id, date, winners, losers, sets, isDraw) => ({ id, date, winners, losers, sets, isDraw: !!isDraw });
+  const matches = [
+    m('a', '2026-11-09', ['Kaz', 'Len'], ['Osh', 'Eli'], [[6, 0], [6, 2]]),
+    m('b', '2026-11-11', ['Kaz', 'Eli'], ['Len', 'Osh'], [[6, 4], [0, 6], [6, 3]]),
+    m('c', '2026-11-15', ['Osh', 'Rishi'], ['Kaz', 'Len'], [[7, 5]]),          // the upset
+    m('d', '2026-11-13', ['Len', 'Rishi'], ['Kaz', 'Osh'], [[3, 6]], true),      // a draw
+    m('x', '2026-11-16', ['Eli', 'Rishi'], ['Kaz', 'Len'], [[6, 0]]),          // next week
+  ];
+  const ev = (matchId, date, playerId, pre, delta) => ({ eventType: 'MATCH_UPDATE', matchId, effectiveDate: date, playerId, preMatchRating: pre, ratingDelta: delta });
+  const journey = [
+    ev('a', '2026-11-09', 'Osh', 1500, -4), ev('a', '2026-11-09', 'Eli', 1500, -4),
+    ev('b', '2026-11-11', 'Osh', 1496, -2), ev('b', '2026-11-11', 'Len', 1600, -1),
+    ev('c', '2026-11-15', 'Osh', 1300, 6), ev('c', '2026-11-15', 'Rishi', 1400, 6), ev('c', '2026-11-15', 'Kaz', 1700, -9), ev('c', '2026-11-15', 'Len', 1600, -9),
+    ev('x', '2026-11-16', 'Kaz', 1690, -30),
+  ];
+  const r = R.build({ matches, journey, start: '2026-11-09' });
+  assert.deepStrictEqual([r.games, r.players], [4, 5]);
+  assert.deepStrictEqual(r.mostWins, { names: ['Kaz'], value: 2 });
+  assert.deepStrictEqual([r.shock.match.id, r.shock.gap], ['c', 300], 'rated 1350 against 1650');
+  assert.strictEqual(r.doughnuts, 2);
+  assert.deepStrictEqual(r.gaveMost, { names: ['Len'], value: 2 }, 'Kaz & Len gave one, Len & Osh the other');
+  assert.deepStrictEqual(r.receivedMost, { names: ['Eli'], value: 2 }, 'Osh & Eli took one, Kaz & Eli the other');
+  assert.deepStrictEqual(r.bad, { name: 'Len', change: -10, record: { w: 1, d: 1, l: 2 } }, 'the biggest fall this week; next week\'s is not counted');
+  const quiet = R.build({ matches: [matches[0]], journey: [ev('a', '2026-11-09', 'Osh', 1500, -4)], start: '2026-11-09' });
+  assert.strictEqual(quiet.bad, null, `a 4-point dip is not a bad week (${R.BAD_WEEK_POINTS} or more)`);
+});
+
+maybe('Rankings › Weekly recap: the latest week with games, any week on request, and copied for WhatsApp', async () => {
+  const app = await H.open({ now: '2026-09-21T10:00:00.000Z', viewport: { width: 390, height: 844 } });
+  try {
+    const r = await app.run(async () => {
+      const copied = [];
+      window.copyText = async (t) => { copied.push(t); return true; };
+      document.querySelector('#tabrow .tab-btn[data-tab="summary"]').click();
+      summaryMode = 'weekly'; renderSummary();
+      const monthHidden = getComputedStyle(document.querySelector('.lg-controls .fg-row')).display === 'none';
+      const weeks = [...document.querySelectorAll('#recapWeekSelect option')].map((o) => o.value);
+      const latest = weeks[0];
+      const games = getAllApprovedMatches().filter((m) => WeeklyRecap.weekStart(m.date) === latest).length;
+      const items = [...document.querySelectorAll('#weeklyRecap .recap-item')].map((e) => e.innerText.replace(/\s+/g, ' ').trim());
+      const sel = document.getElementById('recapWeekSelect');
+      sel.value = weeks[1]; sel.dispatchEvent(new Event('change'));
+      const heading = document.querySelector('#summaryContent .section-heading').innerText;
+      document.getElementById('recapCopy').click();
+      await new Promise((res) => setTimeout(res, 50));
+      return { monthHidden, weeks, latest, games, items, heading, second: recapRangeLabel(weeks[1], WeeklyRecap.weekEnd(weeks[1])), copied, wide: document.documentElement.scrollWidth };
+    });
+    assert.ok(r.monthHidden, 'no Month: the recap picks its own week');
+    assert.ok(r.weeks.length > 1 && r.weeks.every((w, i) => i === 0 || w < r.weeks[i - 1]), 'newest first');
+    assert.match(r.items[0], new RegExp(`^🎾 Games ${r.games} games? · \\d+ players?`, 'i'));
+    assert.deepStrictEqual(r.items.map((x) => x.split(' ')[1].toLowerCase()).filter((w) => w !== 'most' && w !== 'biggest'), ['games', 'doughnuts', 'bad'], 'games, doughnuts and bad week always; most wins and shock when there are any');
+    assert.strictEqual(r.heading, `📅 Weekly recap · ${r.second}`);
+    assert.match(r.copied[0], new RegExp(`^Money Padel · Weekly recap · ${r.second}\\n\\n🎾 Games: `));
+    assert.match(r.copied[0], /\n🍩 Doughnuts: /);
+    assert.match(r.copied[0], /\n📉 Bad week: /);
+    assert.strictEqual(r.wide, 390);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
