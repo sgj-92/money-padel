@@ -568,7 +568,7 @@ or a team per line with 🏆 and the sets"></textarea>
   wireGamesPicture(gamesVm);
   wireRotations();
   box.querySelectorAll('[data-add-kind]').forEach(b => {
-    b.onclick = () => { addGameKind = b.dataset.addKind; if(addGameKind === 'rotation') ensureRotationDraft(); renderGamesTab(); };
+    b.onclick = () => { addGameKind = b.dataset.addKind; if(addGameKind === 'rotation') ensureRotationDraft(); else { rotationEditing = null; rotationDraft = null; rotationPlan = null; } renderGamesTab(); };
   });
 
   box.querySelectorAll('.game-card-clickable').forEach(el=>{
