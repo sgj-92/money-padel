@@ -46,7 +46,14 @@ async function handler(req, res, deps) {
   if (!who.ok) return send(res, who.status, { error: who.message });
 
   const apiKey = d.apiKey !== undefined ? d.apiKey : process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return send(res, 503, { error: 'Ask Claude isn’t switched on yet: add ANTHROPIC_API_KEY in Vercel › Settings › Environment Variables, then redeploy.' });
+  if (!apiKey) {
+    // Which deployment answered (Vercel's system variables; nothing secret),
+    // so a key set for one environment but not this one is plain to see.
+    const env = d.env || process.env;
+    const where = [env.VERCEL_ENV && `${env.VERCEL_ENV} deployment`, env.VERCEL_GIT_COMMIT_REF && `branch ${env.VERCEL_GIT_COMMIT_REF}`,
+      env.VERCEL_GIT_COMMIT_SHA && `commit ${String(env.VERCEL_GIT_COMMIT_SHA).slice(0, 7)}`].filter(Boolean).join(', ');
+    return send(res, 503, { error: `Ask Claude isn’t switched on for this deployment${where ? ` (${where})` : ''}: ANTHROPIC_API_KEY must be set for this environment in Vercel › Settings › Environment Variables, then redeploy.` });
+  }
 
   const body = await readBody(req);
   const question = String(body.question || '').trim();
