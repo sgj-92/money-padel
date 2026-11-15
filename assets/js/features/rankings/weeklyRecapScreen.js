@@ -58,6 +58,57 @@ function recapText(r){
     .concat(recapLines(r).map(l => `${l.icon} ${l.title}: ${l.text}`)).join('\n');
 }
 
+// The week's games, oldest day first, a rotation as one line per pairing.
+const RECAP_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function recapDayLabel(date){
+  const d = new Date(`${date}T12:00:00Z`);
+  return `${RECAP_DAYS[d.getUTCDay()]} ${d.getUTCDate()} ${RECAP_MONTHS[d.getUTCMonth()]}`;
+}
+function recapGames(r){
+  const inWeek = (m) => m.date >= r.start && m.date <= r.end;
+  const games = getAllApprovedMatches().filter(inWeek).map(m => ({ date: m.date, id: m.id,
+    line: MatchOutcome.describe(m), score: m.sets.map(s => s.join('-')).join(' ') + MatchNote.mark(MatchNote.forMatch(matchNotesState, m.id)), rotation: false }));
+  const rot = (typeof V3_ROTATIONS !== 'undefined' ? V3_ROTATIONS : []).filter(inWeek).map(m => ({ date: m.date, id: m.id,
+    line: `Rotation: ${rotationPairLine(m)}`, score: '', rotation: true }));
+  const all = games.concat(rot).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.id.localeCompare(b.id, undefined, { numeric: true }));
+  const days = [];
+  all.forEach(g => { const last = days[days.length - 1]; if(last && last.date === g.date) last.games.push(g); else days.push({ date: g.date, label: recapDayLabel(g.date), games: [g] }); });
+  return { days, count: games.length, rotations: rot.length };
+}
+function recapGamesText(r){
+  const g = recapGames(r);
+  const lines = [`${CLUB.name} · Games · ${recapRangeLabel(r.start, r.end)}`, ''];
+  g.days.forEach(d => { lines.push(d.label); d.games.forEach(x => lines.push(`  ${x.line}${x.score ? ` ${x.score}` : ''}`)); lines.push(''); });
+  return lines.join('\n').trim();
+}
+
+const RECAP_PICTURE_MAX = 60;
+async function shareRecapPicture(kind, r, btn){
+  const msg = (t) => { const el = document.getElementById('recapCopyMsg'); if(el) el.textContent = t; };
+  btn.disabled = true;
+  try {
+    const brand = await CardPainter.loadImage(CLUB.logo);
+    const range = recapRangeLabel(r.start, r.end);
+    let cv;
+    if(kind === 'recap'){
+      cv = CardPainter.weeklyRecap({ title: 'Weekly recap', range, lines: recapLines(r) }, { brand });
+    } else {
+      const g = recapGames(r);
+      // A phone can only hold a picture so tall: the first 60, and how many more.
+      const short = (date) => { const d = new Date(`${date}T12:00:00Z`); return `${RECAP_DAYS[d.getUTCDay()]} ${d.getUTCDate()}`; };
+      const all = g.days.flatMap(d => d.games.map(x => ({ date: short(d.date), teams: x.line, score: x.score || 'rotation', result: '', tone: 'draw' })));
+      const rows = all.slice(0, RECAP_PICTURE_MAX);
+      cv = CardPainter.weeklyGames({ title: 'This week’s games', range,
+        subtitle: `${g.count} game${g.count === 1 ? '' : 's'}${g.rotations ? ` · ${g.rotations} rotation pairing${g.rotations === 1 ? '' : 's'}` : ''}`,
+        rows, more: all.length - rows.length }, { brand });
+    }
+    const file = await CardPainter.toFile(cv, `${CLUB.fileSlug}-${kind === 'recap' ? 'weekly-recap' : 'week-games'}-${r.start}.png`);
+    const outcome = await CardPainter.share([file], { title: `${CLUB.name} — ${kind === 'recap' ? 'Weekly recap' : 'Games'} · ${range}` });
+    msg(outcome === 'shared' ? 'Picture shared.' : outcome === 'saved' ? 'Picture saved — post it from your photos.' : outcome === 'ready' ? 'Picture ready: tap again to share.' : '');
+  } catch(e){ msg('Could not make the picture.'); }
+  btn.disabled = false;
+}
+
 function renderWeeklyRecap(){
   const content = document.getElementById('summaryContent');
   const { weeks, recap } = recapData();
@@ -70,12 +121,37 @@ function renderWeeklyRecap(){
       <span class="recap-icon" aria-hidden="true">${l.icon}</span>
       <span class="recap-body"><b>${escapeHtml(l.title)}</b><span>${escapeHtml(l.text)}</span></span></div>`).join('')}</div>
     <div class="section-sub" style="font-size:10.5px;">Biggest shock: the win by the pair rated furthest below their opponents going in. Bad week: the biggest rating fall over the week, if ${WeeklyRecap.BAD_WEEK_POINTS} points or more. Rotations are not counted as games.</div>
-    <div class="fg-row" style="margin-top:8px;"><button class="tab-btn active" id="recapCopy" style="width:100%;">📋 Copy as WhatsApp text</button></div>
-    <div id="recapCopyMsg" class="section-sub" role="status"></div>`;
+    <div class="recap-actions">
+      <button class="tab-btn active" id="recapPicture">🖼 Share recap picture</button>
+      <button class="preset-btn" id="recapCopy">📋 Copy recap text</button>
+    </div>
+    <div id="recapCopyMsg" class="section-sub" role="status"></div>
+    ${recapGamesHtml(recap)}`;
   wireRequestPlayerLinks(content);
   document.getElementById('recapWeekSelect').onchange = (e) => { recapWeek = e.target.value; renderWeeklyRecap(); };
+  document.getElementById('recapPicture').onclick = (e) => shareRecapPicture('recap', recap, e.currentTarget);
+  const gp = document.getElementById('recapGamesPicture');
+  if(gp) gp.onclick = (e) => shareRecapPicture('games', recap, e.currentTarget);
+  const gc = document.getElementById('recapGamesCopy');
+  if(gc) gc.onclick = async () => {
+    const ok = await copyText(recapGamesText(recap));
+    document.getElementById('recapCopyMsg').textContent = ok ? 'Games list copied — paste it into WhatsApp.' : 'Could not copy on this device.';
+  };
   document.getElementById('recapCopy').onclick = async () => {
     const ok = await copyText(recapText(recap));
     document.getElementById('recapCopyMsg').textContent = ok ? 'Copied — paste it into WhatsApp.' : 'Could not copy on this device.';
   };
+}
+
+// The week's games on screen, by day, with their own picture and copy.
+function recapGamesHtml(r){
+  const g = recapGames(r);
+  if(!g.days.length) return '';
+  return `<div class="section-heading" style="margin-top:18px;">🎾 This week’s games · ${g.count}${g.rotations ? ` <span class="section-sub">+ ${g.rotations} rotation pairing${g.rotations === 1 ? '' : 's'}</span>` : ''}</div>
+    <div class="recap-actions">
+      <button class="tab-btn active" id="recapGamesPicture">🖼 Share games picture</button>
+      <button class="preset-btn" id="recapGamesCopy">📋 Copy games list</button>
+    </div>
+    <div class="recap-games" id="recapGames">${g.days.map(d => `<div class="recap-day">${escapeHtml(d.label)}</div>
+      ${d.games.map(x => `<div class="recap-game${x.rotation ? ' is-rotation' : ''}"><span>${escapeHtml(x.line)}</span><span class="recap-score">${escapeHtml(x.score)}</span></div>`).join('')}`).join('')}</div>`;
 }

@@ -76,3 +76,32 @@ maybe('Rankings › Weekly recap: the latest week with games, any week on reques
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+maybe('the recap and the week\'s games can be shared as pictures, and the games copied as a list', async () => {
+  const app = await H.open({ now: '2026-09-21T10:00:00.000Z', viewport: { width: 390, height: 844 } });
+  try {
+    const r = await app.run(async () => {
+      const shared = [], copied = [];
+      CardPainter.share = async (files) => { shared.push({ name: files[0].name, size: files[0].size }); return 'shared'; };
+      window.copyText = async (t) => { copied.push(t); return true; };
+      document.querySelector('#tabrow .tab-btn[data-tab="summary"]').click();
+      summaryMode = 'weekly'; renderSummary();
+      const { recap } = recapData();
+      const wait = async (n) => { for (let k = 0; k < 400 && shared.length < n; k++) await new Promise((res) => setTimeout(res, 20)); };
+      document.getElementById('recapPicture').click(); await wait(1);
+      document.getElementById('recapGamesPicture').click(); await wait(2);
+      document.getElementById('recapGamesCopy').click();
+      await new Promise((res) => setTimeout(res, 50));
+      const listed = [...document.querySelectorAll('#recapGames .recap-game')].length;
+      const games = getAllApprovedMatches().filter((m) => m.date >= recap.start && m.date <= recap.end).length;
+      return { shared, copied, listed, games, start: recap.start, msg: document.getElementById('recapCopyMsg').textContent };
+    });
+    assert.deepStrictEqual(r.shared.map((x) => x.name), [`money-padel-weekly-recap-${r.start}.png`, `money-padel-week-games-${r.start}.png`]);
+    assert.ok(r.shared.every((x) => x.size > 1000));
+    assert.strictEqual(r.listed, r.games, 'every game of the week is listed');
+    assert.strictEqual(r.copied[0].split('\n').filter((l) => /^ {2}\S/.test(l)).length, r.games, 'and copied');
+    assert.match(r.copied[0], /^Money Padel · Games · /);
+    assert.match(r.msg, /Games list copied/);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
