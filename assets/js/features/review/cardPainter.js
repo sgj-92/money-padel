@@ -941,13 +941,33 @@
   }
 
   // The weekly recap (Shaun, 15 Nov): one card per line -- icon, title, text.
-  function weeklyRecap(v, o = {}) {
-    const P = 64, inner = W - 2 * P, TEXT_W = inner - 150;
+  function recapItems(lines) {
+    const TEXT_W = W - 2 * 64 - 150;
     const probe = canvas(10, 10).getContext('2d');
     font(probe, 36);
-    const items = v.lines.map((l) => ({ ...l, wrapped: wrap(probe, l.text, TEXT_W) }));
+    const items = lines.map((l) => ({ ...l, wrapped: wrap(probe, l.text, TEXT_W) }));
     const itemH = (it) => 40 + 34 + 14 + it.wrapped.length * 48 + 30;
-    const h = P + 56 + 40 + 76 + 10 + 50 + 30 + items.reduce((a, it) => a + itemH(it) + 20, 0) + P;
+    return {
+      height: items.reduce((a, it) => a + itemH(it) + 20, 0),
+      draw(ctx, P, y) {
+        const inner = W - 2 * P;
+        items.forEach((it) => {
+          const ih = itemH(it);
+          card(ctx, P, y, inner, ih);
+          font(ctx, 56); textAt(ctx, it.icon, P + 40, y + 96, { color: C.text });
+          font(ctx, 28, { weight: 700, spacing: 0.08 }); textAt(ctx, it.title.toUpperCase(), P + 130, y + 40 + 28, { color: C.bright });
+          font(ctx, 36);
+          it.wrapped.forEach((line, i) => textAt(ctx, line, P + 130, y + 40 + 34 + 14 + 36 + i * 48, { color: C.text }));
+          y += ih + 20;
+        });
+        return y;
+      },
+    };
+  }
+  function weeklyRecap(v, o = {}) {
+    const P = 64;
+    const items = recapItems(v.lines);
+    const h = P + 56 + 40 + 76 + 10 + 50 + 30 + items.height + P;
     const cv = canvas(W, h);
     const ctx = cv.getContext('2d');
     background(ctx, W, h);
@@ -955,15 +975,30 @@
     brand(ctx, o.brand, v.range, P, y, 56, W - P); y += 56 + 40;
     font(ctx, 62, { serif: true }); textAt(ctx, v.title, P, y + 56, { color: C.text }); y += 76 + 10;
     font(ctx, 32); textAt(ctx, v.range, P, y + 34, { color: C.soft }); y += 50 + 30;
-    items.forEach((it) => {
-      const ih = itemH(it);
-      card(ctx, P, y, inner, ih);
-      font(ctx, 56); textAt(ctx, it.icon, P + 40, y + 96, { color: C.text });
-      font(ctx, 28, { weight: 700, spacing: 0.08 }); textAt(ctx, it.title.toUpperCase(), P + 130, y + 40 + 28, { color: C.bright });
-      font(ctx, 36);
-      it.wrapped.forEach((line, i) => textAt(ctx, line, P + 130, y + 40 + 34 + 14 + 36 + i * 48, { color: C.text }));
-      y += ih + 20;
-    });
+    items.draw(ctx, P, y);
+    return cv;
+  }
+
+  // The recap and the week's games in one picture (Shaun, 15 Nov).
+  function weeklyCombined(v, o = {}) {
+    const P = 64, inner = W - 2 * P;
+    const items = recapItems(v.lines);
+    const g = v.games;
+    const h = P + 56 + 40 + 76 + 10 + 50 + 30 + items.height
+      + 30 + 56 + 50 + 20 + (g.rows.length * 124 + 24) + (g.more ? 70 : 0) + P;
+    const cv = canvas(W, h);
+    const ctx = cv.getContext('2d');
+    background(ctx, W, h);
+    let y = P;
+    brand(ctx, o.brand, v.range, P, y, 56, W - P); y += 56 + 40;
+    font(ctx, 62, { serif: true }); textAt(ctx, v.title, P, y + 56, { color: C.text }); y += 76 + 10;
+    font(ctx, 32); textAt(ctx, v.range, P, y + 34, { color: C.soft }); y += 50 + 30;
+    y = items.draw(ctx, P, y);
+    y += 30;
+    font(ctx, 44, { serif: true }); textAt(ctx, g.title, P, y + 44, { color: C.text }); y += 56;
+    font(ctx, 30); textAt(ctx, g.subtitle, P, y + 32, { color: C.soft }); y += 50 + 20;
+    y += rowsCard(ctx, g.rows, P, y, inner);
+    if (g.more) { font(ctx, 30); textAt(ctx, `+ ${g.more} more this week`, W / 2, y + 50, { color: C.dim, align: 'center' }); }
     return cv;
   }
 
@@ -979,9 +1014,9 @@
     font(ctx, 62, { serif: true }); textAt(ctx, v.title, P, y + 56, { color: C.text }); y += 76 + 10;
     font(ctx, 32); textAt(ctx, v.subtitle, P, y + 34, { color: C.soft }); y += 50 + 30;
     y += rowsCard(ctx, v.rows, P, y, inner);
-    if (v.more) { font(ctx, 30); textAt(ctx, `+ ${v.more} more this week`, W / 2, y + 50, { color: C.dim, align: 'center' }); }
+    if (v.more) { font(ctx, 30); textAt(ctx, v.moreText || `+ ${v.more} more this week`, W / 2, y + 50, { color: C.dim, align: 'center' }); }
     return cv;
   }
 
-  return { W, SLIDE_H, loadImage, slide, sheet, matchResult, matchup, matchups, nominees, headToHead, headToHeadAll, gamesRecord, weeklyRecap, weeklyGames, toBlob, toFile, toPdf, share, save };
+  return { W, SLIDE_H, loadImage, slide, sheet, matchResult, matchup, matchups, nominees, headToHead, headToHeadAll, gamesRecord, weeklyRecap, weeklyGames, weeklyCombined, toBlob, toFile, toPdf, share, save };
 });

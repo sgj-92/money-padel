@@ -143,3 +143,55 @@ maybe('the recap picture opens the share sheet straight from the tap, with only 
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 15 Nov: "Allow me to combine the weekly recap summary and games
+// played into one picture too. I also want to share upcoming fixtures for the
+// following week."
+maybe('the recap and the games share as one picture, and next week\'s fixtures as a picture and a list', async () => {
+  const app = await H.open({ now: '2026-09-21T10:00:00.000Z', viewport: { width: 390, height: 844 } });
+  try {
+    const r = await app.run(async () => {
+      const shared = [], copied = [];
+      CardPainter.share = async (files) => { shared.push({ name: files[0].name, size: files[0].size }); return 'shared'; };
+      window.copyText = async (t) => { copied.push(t); return true; };
+      const at = '2026-09-20T09:00:00.000Z';
+      const agreed = (id, players, date, booked, extra = {}) => ({ ...FixtureFlow.createAgreed({ id, players, by: 'Shaun', at, preferredDate: date, courtBookingMade: booked, ...extra }) });
+      gameRequestsState = [
+        agreed('fx-a', ['Shaun', 'Max', 'KC', 'Tom'], '2026-09-29', true, { preferredTime: '19:00', location: 'Padel Haus' }),
+        agreed('fx-b', ['Erf', 'Eli', 'Osh', 'Len'], '2026-10-02', false),
+        agreed('fx-c', ['Kaz', 'PDM', 'Rhys', 'Omar'], '2026-09-23', true),
+        agreed('fx-d', ['Jams', 'Jords', 'Tee', 'MK'], '', false),
+      ];
+      document.querySelector('#tabrow .tab-btn[data-tab="summary"]').click();
+      summaryMode = 'weekly'; renderSummary();
+      const { recap } = recapData();
+      const wait = async (n) => { for (let k = 0; k < 400 && shared.length < n; k++) await new Promise((res) => setTimeout(res, 20)); };
+      document.getElementById('recapBothPicture').click(); await wait(1);
+      const nextList = [...document.querySelectorAll('#recapFixtures .recap-game')].map((x) => x.textContent);
+      const heading = [...document.querySelectorAll('.section-heading')].map((x) => x.textContent).find((t) => /fixtures/.test(t));
+      const note = document.getElementById('summaryContent').textContent.includes('1 agreed game has no date yet');
+      document.getElementById('recapFixturesPicture').click(); await wait(2);
+      document.getElementById('recapFixturesCopy').click();
+      await new Promise((res) => setTimeout(res, 50));
+      const msg = document.getElementById('recapFixturesMsg').textContent;
+      const sel = document.getElementById('recapFixturesWeek');
+      sel.value = 'this'; sel.dispatchEvent(new Event('change'));
+      const thisList = [...document.querySelectorAll('#recapFixtures .recap-game')].map((x) => x.textContent);
+      return { shared, copied, nextList, thisList, heading, note, msg, start: recap.start };
+    });
+    assert.deepStrictEqual(r.shared.map((x) => x.name), [`money-padel-weekly-recap-games-${r.start}.png`, 'money-padel-fixtures-2026-09-28.png']);
+    assert.ok(r.shared.every((x) => x.size > 1000));
+    assert.match(r.heading, /Next week’s fixtures · 2/);
+    assert.strictEqual(r.nextList.length, 2);
+    assert.match(r.nextList[0], /Shaun & Max vs KC & Tom.*19:00 · Padel Haus.*Booked/);
+    assert.match(r.nextList[1], /Erf & Eli vs Osh & Len.*Called out/);
+    assert.ok(r.note, 'undated agreed games are mentioned, not listed');
+    assert.match(r.copied[0], /^Money Padel · Next week's fixtures · 28 Sep – 4 Oct 2026/);
+    assert.match(r.copied[0], /Tue 29 Sep\n {2}Shaun & Max vs KC & Tom · 19:00 · Padel Haus\n/);
+    assert.match(r.copied[0], /Erf & Eli vs Osh & Len · Time and venue TBC \(court not booked yet\)/);
+    assert.match(r.msg, /Fixtures copied/);
+    assert.deepStrictEqual(r.thisList.length, 1, 'the rest of this week instead');
+    assert.match(r.thisList[0], /Kaz & PDM vs Rhys & Omar/);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});

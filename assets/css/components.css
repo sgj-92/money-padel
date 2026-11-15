@@ -199,6 +199,8 @@
   .recap-game{ display:flex; justify-content:space-between; gap:10px; font-size:13.5px; color:var(--text); padding:5px 0; border-top:1px solid var(--line); }
   .recap-game.is-rotation{ color:var(--text-soft); }
   .recap-score{ color:var(--text-dim); white-space:nowrap; }
+  .recap-game small{ color:var(--text-dim); font-size:12px; }
+  .recap-game.is-booked .recap-score{ color:var(--gold-bright); }
   .recap-item{ display:flex; gap:12px; align-items:flex-start; background:var(--bg1); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
   .recap-icon{ font-size:22px; line-height:1.2; }
   label.recap-item{ cursor:pointer; }
