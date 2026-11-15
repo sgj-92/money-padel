@@ -57,6 +57,7 @@ function renderSummary(){
         <option value="league">League Table</option>
         <option value="honours">Honours</option>
         <option value="information">Information</option>
+        <option value="weekly">Weekly recap</option>
       </select>
     </div>
   </div>
@@ -73,7 +74,8 @@ function renderSummary(){
   const modeSel = document.getElementById('summaryModeSelect');
   modeSel.value = summaryMode;
   const controls = box.querySelector('.lg-controls');
-  if(controls) controls.classList.toggle('roh-mode', summaryMode === 'honours');
+  // Honours and the weekly recap choose their own period, so no Month.
+  if(controls) controls.classList.toggle('roh-mode', summaryMode === 'honours' || summaryMode === 'weekly');
   modeSel.onchange = (e)=>{ summaryMode = e.target.value; renderSummary(); };
 
   resetLeagueTierSections();
@@ -81,12 +83,13 @@ function renderSummary(){
   const legacyExplainer = document.getElementById('explainerWrapper');
   // Merit carries its own explanation too, so the legacy per-tab block would
   // be a second one on that view as well.
-  if(legacyExplainer) legacyExplainer.style.display = (summaryMode === 'league' || summaryMode === 'merit' || summaryMode === 'race' || summaryMode === 'honours') ? 'none' : '';
+  if(legacyExplainer) legacyExplainer.style.display = (summaryMode === 'league' || summaryMode === 'merit' || summaryMode === 'race' || summaryMode === 'honours' || summaryMode === 'weekly') ? 'none' : '';
 
   if(summaryMode === 'league') renderSummaryLeagueTable();
   else if(summaryMode === 'merit') renderMeritTable();
   else if(summaryMode === 'race') renderMonthlyRace();
   else if(summaryMode === 'honours') renderRollOfHonour();
+  else if(summaryMode === 'weekly') renderWeeklyRecap();
   else renderSummaryInformation();
 }
 
