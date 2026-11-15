@@ -152,6 +152,8 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Rotations in the list; Add a game prominent with Game / Rotation — DONE (this commit), 15 Nov.** Shaun: rotations show in the games list, Rotation is an option under Add a game, and Add a game is larger/more obvious. Rotation cards now sit in the list on their day (still uncounted); the separate section is gone. Add a game is a large button; inside, a **Game | Rotation** switch (Rotation records directly for an Admin; members are told an Admin records them). Admins can **Remove this rotation** (preview, then `deleteMany` in one replay). 1071 / 1071.
+
 **Rotation sessions — DONE (this commit), 15 Nov.** Shaun decided: a separate section; ratings move as one match; not in any table; head to head shows the sets as history only. Engine `match.rotation {session, part, of, weight=1/of}` scales K and evidence; lifetimeMatches counts the session once (RATING_MODEL.md). App keeps rotation pairings in `V3_ROTATIONS`, apart from `V3_MATCHES`. Results › **Rotations** (cards: pairings, each player's sets and rating change); Admin: **Record a rotation** (enter pairings; a tie-break like 10-6 is stored as a 1-0 set) or tick games already entered on that date to make them a rotation (`editMany`); preview then confirm. H2H "In rotations" (Together/Opposed, no W/L). 1071 / 1071.
 - **Shaun:** record 14 Nov's Khalid/Azzu/David/Nilesh session in Padel Championships (or tick the games if already entered). Americano still to build on the same weighting, awaiting Shaun's go.
 
