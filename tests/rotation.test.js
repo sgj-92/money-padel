@@ -152,3 +152,46 @@ maybe('games already entered can be made a rotation: they leave the tables and k
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+maybe('a rotation can be corrected: Edit fills the form, a wrong score is fixed, the same pairings are re-rated as if entered right', async () => {
+  const run = (fixFirst) => H.open({ now: '2026-09-30T10:00:00.000Z' }).then(async (app) => {
+    try {
+      return await app.run(async (fix) => {
+        isUnlocked = true; adminRole = 'owner'; currentUserName = 'Shaun';
+        document.querySelector('#tabrow .tab-btn[data-tab="games"]').click(); gamesMonth = 'all';
+        addGameExpanded = true; addGameKind = 'rotation'; ensureRotationDraft(); rotationDraft.date = '2026-09-29'; renderGamesTab();
+        const rows = [...document.querySelectorAll('[data-rot-row]')];
+        const fill = (row, v) => ['a1', 'a2', 'b1', 'b2', 'score'].forEach((k, i) => { row.querySelector(`[data-rot="${k}"]`).value = v[i]; });
+        fill(rows[0], ['Max', 'Jords', 'PDM', 'Stormzy', '4-6']);
+        fill(rows[1], ['Max', 'PDM', 'Jords', 'Stormzy', '6-3']);
+        fill(rows[2], ['Max', 'Stormzy', 'Jords', 'PDM', fix ? '6-2 10-6' : '6-2']);
+        await stageRotation(); await commitRotation();
+        await new Promise((res) => setTimeout(res, 50));
+        const idsBefore = rotationSessions()[0].parts.map((m) => m.id);
+        let form = null;
+        if (!fix) {
+          gamesMonth = 'all'; renderGamesTab();
+          document.querySelector('[data-rot-edit]').click();
+          form = [...document.querySelectorAll('[data-rot-row]')].map((row) => [...row.querySelectorAll('[data-rot]')].map((i) => i.value));
+          document.querySelectorAll('[data-rot-row]')[2].querySelector('[data-rot="score"]').value = '6-2 10-6';
+          await stageRotation();
+          const preview = document.getElementById('gamesView').innerText;
+          await commitRotation();
+          await new Promise((res) => setTimeout(res, 50));
+          form = { form, preview: /Preview changes/.test(preview) || /Confirm/.test(preview) };
+        }
+        const s = rotationSessions()[0];
+        return { form, msg: rotationMessage, ids: s.parts.map((m) => m.id), idsBefore, count: rotationSessions().length,
+          sets: s.parts.map((m) => m.sets), ratings: ['Max', 'Jords', 'PDM', 'Stormzy'].map((x) => PLAYERS.find((p) => p.name === x).rating) };
+      }, fixFirst);
+    } finally { await app.close(); }
+  });
+  const corrected = await run(false);
+  const rightFirstTime = await run(true);
+  assert.deepStrictEqual(corrected.form.form, [['PDM', 'Stormzy', 'Max', 'Jords', '6-4'], ['Max', 'PDM', 'Jords', 'Stormzy', '6-3'], ['Max', 'Stormzy', 'Jords', 'PDM', '6-2']], 'filled in as stored, winners first');
+  assert.strictEqual(corrected.msg, 'Rotation corrected.');
+  assert.deepStrictEqual(corrected.ids, corrected.idsBefore, 'the same pairings, corrected in place');
+  assert.strictEqual(corrected.count, 1);
+  assert.deepStrictEqual(corrected.sets[2], [[6, 2], [1, 0]]);
+  corrected.ratings.forEach((x, i) => assert.ok(Math.abs(x - rightFirstTime.ratings[i]) < 1e-9, 'exactly as if entered right first time'));
+});

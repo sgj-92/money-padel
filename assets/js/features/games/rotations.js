@@ -17,6 +17,7 @@
 
 let addGameKind = 'game';    // Add a game: 'game' | 'rotation' (Shaun, 15 Nov)
 let rotationRemove = null;    // { session, planned } staged removal
+let rotationEditing = null;   // the session being amended (Shaun, 15 Nov), or null
 let rotationDraft = null;     // { date, rows: [{ a1, a2, b1, b2, score }], convert: [ids] }
 let rotationPlan = null;      // a staged plan awaiting confirmation
 let rotationMessage = '';
@@ -84,7 +85,8 @@ function rotationCardHtml(s){
           <div class="section-sub">Rating moves: ${rotationRemove.planned.playersMoved.map(x => movedPlayerText(x, rotationRemove.planned, true)).join(' &nbsp;·&nbsp; ') || 'none'}</div>
           <div class="difficulty-row"><button class="preset-btn" data-rot-remove-yes style="flex:1;">Remove it</button><button class="preset-btn" data-rot-remove-no style="flex:1;">Keep it</button></div>
         </div>`
-      : `<button type="button" class="preset-btn rot-remove" data-rot-remove="${escapeHtml(s.session)}">Remove this rotation</button>`) : ''}
+      : `<div class="rot-actions"><button type="button" class="preset-btn rot-remove" data-rot-edit="${escapeHtml(s.session)}">Edit</button>
+          <button type="button" class="preset-btn rot-remove" data-rot-remove="${escapeHtml(s.session)}">Remove this rotation</button></div>`) : ''}
   </div>`;
 }
 
@@ -117,6 +119,17 @@ function rotationAddHtml(){
     </div>
     <input class="fg-select" data-rot="score" value="${escapeHtml(r.score)}" placeholder="Score, first pair first: 6-3 or 6-2 10-6">
   </div>`).join('');
+  if(rotationEditing){
+    return `<div class="rot-form">
+      <div class="section-sub" style="margin-top:0; color:var(--gold-bright);">Editing the rotation on ${escapeHtml(dayLabel(d.date))}. Change any name or score; the date and the number of pairings stay as they are (to change those, remove it and record it again).</div>
+      ${rows}
+      <div class="section-sub" style="font-size:10.5px;">A tie-break (e.g. 10-6) counts as one set won, with no games.</div>
+      <div class="difficulty-row"><button class="tab-btn active" id="rotationPreview" style="flex:2;">Preview changes</button>
+        <button class="preset-btn" id="rotationEditCancel" style="flex:1;">Cancel</button></div>
+      ${rotationMessage ? `<div class="section-sub" style="color:var(--gold-bright);">${rotationMessage}</div>` : ''}
+      ${rotationPlan ? rotationConfirmHtml() : ''}
+    </div>`;
+  }
   return intro + `<div class="rot-form">
     <div class="fg-row"><label class="fg-label">Date</label><input type="date" class="fg-select" id="rotationDate" value="${escapeHtml(d.date)}"></div>
     ${onDate.length ? `<div class="fg-row"><label class="fg-label">Games already entered on this date, to make into the rotation</label>
@@ -179,8 +192,27 @@ function rotationMatches(){
   };
   const toId = (n) => playerIdFor(canonicalPlayerName(n));
   const sessionNo = new Set(rotationSessions().filter(s => s.date === d.date).map(s => s.session)).size + 1;
-  const session = `${d.date}-R${sessionNo}`;
+  let session = `${d.date}-R${sessionNo}`;
   let list;
+  // Amending: the same pairings, same identifiers, new names or scores.
+  if(rotationEditing){
+    const parts = ((V3_RECORD && V3_RECORD.matches) || []).filter(m => m.rotation && m.rotation.session === rotationEditing)
+      .sort((a, b) => a.rotation.part - b.rotation.part);
+    if(!parts.length) return { error: 'That rotation is no longer in the record.' };
+    session = rotationEditing;
+    const edited = [];
+    for(let i = 0; i < parts.length; i++){
+      const r = d.rows[i] || {};
+      const names = [r.a1, r.a2, r.b1, r.b2].map(x => String(x || '').trim());
+      if(names.some(x => !x)) return { error: `Pairing ${i + 1}: enter all four players.` };
+      if(new Set(names.map(x => toId(x).toLowerCase())).size !== 4) return { error: `Pairing ${i + 1}: four different players, please.` };
+      const sets = parseRotationScore(r.score);
+      if(!sets) return { error: `Pairing ${i + 1}: enter the score as 6-3 (no level sets).` };
+      const m = shape(parts[i].date, parts[i].id, [toId(names[0]), toId(names[1])], [toId(names[2]), toId(names[3])], sets);
+      edited.push({ ...m, sourceIndex: parts[i].sourceIndex, rotation: { ...parts[i].rotation } });
+    }
+    return { type: 'editMany', session, matches: edited };
+  }
   if(d.convert.length){
     if(d.convert.length < 2) return { error: 'Tick at least two games.' };
     const raw = (V3_RECORD && V3_RECORD.matches) || [];
@@ -220,7 +252,7 @@ async function stageRotation(){
   try {
     const stored = await readStoredRecord(RatingStore.firestoreCompatBackend(db));
     const planned = planIncludingNewPlayers({ stored, change: { type: built.type, matches: built.matches },
-      provenance: { createdBy: name, recordedAt: new Date().toISOString(), source: built.type === 'editMany' ? 'Games made a rotation' : 'Rotation recorded' } });
+      provenance: { createdBy: name, recordedAt: new Date().toISOString(), source: rotationEditing ? 'Rotation corrected' : built.type === 'editMany' ? 'Games made a rotation' : 'Rotation recorded' } });
     const show = (ids) => ids.map(displayNameFor).join(' & ');
     rotationPlan = { planned, lines: built.matches.map(m => `${show(m.teamA)} ${m.sets.map(s => s.join('-')).join(' ')} ${show(m.teamB)}${m.outcome === RatingEngine.OUTCOME.DRAW ? ' (level)' : ''}`) };
     rotationMessage = `${built.matches.length} pairings, each worth 1/${built.matches.length} of a match.`;
@@ -235,11 +267,27 @@ async function commitRotation(){
     await ReplayForward.commit(RatingStore.firestoreCompatBackend(db), rotationPlan.planned);
     const joined = ((rotationPlan.planned && rotationPlan.planned.newPlayers) || []).filter(n => !Object.keys(tagOverridesState).some(k => k.toLowerCase() === n.playerId.toLowerCase()));
     if(joined.length){ joined.forEach(n => { tagOverridesState[n.playerId] = { tier: n.tier, active: true }; }); await saveTagOverrides(tagOverridesState); }
-    rotationPlan = null; rotationDraft = null;
+    const was = rotationEditing;
+    rotationPlan = null; rotationDraft = null; rotationEditing = null;
+    if(was) addGameExpanded = false;
     await loadV3State();
-    rotationMessage = 'Rotation recorded. It is in the list below, on its day.';
+    rotationMessage = was ? 'Rotation corrected.' : 'Rotation recorded. It is in the list below, on its day.';
   } catch(e){ rotationMessage = 'Nothing was recorded: ' + e.message; }
   dataChanged();
+}
+
+// Opens Add a game › Rotation filled in with the session as stored, the
+// winning pair first in each pairing.
+function startRotationEdit(session){
+  const s = rotationSessions().find(x => x.session === session);
+  if(!s) return;
+  rotationEditing = session; rotationPlan = null; rotationMessage = ''; rotationRemove = null;
+  rotationDraft = { date: s.date, convert: [], rows: s.parts.map(m => ({ a1: m.winners[0] || '', a2: m.winners[1] || '', b1: m.losers[0] || '', b2: m.losers[1] || '',
+    score: m.sets.map(x => x.join('-')).join(' ') })) };
+  addGameExpanded = true; addGameKind = 'rotation';
+  renderGamesTab();
+  const f = document.getElementById('agRotation');
+  if(f && f.scrollIntoView) f.scrollIntoView({ block: 'start' });
 }
 
 async function stageRotationRemoval(session){
@@ -276,6 +324,9 @@ function wireRotations(){
   const commit = document.getElementById('rotationCommit');
   if(commit) commit.onclick = commitRotation;
   document.querySelectorAll('[data-rot-remove]').forEach(b => { b.onclick = () => stageRotationRemoval(b.dataset.rotRemove); });
+  document.querySelectorAll('[data-rot-edit]').forEach(b => { b.onclick = () => startRotationEdit(b.dataset.rotEdit); });
+  const cancelEdit = document.getElementById('rotationEditCancel');
+  if(cancelEdit) cancelEdit.onclick = () => { rotationEditing = null; rotationDraft = null; rotationPlan = null; rotationMessage = ''; addGameExpanded = false; renderGamesTab(); };
   const yes = document.querySelector('[data-rot-remove-yes]');
   if(yes) yes.onclick = commitRotationRemoval;
   const no = document.querySelector('[data-rot-remove-no]');

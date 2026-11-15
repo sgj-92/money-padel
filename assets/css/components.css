@@ -185,6 +185,7 @@
   .add-game-cta-chev{ color:var(--gold-bright); font-size:14px; }
   .add-game-body{ border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; background:var(--bg1); }
   .rot-remove{ margin-top:8px; font-size:12px; padding:5px 12px; }
+  .rot-actions{ display:flex; gap:8px; }
   .rot-toggle{ width:100%; text-align:left; background:var(--bg1); border:1px solid var(--line); border-radius:10px; padding:10px 12px; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; display:flex; justify-content:space-between; }
   .rot-card{ background:var(--bg1); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-top:8px; }
   .rot-head{ font-size:12px; color:var(--gold-soft); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
