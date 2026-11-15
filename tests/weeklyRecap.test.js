@@ -35,6 +35,7 @@ test('the recap: games, most wins, the biggest shock, doughnuts both ways, and a
   const r = R.build({ matches, journey, start: '2026-11-09' });
   assert.deepStrictEqual([r.games, r.players], [4, 5]);
   assert.deepStrictEqual(r.mostWins, { names: ['Kaz'], value: 2 });
+  assert.deepStrictEqual(r.mostLosses, { names: ['Len', 'Osh'], value: 2 }, 'a draw is not a loss');
   assert.deepStrictEqual([r.shock.match.id, r.shock.gap], ['c', 300], 'rated 1350 against 1650');
   assert.strictEqual(r.doughnuts, 2);
   assert.deepStrictEqual(r.gaveMost, { names: ['Len'], value: 2 }, 'Kaz & Len gave one, Len & Osh the other');

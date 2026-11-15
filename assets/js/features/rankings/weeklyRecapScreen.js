@@ -40,6 +40,10 @@ function recapLines(r){
     const one = r.mostWins.names.length === 1 ? r.record[r.mostWins.names[0]] : null;
     lines.push({ key: 'mostWins', icon: '🏆', title: 'Most wins', text: `${names(r.mostWins)} · ${plural(r.mostWins.value, 'win', 'wins')}${one ? ` (${one.w}W${one.d ? ` ${one.d}D` : ''} ${one.l}L)` : ''}` });
   }
+  if(r.mostLosses){
+    const one = r.mostLosses.names.length === 1 ? r.record[r.mostLosses.names[0]] : null;
+    lines.push({ key: 'mostLosses', icon: '😓', title: 'Most losses', text: `${names(r.mostLosses)} · ${plural(r.mostLosses.value, 'loss', 'losses')}${one ? ` (${one.w}W${one.d ? ` ${one.d}D` : ''} ${one.l}L)` : ''}` });
+  }
   if(r.shock){
     const m = r.shock.match;
     lines.push({ key: 'shock', icon: '😱', title: 'Biggest shock', text: `${m.winners.join(' & ')} beat ${m.losers.join(' & ')} ${m.sets.map(s => s.join('-')).join(' ')}, rated ${r.shock.gap} points below them going in` });

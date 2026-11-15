@@ -75,7 +75,8 @@
       });
     });
     const wins = {};
-    Object.keys(record).forEach((n) => { wins[n] = record[n].w; });
+    const losses = {};
+    Object.keys(record).forEach((n) => { wins[n] = record[n].w; losses[n] = record[n].l; });
 
     // The rating side of the week: each player's change, and each game's
     // pre-match pair ratings for the shock.
@@ -107,6 +108,7 @@
       games: games.length,
       players: players.size,
       mostWins: leaders(wins),
+      mostLosses: leaders(losses),   // Shaun, 15 Nov: "add most losses"
       shock,
       doughnuts,
       gaveMost: leaders(gave),
