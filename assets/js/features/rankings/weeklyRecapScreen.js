@@ -33,29 +33,39 @@ function recapLines(r){
   const tied = (x, verb) => x.names.length > 3 ? `${x.names.length} players ${verb} ${x.value} each` : `${verb} the most: ${names(x)} (${x.value})`;
   const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
   const lines = [];
-  lines.push({ icon: '🎾', title: 'Games', text: r.games
+  lines.push({ key: 'games', icon: '🎾', title: 'Games', text: r.games
     ? `${plural(r.games, 'game', 'games')} · ${plural(r.players, 'player', 'players')}${r.rotations ? ` · ${plural(r.rotations, 'rotation', 'rotations')}` : ''}`
     : `No games${r.rotations ? ` · ${plural(r.rotations, 'rotation', 'rotations')}` : ''}` });
   if(r.mostWins){
     const one = r.mostWins.names.length === 1 ? r.record[r.mostWins.names[0]] : null;
-    lines.push({ icon: '🏆', title: 'Most wins', text: `${names(r.mostWins)} · ${plural(r.mostWins.value, 'win', 'wins')}${one ? ` (${one.w}W${one.d ? ` ${one.d}D` : ''} ${one.l}L)` : ''}` });
+    lines.push({ key: 'mostWins', icon: '🏆', title: 'Most wins', text: `${names(r.mostWins)} · ${plural(r.mostWins.value, 'win', 'wins')}${one ? ` (${one.w}W${one.d ? ` ${one.d}D` : ''} ${one.l}L)` : ''}` });
   }
   if(r.shock){
     const m = r.shock.match;
-    lines.push({ icon: '😱', title: 'Biggest shock', text: `${m.winners.join(' & ')} beat ${m.losers.join(' & ')} ${m.sets.map(s => s.join('-')).join(' ')}, rated ${r.shock.gap} points below them going in` });
+    lines.push({ key: 'shock', icon: '😱', title: 'Biggest shock', text: `${m.winners.join(' & ')} beat ${m.losers.join(' & ')} ${m.sets.map(s => s.join('-')).join(' ')}, rated ${r.shock.gap} points below them going in` });
   }
-  lines.push({ icon: '🍩', title: 'Doughnuts', text: r.doughnuts
+  lines.push({ key: 'doughnuts', icon: '🍩', title: 'Doughnuts', text: r.doughnuts
     ? `${plural(r.doughnuts, 'doughnut', 'doughnuts')} (6-0 sets)${r.gaveMost ? ` · ${tied(r.gaveMost, 'gave')}` : ''}${r.receivedMost ? ` · ${tied(r.receivedMost, 'received')}` : ''}`
     : 'None this week' });
-  lines.push({ icon: '📉', title: 'Bad week', text: r.bad
+  lines.push({ key: 'bad', icon: '📉', title: 'Bad week', text: r.bad
     ? `${r.bad.name} · ${r.bad.record.w}W${r.bad.record.d ? ` ${r.bad.record.d}D` : ''} ${r.bad.record.l}L · rating ${String(r.bad.change).replace('-', '−')}`
     : 'Nobody had a bad week' });
   return lines;
 }
 
+// Which lines go out (Shaun, 15 Nov: "include or deselect each metric before
+// sending. Ie I don't want to send bad week"). Remembered on this device.
+const RECAP_PICK_KEY = 'recapLinesOff';
+let recapOff = (() => { try { return JSON.parse(localStorage.getItem(RECAP_PICK_KEY) || '[]'); } catch(e){ return []; } })();
+function recapChosen(r){ return recapLines(r).filter(l => !recapOff.includes(l.key)); }
+function setRecapLine(key, on){
+  recapOff = on ? recapOff.filter(k => k !== key) : [...new Set(recapOff.concat([key]))];
+  try { localStorage.setItem(RECAP_PICK_KEY, JSON.stringify(recapOff)); } catch(e){ /* not kept: fine */ }
+}
+
 function recapText(r){
   return [`${CLUB.name} · Weekly recap · ${recapRangeLabel(r.start, r.end)}`, '']
-    .concat(recapLines(r).map(l => `${l.icon} ${l.title}: ${l.text}`)).join('\n');
+    .concat(recapChosen(r).map(l => `${l.icon} ${l.title}: ${l.text}`)).join('\n');
 }
 
 // The week's games, oldest day first, a rotation as one line per pairing.
@@ -83,30 +93,62 @@ function recapGamesText(r){
 }
 
 const RECAP_PICTURE_MAX = 60;
+
+// The picture is made BEFORE the tap: a phone opens its share sheet only
+// straight from a tap, and building a picture first used up that moment, so
+// iPhones fell back to a download (Shaun, 15 Nov). Each picture is built as
+// soon as what it shows is known, and rebuilt when that changes.
+const recapReady = { recap: null, games: null };   // { key, file, title }
+
+function recapPictureKey(kind, r){
+  return kind === 'recap' ? `recap|${r.start}|${recapChosen(r).map(l => l.key + ':' + l.text).join('|')}` : `games|${r.start}|${recapGamesText(r)}`;
+}
+
+async function buildRecapPicture(kind, r){
+  const brand = await CardPainter.loadImage(CLUB.logo);
+  const range = recapRangeLabel(r.start, r.end);
+  let cv;
+  if(kind === 'recap'){
+    cv = CardPainter.weeklyRecap({ title: 'Weekly recap', range, lines: recapChosen(r) }, { brand });
+  } else {
+    const g = recapGames(r);
+    // A phone can only hold a picture so tall: the first 60, and how many more.
+    const short = (date) => { const d = new Date(`${date}T12:00:00Z`); return `${RECAP_DAYS[d.getUTCDay()]} ${d.getUTCDate()}`; };
+    const all = g.days.flatMap(d => d.games.map(x => ({ date: short(d.date), teams: x.line, score: x.score || 'rotation', result: '', tone: 'draw' })));
+    const rows = all.slice(0, RECAP_PICTURE_MAX);
+    cv = CardPainter.weeklyGames({ title: 'This week’s games', range,
+      subtitle: `${g.count} game${g.count === 1 ? '' : 's'}${g.rotations ? ` · ${g.rotations} rotation pairing${g.rotations === 1 ? '' : 's'}` : ''}`,
+      rows, more: all.length - rows.length }, { brand });
+  }
+  const file = await CardPainter.toFile(cv, `${CLUB.fileSlug}-${kind === 'recap' ? 'weekly-recap' : 'week-games'}-${r.start}.png`);
+  return { file, title: `${CLUB.name} — ${kind === 'recap' ? 'Weekly recap' : 'Games'} · ${range}` };
+}
+
+function prepareRecapPicture(kind, r){
+  const key = recapPictureKey(kind, r);
+  if(recapReady[kind] && recapReady[kind].key === key) return;
+  recapReady[kind] = { key, pending: true };
+  buildRecapPicture(kind, r).then(made => {
+    if(recapReady[kind] && recapReady[kind].key === key) recapReady[kind] = { key, ...made };
+  }, () => { if(recapReady[kind] && recapReady[kind].key === key) recapReady[kind] = null; });
+}
+
 async function shareRecapPicture(kind, r, btn){
   const msg = (t) => { const el = document.getElementById('recapCopyMsg'); if(el) el.textContent = t; };
-  btn.disabled = true;
+  const key = recapPictureKey(kind, r);
+  const ready = recapReady[kind] && recapReady[kind].key === key && recapReady[kind].file ? recapReady[kind] : null;
   try {
-    const brand = await CardPainter.loadImage(CLUB.logo);
-    const range = recapRangeLabel(r.start, r.end);
-    let cv;
-    if(kind === 'recap'){
-      cv = CardPainter.weeklyRecap({ title: 'Weekly recap', range, lines: recapLines(r) }, { brand });
-    } else {
-      const g = recapGames(r);
-      // A phone can only hold a picture so tall: the first 60, and how many more.
-      const short = (date) => { const d = new Date(`${date}T12:00:00Z`); return `${RECAP_DAYS[d.getUTCDay()]} ${d.getUTCDate()}`; };
-      const all = g.days.flatMap(d => d.games.map(x => ({ date: short(d.date), teams: x.line, score: x.score || 'rotation', result: '', tone: 'draw' })));
-      const rows = all.slice(0, RECAP_PICTURE_MAX);
-      cv = CardPainter.weeklyGames({ title: 'This week’s games', range,
-        subtitle: `${g.count} game${g.count === 1 ? '' : 's'}${g.rotations ? ` · ${g.rotations} rotation pairing${g.rotations === 1 ? '' : 's'}` : ''}`,
-        rows, more: all.length - rows.length }, { brand });
+    // Ready: straight to the share sheet, inside the tap.
+    let made = ready;
+    if(!made){
+      btn.disabled = true;
+      made = await buildRecapPicture(kind, r);
+      recapReady[kind] = { key, ...made };
+      btn.disabled = false;
     }
-    const file = await CardPainter.toFile(cv, `${CLUB.fileSlug}-${kind === 'recap' ? 'weekly-recap' : 'week-games'}-${r.start}.png`);
-    const outcome = await CardPainter.share([file], { title: `${CLUB.name} — ${kind === 'recap' ? 'Weekly recap' : 'Games'} · ${range}` });
+    const outcome = await CardPainter.share([made.file], { title: made.title });
     msg(outcome === 'shared' ? 'Picture shared.' : outcome === 'saved' ? 'Picture saved — post it from your photos.' : outcome === 'ready' ? 'Picture ready: tap again to share.' : '');
-  } catch(e){ msg('Could not make the picture.'); }
-  btn.disabled = false;
+  } catch(e){ btn.disabled = false; msg('Could not make the picture.'); }
 }
 
 function renderWeeklyRecap(){
@@ -117,9 +159,11 @@ function renderWeeklyRecap(){
   content.innerHTML = `<div class="fg-row" style="margin-top:6px;"><label class="fg-label" for="recapWeekSelect">Week (Monday to Sunday)</label>
       <select id="recapWeekSelect" class="fg-select">${options}</select></div>
     <div class="section-heading">📅 Weekly recap · ${escapeHtml(recapRangeLabel(recap.start, recap.end))}</div>
-    <div class="recap-list" id="weeklyRecap">${recapLines(recap).map(l => `<div class="recap-item">
+    <div class="section-sub" style="margin:2px 0 0;">Untick anything you don’t want to send: the picture and the copied text leave it out.</div>
+    <div class="recap-list" id="weeklyRecap">${recapLines(recap).map(l => { const on = !recapOff.includes(l.key); return `<label class="recap-item${on ? '' : ' is-off'}">
       <span class="recap-icon" aria-hidden="true">${l.icon}</span>
-      <span class="recap-body"><b>${escapeHtml(l.title)}</b><span>${escapeHtml(l.text)}</span></span></div>`).join('')}</div>
+      <span class="recap-body"><b>${escapeHtml(l.title)}</b><span>${escapeHtml(l.text)}</span></span>
+      <input type="checkbox" class="recap-pick" data-recap-line="${l.key}"${on ? ' checked' : ''} aria-label="Include ${escapeHtml(l.title)}"></label>`; }).join('')}</div>
     <div class="section-sub" style="font-size:10.5px;">Biggest shock: the win by the pair rated furthest below their opponents going in. Bad week: the biggest rating fall over the week, if ${WeeklyRecap.BAD_WEEK_POINTS} points or more. Rotations are not counted as games.</div>
     <div class="recap-actions">
       <button class="tab-btn active" id="recapPicture">🖼 Share recap picture</button>
@@ -128,6 +172,15 @@ function renderWeeklyRecap(){
     <div id="recapCopyMsg" class="section-sub" role="status"></div>
     ${recapGamesHtml(recap)}`;
   wireRequestPlayerLinks(content);
+  content.querySelectorAll('[data-recap-line]').forEach(box => {
+    box.onchange = () => {
+      setRecapLine(box.dataset.recapLine, box.checked);
+      box.closest('.recap-item').classList.toggle('is-off', !box.checked);
+      prepareRecapPicture('recap', recap);
+    };
+  });
+  prepareRecapPicture('recap', recap);
+  prepareRecapPicture('games', recap);
   document.getElementById('recapWeekSelect').onchange = (e) => { recapWeek = e.target.value; renderWeeklyRecap(); };
   document.getElementById('recapPicture').onclick = (e) => shareRecapPicture('recap', recap, e.currentTarget);
   const gp = document.getElementById('recapGamesPicture');
