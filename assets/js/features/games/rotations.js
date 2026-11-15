@@ -15,8 +15,8 @@
 // An Admin records one here, or makes games already entered into one.
 // Loads before gamesScreen.js; declarations only.
 
-let rotationsOpen = false;
-let rotationFormOpen = false;
+let addGameKind = 'game';    // Add a game: 'game' | 'rotation' (Shaun, 15 Nov)
+let rotationRemove = null;    // { session, planned } staged removal
 let rotationDraft = null;     // { date, rows: [{ a1, a2, b1, b2, score }], convert: [ids] }
 let rotationPlan = null;      // a staged plan awaiting confirmation
 let rotationMessage = '';
@@ -69,38 +69,39 @@ function rotationSessionsShown(){
 
 function rotationCardHtml(s){
   const st = rotationStats(s);
+  const removing = rotationRemove && rotationRemove.session === s.session;
   const players = rotationPlayers(s).sort((a, b) => st[b].won - st[a].won || st[a].lost - st[b].lost);
   return `<div class="rot-card" data-rotation="${escapeHtml(s.session)}">
-    <div class="rot-head">${escapeHtml(dayLabel(s.date))} · Rotation · ${s.parts.length} pairings</div>
+    <div class="rot-head">🔄 Rotation · ${s.parts.length} pairings</div>
     ${s.parts.map(m => `<div class="rot-pair">${escapeHtml(rotationPairLine(m))}</div>`).join('')}
     <div class="rot-players">${players.map(n => {
       const d = Math.round(st[n].delta * 10) / 10;
       return `<span class="rot-player"><b>${escapeHtml(n)}</b> ${st[n].won}–${st[n].lost} sets <span class="${d >= 0 ? 'perf-pos' : 'perf-neg'}">${d > 0 ? '+' : ''}${d}</span></span>`;
     }).join('')}</div>
+    ${isUnlocked ? (removing
+      ? `<div class="callout-card" style="padding:10px; margin-top:8px; border-color:var(--gold-dim);">
+          <div style="font-weight:700; color:var(--gold-bright);">Remove this rotation?</div>
+          <div class="section-sub">Rating moves: ${rotationRemove.planned.playersMoved.map(x => movedPlayerText(x, rotationRemove.planned, true)).join(' &nbsp;·&nbsp; ') || 'none'}</div>
+          <div class="difficulty-row"><button class="preset-btn" data-rot-remove-yes style="flex:1;">Remove it</button><button class="preset-btn" data-rot-remove-no style="flex:1;">Keep it</button></div>
+        </div>`
+      : `<button type="button" class="preset-btn rot-remove" data-rot-remove="${escapeHtml(s.session)}">Remove this rotation</button>`) : ''}
   </div>`;
 }
 
-function rotationsSectionHtml(){
-  const shown = rotationSessionShownSafe();
-  if(!shown.length && !isUnlocked) return '';
-  let html = `<div class="rot-section">
-    <button type="button" class="rot-toggle" id="rotationsToggle" aria-expanded="${rotationsOpen}">🔄 Rotations · ${shown.length} session${shown.length === 1 ? '' : 's'} <span aria-hidden="true">${rotationsOpen ? '▴' : '▾'}</span></button>`;
-  if(rotationsOpen){
-    html += `<div class="section-sub" style="margin-top:4px;">Partners swap each set. Each pairing moves ratings, and a whole session counts as about one match. Rotations are not in the League, Merit, Race or W/L, and head to head shows them as history only.</div>`;
-    html += shown.map(rotationCardHtml).join('') || `<div class="section-sub">No rotations for these filters.</div>`;
-    if(isUnlocked) html += rotationAdminHtml();
-  }
-  return html + `</div>`;
+function rotationSessionsShownSafe(){ try { return rotationSessionsShown(); } catch(e){ return []; } }
+
+// ---- Add a game › Rotation: record one, or make games already entered into one ----
+
+function ensureRotationDraft(){
+  if(rotationDraft) return;
+  const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  rotationDraft = { date: today, rows: [0, 1, 2].map(() => ({ a1: '', a2: '', b1: '', b2: '', score: '' })), convert: [] };
 }
-function rotationSessionShownSafe(){ try { return rotationSessionsShown(); } catch(e){ return []; } }
 
-// ---- Admin: record a rotation, or make games already entered into one ----
-
-function rotationAdminHtml(){
-  if(!rotationFormOpen){
-    return `<button type="button" class="preset-btn" id="rotationOpenForm" style="width:100%; margin-top:8px;">Record a rotation</button>`
-      + (rotationMessage ? `<div class="section-sub">${rotationMessage}</div>` : '');
-  }
+function rotationAddHtml(){
+  const intro = `<div class="section-sub" style="margin-top:0;">Partners swap each set. Each pairing moves ratings, and the whole session counts as about one match. Rotations are listed with the games but are not in the League, Merit, Race or W/L, and head to head shows them as history only.</div>`;
+  if(!isUnlocked) return intro + `<div class="section-sub" style="color:var(--gold-bright);">An Admin records rotations: unlock Admin, or send the pairings and scores to one.</div>`;
+  ensureRotationDraft();
   const d = rotationDraft;
   const onDate = V3_MATCHES.filter(m => m.date === d.date);
   const rows = d.rows.map((r, i) => `<div class="rot-row" data-rot-row="${i}">
@@ -116,7 +117,7 @@ function rotationAdminHtml(){
     </div>
     <input class="fg-select" data-rot="score" value="${escapeHtml(r.score)}" placeholder="Score, first pair first: 6-3 or 6-2 10-6">
   </div>`).join('');
-  return `<div class="fg-controls rot-form">
+  return intro + `<div class="rot-form">
     <div class="fg-row"><label class="fg-label">Date</label><input type="date" class="fg-select" id="rotationDate" value="${escapeHtml(d.date)}"></div>
     ${onDate.length ? `<div class="fg-row"><label class="fg-label">Games already entered on this date, to make into the rotation</label>
       ${onDate.map(m => `<label class="late-pick"><input type="checkbox" data-rot-convert value="${escapeHtml(m.id)}"${d.convert.includes(m.id) ? ' checked' : ''}> ${escapeHtml(rotationPairLine(m))}</label>`).join('')}
@@ -124,8 +125,7 @@ function rotationAdminHtml(){
     <div class="fg-row"><label class="fg-label">Or enter the pairings</label>${rows}
       <button type="button" class="preset-btn" id="rotationAddRow" style="margin-top:6px;">+ Add pairing</button></div>
     <div class="section-sub" style="font-size:10.5px;">A tie-break (e.g. 10-6) counts as one set won, with no games.</div>
-    <div class="difficulty-row"><button class="tab-btn active" id="rotationPreview" style="flex:2;">Preview</button>
-      <button class="preset-btn" id="rotationCancel" style="flex:1;">Cancel</button></div>
+    <button class="tab-btn active" id="rotationPreview" style="width:100%;">Preview</button>
     ${rotationMessage ? `<div class="section-sub" style="color:var(--gold-bright);">${rotationMessage}</div>` : ''}
     ${rotationPlan ? rotationConfirmHtml() : ''}
   </div>`;
@@ -235,24 +235,38 @@ async function commitRotation(){
     await ReplayForward.commit(RatingStore.firestoreCompatBackend(db), rotationPlan.planned);
     const joined = ((rotationPlan.planned && rotationPlan.planned.newPlayers) || []).filter(n => !Object.keys(tagOverridesState).some(k => k.toLowerCase() === n.playerId.toLowerCase()));
     if(joined.length){ joined.forEach(n => { tagOverridesState[n.playerId] = { tier: n.tier, active: true }; }); await saveTagOverrides(tagOverridesState); }
-    rotationPlan = null; rotationFormOpen = false; rotationDraft = null; rotationsOpen = true;
+    rotationPlan = null; rotationDraft = null;
     await loadV3State();
-    rotationMessage = 'Rotation recorded.';
+    rotationMessage = 'Rotation recorded. It is in the list below, on its day.';
   } catch(e){ rotationMessage = 'Nothing was recorded: ' + e.message; }
   dataChanged();
 }
 
+async function stageRotationRemoval(session){
+  const name = requireName();
+  if(!name) return;
+  try {
+    const raw = ((V3_RECORD && V3_RECORD.matches) || []).filter(m => m.rotation && m.rotation.session === session);
+    const stored = await readStoredRecord(RatingStore.firestoreCompatBackend(db));
+    const planned = planIncludingNewPlayers({ stored, change: { type: 'deleteMany', matchIds: raw.map(m => m.id) },
+      provenance: { createdBy: name, recordedAt: new Date().toISOString(), source: 'Rotation removed' } });
+    rotationRemove = { session, planned };
+  } catch(e){ rotationRemove = null; rotationMessage = 'Couldn’t remove it: ' + e.message; }
+  renderGamesTab();
+}
+
+async function commitRotationRemoval(){
+  if(!rotationRemove) return;
+  try {
+    await ReplayForward.commit(RatingStore.firestoreCompatBackend(db), rotationRemove.planned);
+    rotationRemove = null;
+    await loadV3State();
+    rotationMessage = 'Rotation removed.';
+  } catch(e){ rotationMessage = 'Nothing was removed: ' + e.message; }
+  dataChanged();
+}
+
 function wireRotations(){
-  const t = document.getElementById('rotationsToggle');
-  if(t) t.onclick = () => { rotationsOpen = !rotationsOpen; renderGamesTab(); };
-  const open = document.getElementById('rotationOpenForm');
-  if(open) open.onclick = () => {
-    const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-    rotationDraft = { date: today, rows: [0, 1, 2].map(() => ({ a1: '', a2: '', b1: '', b2: '', score: '' })), convert: [] };
-    rotationFormOpen = true; rotationPlan = null; rotationMessage = ''; renderGamesTab();
-  };
-  const cancel = document.getElementById('rotationCancel');
-  if(cancel) cancel.onclick = () => { rotationFormOpen = false; rotationDraft = null; rotationPlan = null; rotationMessage = ''; renderGamesTab(); };
   const add = document.getElementById('rotationAddRow');
   if(add) add.onclick = () => { readRotationForm(); rotationDraft.rows.push({ a1: '', a2: '', b1: '', b2: '', score: '' }); renderGamesTab(); };
   const date = document.getElementById('rotationDate');
@@ -261,6 +275,11 @@ function wireRotations(){
   if(prev) prev.onclick = stageRotation;
   const commit = document.getElementById('rotationCommit');
   if(commit) commit.onclick = commitRotation;
+  document.querySelectorAll('[data-rot-remove]').forEach(b => { b.onclick = () => stageRotationRemoval(b.dataset.rotRemove); });
+  const yes = document.querySelector('[data-rot-remove-yes]');
+  if(yes) yes.onclick = commitRotationRemoval;
+  const no = document.querySelector('[data-rot-remove-no]');
+  if(no) no.onclick = () => { rotationRemove = null; renderGamesTab(); };
 }
 
 // Head to head: the rotation sets two players shared, as history only.

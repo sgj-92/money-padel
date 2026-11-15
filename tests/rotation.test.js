@@ -69,8 +69,9 @@ maybe('Admin records a rotation: a tie-break is a set, ratings move, tables do n
       const [K, A, D, N] = ['Max', 'Jords', 'PDM', 'Stormzy'];
       const played = (x) => matchesIncludingDraws().filter((m) => m.winners.includes(x) || m.losers.includes(x)).length;
       const before = { played: [K, A, D, N].map(played), ratings: [K, A, D, N].map((x) => PLAYERS.find((p) => p.name === x).rating), race: JSON.stringify(buildMonthlyRace('2026-09').table.map((x) => [x.playerId, x.played])) };
-      rotationsOpen = true; renderGamesTab();
-      document.getElementById('rotationOpenForm').click();
+      addGameExpanded = false; renderGamesTab();
+      document.getElementById('addGameToggle').click();
+      document.querySelector('[data-add-kind="rotation"]').click();
       document.getElementById('rotationDate').value = '2026-09-29';
       const rows = [...document.querySelectorAll('[data-rot-row]')];
       const fill = (row, a1, a2, b1, b2, score) => { const set = (k, v) => { row.querySelector(`[data-rot="${k}"]`).value = v; }; set('a1', a1); set('a2', a2); set('b1', b1); set('b2', b2); set('score', score); };
@@ -82,18 +83,30 @@ maybe('Admin records a rotation: a tie-break is a set, ratings move, tables do n
       await commitRotation();
       await new Promise((res) => setTimeout(res, 50));
       renderGamesTab();
-      const card = document.querySelector('.rot-card') ? document.querySelector('.rot-card').innerText : '';
+      gamesMonth = '2026-09'; renderGamesTab();
+      const card = document.querySelector('#gamesView .rot-card') ? document.querySelector('#gamesView .rot-card').innerText : '';
+      // On its day, among the games: the day heading comes just before it.
+      const head = document.querySelector('#gamesView .rot-card').previousElementSibling.innerText;
       const after = { played: [K, A, D, N].map(played), ratings: [K, A, D, N].map((x) => PLAYERS.find((p) => p.name === x).rating), race: JSON.stringify(buildMonthlyRace('2026-09').table.map((x) => [x.playerId, x.played])) };
       const sess = rotationSessions()[0];
       const stats = rotationStats(sess);
       h2hPlayerA = K; h2hPlayerB = N; h2hMonth = 'all';
       renderH2H();
       const h2h = document.getElementById('h2hView') ? document.getElementById('h2hView').innerText : document.body.innerText;
-      return { preview, card, before, after, parts: sess.parts.map((m) => [m.winners, m.sets, m.rotation.weight]), stats: [K, A, D, N].map((x) => [stats[x].won, stats[x].lost]), h2h, msg: rotationMessage, wide: document.documentElement.scrollWidth };
+      // Removed again, exactly: ratings back where they were.
+      const ratingsWith = [K, A, D, N].map((x) => PLAYERS.find((p) => p.name === x).rating);
+      document.querySelector('[data-rot-remove]').click();
+      for (let k = 0; k < 100 && !rotationRemove; k++) await new Promise((res) => setTimeout(res, 20));
+      document.querySelector('[data-rot-remove-yes]').click();
+      for (let k = 0; k < 100 && !/removed/.test(rotationMessage); k++) await new Promise((res) => setTimeout(res, 20));
+      const removed = { left: rotationSessions().length, ratings: [K, A, D, N].map((x) => PLAYERS.find((p) => p.name === x).rating), ratingsWith };
+      return { head, removed, preview, card, before, after, parts: sess.parts.map((m) => [m.winners, m.sets, m.rotation.weight]), stats: [K, A, D, N].map((x) => [stats[x].won, stats[x].lost]), h2h, wide: document.documentElement.scrollWidth };
     });
     assert.match(r.preview, /Max & Stormzy 6-2 1-0 Jords & PDM/, 'the tie-break is a set won, no games');
     assert.match(r.preview, /each worth 1\/3 of a match/);
-    assert.strictEqual(r.msg, 'Rotation recorded.');
+    assert.match(r.head, /29 Sep/i);
+    assert.strictEqual(r.removed.left, 0);
+    r.removed.ratings.forEach((x, i) => assert.ok(Math.abs(x - r.before.ratings[i]) < 1e-6, 'removing it puts every rating back'));
     assert.deepStrictEqual(r.parts.map((p) => [p[0], p[1]]), [[['PDM', 'Stormzy'], [[6, 4]]], [['Max', 'PDM'], [[6, 3]]], [['Max', 'Stormzy'], [[6, 2], [1, 0]]]]);
     assert.ok(r.parts.every((p) => Math.abs(p[2] - 1 / 3) < 1e-12));
     assert.deepStrictEqual(r.after.played, r.before.played, 'no table counts it');
@@ -121,8 +134,7 @@ maybe('games already entered can be made a rotation: they leave the tables and k
       const date = Object.keys(byDate).filter((d) => byDate[d].length >= 2).sort().slice(-1)[0];
       const games = byDate[date].slice(0, 2);
       const total = getAllApprovedMatches().length;
-      rotationsOpen = true; renderGamesTab();
-      document.getElementById('rotationOpenForm').click();
+      addGameExpanded = true; addGameKind = 'rotation'; ensureRotationDraft(); renderGamesTab();
       const dateBox = document.getElementById('rotationDate');
       dateBox.value = date; dateBox.dispatchEvent(new Event('change'));
       games.forEach((g) => { document.querySelector(`[data-rot-convert][value="${g.id}"]`).checked = true; });
@@ -133,7 +145,7 @@ maybe('games already entered can be made a rotation: they leave the tables and k
       return { total, after: getAllApprovedMatches().length, ids: sess ? sess.parts.map((m) => m.id).sort() : null, want: games.map((g) => g.id).sort(),
         scores: sess ? sess.parts.map((m) => JSON.stringify(m.sets)).sort() : null, wantScores: games.map((g) => JSON.stringify(g.sets)).sort(), msg: rotationMessage };
     });
-    assert.strictEqual(r.msg, 'Rotation recorded.');
+    assert.match(r.msg, /^Rotation recorded\./);
     assert.strictEqual(r.after, r.total - 2, 'out of the tables');
     assert.deepStrictEqual(r.ids, r.want);
     assert.deepStrictEqual(r.scores, r.wantScores);

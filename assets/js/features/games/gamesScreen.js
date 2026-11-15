@@ -304,9 +304,19 @@ function renderGamesTab(){
   // Add a game, no admin, no pending submissions.
   const standingsOnly = isStandingsMode();
   if(!standingsOnly){
-  html += foldHeading('addGameToggle', '➕ Add a game', addGameExpanded,
-    { bodyId: 'addGameBody', summary: linkedRequestId ? 'from Upcoming' : 'submit a result' });
-  html += `<div id="addGameBody" style="display:${addGameExpanded ? 'block' : 'none'};">`;
+  // Bigger and plainer than a fold (Shaun, 15 Nov: "more obvious").
+  html += `<button type="button" class="add-game-cta${addGameExpanded ? ' is-open' : ''}" id="addGameToggle" aria-expanded="${addGameExpanded}" aria-controls="addGameBody">
+    <span class="add-game-cta-icon" aria-hidden="true">＋</span>
+    <span class="add-game-cta-text"><b>Add a game</b><span>${linkedRequestId ? 'Recording a game from Upcoming' : 'Submit a result, or record a rotation'}</span></span>
+    <span class="add-game-cta-chev" aria-hidden="true">${addGameExpanded ? '▴' : '▾'}</span>
+  </button>`;
+  html += `<div id="addGameBody" class="add-game-body" style="display:${addGameExpanded ? 'block' : 'none'};">`;
+  html += `<div class="fg-toggle add-game-kind" style="margin-bottom:10px;">
+    <button type="button" class="fg-toggle-btn${addGameKind === 'game' ? ' active' : ''}" data-add-kind="game">Game</button>
+    <button type="button" class="fg-toggle-btn${addGameKind === 'rotation' ? ' active' : ''}" data-add-kind="rotation">Rotation</button>
+  </div>`;
+  if(addGameKind === 'rotation') html += `<div id="agRotation">${rotationAddHtml()}</div>`;
+  html += `<div id="agGameForm" style="display:${addGameKind === 'rotation' ? 'none' : 'block'};">`;
   html += identityLineHtml('Adding');
   // The one place the lifecycle is visible to the person in it: this form is
   // finishing a game that already exists in Upcoming, and submitting it will
@@ -369,6 +379,7 @@ or a team per line with 🏆 and the sets"></textarea>
     </div>
     <div id="agMessage" class="section-sub"></div>
   </div>`;
+  html += `</div>`; // close agGameForm
   html += `</div>`; // close addGameBody
 
   }
@@ -435,16 +446,28 @@ or a team per line with 🏆 and the sets"></textarea>
   html += gamesRecordHtml(gamesVm.record, gamesTypeOptions);
   html += gamesGroupRecordHtml(gamesVm.records, gamesTypeOptions);
   html += gamesPictureButtonHtml(gamesVm);
-  html += rotationsSectionHtml();
   html += `<div class="section-sub">Newest first, grouped by day. Tap a game to see the full breakdown.</div>`;
   const idToIdx = {};
   ALL_MATCHES.forEach((m,i)=>{ idToIdx[m.id] = i; });
   let lastDate = null;
-  display.forEach(m=>{
-    if(m.date !== lastDate){
-      html += `<div class="section-heading" style="margin-top:16px; font-size:12px; color:var(--gold-soft); text-transform:uppercase; letter-spacing:.04em;">${dayLabel(m.date)}</div>`;
-      lastDate = m.date;
+  const dayHead = (date) => {
+    if(date === lastDate) return;
+    html += `<div class="section-heading" style="margin-top:16px; font-size:12px; color:var(--gold-soft); text-transform:uppercase; letter-spacing:.04em;">${dayLabel(date)}</div>`;
+    lastDate = date;
+  };
+  // Rotations sit in the list on their day (Shaun, 15 Nov), first on that
+  // day; they are never counted in the figures above (rotations.js).
+  const sessions = rotationSessionsShownSafe();
+  const flushSessions = (beforeOrOn) => {
+    while(sessions.length && sessions[0].date >= beforeOrOn){
+      const s = sessions.shift();
+      dayHead(s.date);
+      html += rotationCardHtml(s);
     }
+  };
+  display.forEach(m=>{
+    flushSessions(m.date);
+    dayHead(m.date);
     const isBase = m.id.startsWith('base_');
     const edit = matchEditsState[m.id];
     let metaLine = isBase ? 'Historical record' : escapeHtml(matchAttributionLine(m));
@@ -532,6 +555,7 @@ or a team per line with 🏆 and the sets"></textarea>
       </div>` : ''}
     </div>`;
   });
+  flushSessions('');
 
   // A game being edited that the current filters do not list still gets its
   // form, at the head of the list rather than out of reach.
@@ -543,6 +567,9 @@ or a team per line with 🏆 and the sets"></textarea>
   box.innerHTML = html;
   wireGamesPicture(gamesVm);
   wireRotations();
+  box.querySelectorAll('[data-add-kind]').forEach(b => {
+    b.onclick = () => { addGameKind = b.dataset.addKind; if(addGameKind === 'rotation') ensureRotationDraft(); renderGamesTab(); };
+  });
 
   box.querySelectorAll('.game-card-clickable').forEach(el=>{
     el.onclick = (ev)=>{

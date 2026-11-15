@@ -214,6 +214,14 @@
       if (matches.some((m) => m.id === change.match.id)) throw new Error(`Match ${change.match.id} is already in the record.`);
       matches.splice(i, 1);
       matches.push(change.match);
+    } else if (change.type === 'deleteMany') {
+      // A rotation removed: all its pairings go together, in one replay.
+      if (!change.matchIds || !change.matchIds.length) throw new Error('No matches to remove.');
+      change.matchIds.forEach((id) => {
+        const i = matches.findIndex((m) => m.id === id);
+        if (i === -1) throw new Error(`Match ${id} is not in the record.`);
+        matches.splice(i, 1);
+      });
     } else if (change.type === 'delete') {
       const i = matches.findIndex((m) => m.id === change.matchId);
       if (i === -1) throw new Error(`Match ${change.matchId} is not in the record.`);

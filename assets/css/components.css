@@ -175,7 +175,16 @@
   .gp-group-table td{ text-align:center; padding:5px 2px; border-top:1px solid var(--line); }
   .gp-group-pct{ color:var(--gold-bright); font-weight:700; }
   .gp-picture-row{ display:flex; align-items:center; gap:10px; margin:8px 0 4px; }
-  .rot-section{ margin:10px 0; }
+  .add-game-cta{ width:100%; display:flex; align-items:center; gap:12px; margin:14px 0 8px; padding:14px 16px; text-align:left; cursor:pointer; font-family:inherit;
+    background:linear-gradient(180deg, rgba(var(--gold-rgb),0.14), rgba(var(--gold-rgb),0.06)); border:1px solid var(--gold-dim); border-radius:14px; color:var(--text); }
+  .add-game-cta.is-open{ border-color:var(--gold); }
+  .add-game-cta-icon{ flex:none; width:40px; height:40px; border-radius:50%; background:var(--gold); color:var(--bg0); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; }
+  .add-game-cta-text{ flex:1; display:flex; flex-direction:column; gap:2px; }
+  .add-game-cta-text b{ font-size:17px; }
+  .add-game-cta-text span{ font-size:12.5px; color:var(--text-soft); }
+  .add-game-cta-chev{ color:var(--gold-bright); font-size:14px; }
+  .add-game-body{ border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:12px; background:var(--bg1); }
+  .rot-remove{ margin-top:8px; font-size:12px; padding:5px 12px; }
   .rot-toggle{ width:100%; text-align:left; background:var(--bg1); border:1px solid var(--line); border-radius:10px; padding:10px 12px; color:var(--text); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; display:flex; justify-content:space-between; }
   .rot-card{ background:var(--bg1); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-top:8px; }
   .rot-head{ font-size:12px; color:var(--gold-soft); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
