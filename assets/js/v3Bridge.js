@@ -158,6 +158,8 @@
     if (doc.forfeit) {
       shape.forfeit = { by: Names.mapTeam(alias, [doc.forfeit.by])[0], unaffected: Names.mapTeam(alias, doc.forfeit.unaffected || []) };
     }
+    // A rotation pairing: kept out of every table by the app (V3_ROTATIONS).
+    if (doc.rotation) shape.rotation = { session: doc.rotation.session, part: doc.rotation.part, of: doc.rotation.of, weight: doc.rotation.weight };
     if (doc.late) {
       const by = doc.late.by || [];
       shape.late = { by: Names.mapTeam(alias, by), onTime: Names.mapTeam(alias, doc.late.onTime || []),

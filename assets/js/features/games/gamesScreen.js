@@ -435,6 +435,7 @@ or a team per line with 🏆 and the sets"></textarea>
   html += gamesRecordHtml(gamesVm.record, gamesTypeOptions);
   html += gamesGroupRecordHtml(gamesVm.records, gamesTypeOptions);
   html += gamesPictureButtonHtml(gamesVm);
+  html += rotationsSectionHtml();
   html += `<div class="section-sub">Newest first, grouped by day. Tap a game to see the full breakdown.</div>`;
   const idToIdx = {};
   ALL_MATCHES.forEach((m,i)=>{ idToIdx[m.id] = i; });
@@ -541,6 +542,7 @@ or a team per line with 🏆 and the sets"></textarea>
 
   box.innerHTML = html;
   wireGamesPicture(gamesVm);
+  wireRotations();
 
   box.querySelectorAll('.game-card-clickable').forEach(el=>{
     el.onclick = (ev)=>{

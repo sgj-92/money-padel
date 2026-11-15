@@ -688,6 +688,7 @@ function buildDifficultySuggestions(allPlayers, activePlayers){
 // still present for beta diagnostics but no longer feeds the UI.
 let V3_STATE = (typeof V3Bridge !== 'undefined') ? V3Bridge.createState() : { loaded:false, error:'v3Bridge.js did not load', players:{} };
 let V3_MATCHES = [];   // the v3 `matches` collection, in the shape the app reads
+let V3_ROTATIONS = []; // rotation pairings, apart from every table (features/games/rotations.js)
 let V3_JOURNEY = [];   // the Rating Journey -- monthly views only, never player state
 let V3_MATCH_FACTS = {}; // matchId -> what the engine did in that match, read back
 // The authoritative "what tier was this player in on this date" lookup, built
@@ -737,6 +738,10 @@ async function loadV3State(){
         const rawMatches = {};
         const rawJourney = {};
         V3_MATCHES = await PerfTrace.timeAsync('read matches', V3Bridge.loadMatches(backend, rawMatches, V3_STATE.alias, { allowEmpty: !!CLUB.recordStartsEmpty }));
+        // Rotation pairings (Shaun, 15 Nov) move ratings but sit in their own
+        // section: no table, record, race or head-to-head result counts them.
+        V3_ROTATIONS = V3_MATCHES.filter(m => m.rotation);
+        V3_MATCHES = V3_MATCHES.filter(m => !m.rotation);
         // Loaded at start-up rather than lazily because the app opens on a
         // monthly view, so a lazy read would fire immediately anyway.
         V3_JOURNEY = await PerfTrace.timeAsync('read ratingJourney', V3Bridge.loadJourney(backend, rawJourney, V3_STATE.alias, { allowEmpty: !!CLUB.recordStartsEmpty }));
@@ -774,7 +779,7 @@ async function loadV3State(){
         V3_RECORD = { matches: rawMatches.raw || [], journey: rawJourney.raw || [], players: V3_STATE.rawPlayerDocs || [] };
       }
       catch(e){
-        V3_MATCHES = []; V3_JOURNEY = []; MONTHLY_VIEWS = null;
+        V3_MATCHES = []; V3_ROTATIONS = []; V3_JOURNEY = []; MONTHLY_VIEWS = null;
         V3_MATCH_FACTS = {}; V3_TIER_AS_OF = null; V3_TIER_HISTORY = null; V3_RECORD = null;
         V3_STATE = {...V3_STATE, loaded:false, error:'Could not read v3 history: ' + e.message};
       }

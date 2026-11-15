@@ -233,6 +233,16 @@ differ only in which result each player is rated on.
   expectation). In the app, both kinds of partner are left out of the tables and
   records (v3Bridge).
 
+## Rotation sessions (Shaun, 15 Nov)
+
+Four players swap partners each set. Each pairing is stored as its own match
+with `rotation { session, part, of, weight }`, and is rated on its own games
+and result at `weight = 1 / of` of a full match. That weight applies to both
+the rating movement and the evidence. `lifetimeMatches` counts the session
+once, on part 1. A tie-break is entered as a set won, with no games.
+Rotations are kept out of every table (League, Merit, Race, W/L, qualifying
+minimums). Head to head lists them as history, with no win or loss.
+
 ## Data scope
 
 The authoritative match history is the CSV export. The April/May 2026 block (50
