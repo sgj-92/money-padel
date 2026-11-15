@@ -76,6 +76,7 @@ const STORAGE_KEY_DELETED = 'moneypadel_deleted_ids';      // array of ids, soft
 const STORAGE_KEY_VISIBILITY = 'moneypadel_visibility';    // shared: which sections non-admins can see
 const STORAGE_KEY_MY_NAME = 'moneypadel_my_name';          // personal — localStorage, this device only
 const STORAGE_KEY_GAME_REQUESTS = 'moneypadel_game_requests'; // shared: wishlist + upcoming games
+const STORAGE_KEY_COURT_BOOKINGS = 'moneypadel_court_bookings'; // admin: courts booked, players still to confirm
 const STORAGE_KEY_DEV_AREAS = 'moneypadel_dev_areas'; // shared: freeform per-player development notes
 const STORAGE_KEY_CHALLENGES = 'moneypadel_challenges'; // shared: sequential turn-based match challenges (separate from gameRequestsState -- see buildCompleteMatchWithPartner/bridgeChallengeToRequest below for why)
 const STORAGE_KEY_NS_RESULTS = 'moneypadel_north_south_results'; // shared: live results for the North vs South exhibition, keyed by fixture id -- see NORTH_SOUTH_FIXTURES above
@@ -95,6 +96,18 @@ async function saveVisibility(vis){
 async function loadGameRequests(){
   try { const v = await fsGet(STORAGE_KEY_GAME_REQUESTS); if(v) return JSON.parse(v); } catch(e){ console.error('load game requests failed', e); }
   return [];
+}
+
+async function loadCourtBookings(){
+  try { const v = await fsGet(STORAGE_KEY_COURT_BOOKINGS); if(v) return JSON.parse(v); } catch(e){ console.error('load court bookings failed', e); }
+  return [];
+}
+
+async function saveCourtBookings(courts){
+  try {
+    await fsSet(STORAGE_KEY_COURT_BOOKINGS, JSON.stringify(courts));
+    return true;
+  } catch(e){ lastStorageError = (e && e.message) ? e.message : String(e); console.error('save court bookings failed', e); return false; }
 }
 
 async function saveGameRequests(requests){

@@ -64,8 +64,13 @@ function setRecapLine(key, on){
 }
 
 function recapText(r){
-  return [`${CLUB.name} · Weekly recap · ${recapRangeLabel(r.start, r.end)}`, '']
+  const text = [`${CLUB.name} · Weekly recap · ${recapRangeLabel(r.start, r.end)}`, '']
     .concat(recapChosen(r).map(l => `${l.icon} ${l.title}: ${l.text}`)).join('\n');
+  const f = typeof recapFixturesIncluded === 'function' ? recapFixturesIncluded() : null;
+  if(!f) return text;
+  // The fixtures list without its club-name line: "📆 Next week's fixtures · …".
+  const [head, ...rest] = recapFixturesText(f).split('\n');
+  return `${text}\n\n📆 ${head.replace(`${CLUB.name} · `, '')}\n${rest.join('\n').trim()}`;
 }
 
 // The week's games, oldest day first, a rotation as one line per pairing.
@@ -114,15 +119,28 @@ function recapFixtures(which){
         when: [r.preferredTime, r.location].filter(Boolean).join(' · ') || 'Time and venue TBC',
         booked: FixtureFlow.stage(r, now) === S.UPCOMING };
     });
+  // Courts booked with players still to confirm: shared too, so the group
+  // can fill them (Play › Upcoming › Courts booked).
+  const courts = (typeof courtBookingsState !== 'undefined' ? courtBookingsState : [])
+    .filter(c => c.date >= start && c.date <= end)
+    .map(c => ({ id: c.id, date: c.date, teams: CourtBookings.namesLine(c),
+      when: [c.time, c.venue].filter(Boolean).join(' · ') || 'Time and venue TBC',
+      booked: true, open: CourtBookings.needed(c) }));
+  games.push(...courts);
+  games.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
   const days = [];
   games.forEach(g => { const last = days[days.length - 1]; if(last && last.date === g.date) last.games.push(g); else days.push({ date: g.date, label: recapDayLabel(g.date), games: [g] }); });
-  return { which, start, end, days, count: games.length, undated: live.filter(r => !r.preferredDate).length,
+  return { which, start, end, days, count: games.length - courts.length, courts: courts.length, undated: live.filter(r => !r.preferredDate).length,
     title: which === 'this' ? 'This week’s fixtures' : 'Next week’s fixtures' };
+}
+function recapFixturesCount(f){
+  const p = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  return [f.count || !f.courts ? p(f.count, 'game', 'games') : null, f.courts ? `${p(f.courts, 'court', 'courts')} needing players` : null].filter(Boolean).join(' · ');
 }
 function recapFixturesText(f){
   const lines = [`${CLUB.name} · ${f.title.replace('’', "'")} · ${recapRangeLabel(f.start, f.end)}`, ''];
   if(!f.days.length) lines.push('No games arranged yet.');
-  f.days.forEach(d => { lines.push(d.label); d.games.forEach(x => lines.push(`  ${x.teams} · ${x.when}${x.booked ? '' : ' (court not booked yet)'}`)); lines.push(''); });
+  f.days.forEach(d => { lines.push(d.label); d.games.forEach(x => lines.push(x.open ? `  Court booked · ${x.when} · ${x.teams}` : `  ${x.teams} · ${x.when}${x.booked ? '' : ' (court not booked yet)'}`)); lines.push(''); });
   return lines.join('\n').trim();
 }
 
@@ -138,7 +156,8 @@ function recapPictureKey(kind, r){
   const recapKey = () => `${r.start}|${recapChosen(r).map(l => l.key + ':' + l.text).join('|')}`;
   if(kind === 'recap') return `recap|${recapKey()}`;
   if(kind === 'games') return `games|${recapGamesText(r)}`;
-  if(kind === 'both') return `both|${recapKey()}|${recapGamesText(r)}`;
+  const fx = () => { const f = recapFixturesIncluded(); return f ? recapFixturesText(f) : ''; };
+  if(kind === 'both') return `both|${recapKey()}|${recapGamesText(r)}|${fx()}`;
   return `fixtures|${recapFixturesText(recapFixtures(recapFixturesWhich))}`;
 }
 
@@ -153,6 +172,26 @@ function recapGameRows(r){
     subtitle: `${g.count} game${g.count === 1 ? '' : 's'}${g.rotations ? ` · ${g.rotations} rotation pairing${g.rotations === 1 ? '' : 's'}` : ''}` };
 }
 
+// The fixtures as picture rows (alone, or under the recap).
+function recapFixtureRows(f){
+  const range = recapRangeLabel(f.start, f.end);
+  const all = f.days.flatMap(d => d.games.map(x => ({ date: recapDayLabel(d.date).replace(/ \w+$/, ''), teams: x.teams, score: x.when,
+    result: x.open ? `Needs ${x.open}` : x.booked ? 'Booked' : 'Called out', tone: x.open ? 'open' : x.booked ? 'win' : 'draw' })));
+  const rows = all.slice(0, RECAP_PICTURE_MAX);
+  return { title: f.title, subtitle: `${range} · ${recapFixturesCount(f)}`, rows,
+    more: all.length - rows.length, moreText: `+ ${all.length - rows.length} more` };
+}
+
+// Next week's fixtures go out with the recap too (Shaun, 15 Nov: "Put
+// fixtures in the recap"), unless unticked. Remembered on this device.
+const RECAP_FIXTURES_KEY = 'recapWithFixtures';
+let recapWithFixtures = (() => { try { return localStorage.getItem(RECAP_FIXTURES_KEY) !== 'off'; } catch(e){ return true; } })();
+function recapFixturesIncluded(){
+  if(!recapWithFixtures) return null;
+  const f = recapFixtures(recapFixturesWhich);
+  return f.days.length ? f : null;
+}
+
 const RECAP_FILE = { recap: 'weekly-recap', games: 'week-games', both: 'weekly-recap-games', fixtures: 'fixtures' };
 const RECAP_TITLE = { recap: 'Weekly recap', games: 'Games', both: 'Weekly recap', fixtures: 'Fixtures' };
 
@@ -162,16 +201,14 @@ async function buildRecapPicture(kind, r){
   if(kind === 'fixtures'){
     const f = recapFixtures(recapFixturesWhich);
     range = recapRangeLabel(f.start, f.end); start = f.start;
-    const all = f.days.flatMap(d => d.games.map(x => ({ date: recapDayLabel(d.date).replace(/ \w+$/, ''), teams: x.teams, score: x.when,
-      result: x.booked ? 'Booked' : 'Called out', tone: x.booked ? 'win' : 'draw' })));
-    const rows = all.slice(0, RECAP_PICTURE_MAX);
-    cv = CardPainter.weeklyGames({ title: f.title, range,
-      subtitle: `${range} · ${f.count} game${f.count === 1 ? '' : 's'}`, rows,
-      more: all.length - rows.length, moreText: `+ ${all.length - rows.length} more games` }, { brand });
+    cv = CardPainter.weeklyGames({ ...recapFixtureRows(f), range }, { brand });
   } else {
     range = recapRangeLabel(r.start, r.end); start = r.start;
     if(kind === 'recap') cv = CardPainter.weeklyRecap({ title: 'Weekly recap', range, lines: recapChosen(r) }, { brand });
-    else if(kind === 'both') cv = CardPainter.weeklyCombined({ title: 'Weekly recap', range, lines: recapChosen(r), games: recapGameRows(r) }, { brand });
+    else if(kind === 'both'){
+      const f = recapFixturesIncluded();
+      cv = CardPainter.weeklyCombined({ title: 'Weekly recap', range, lines: recapChosen(r), games: recapGameRows(r), fixtures: f ? recapFixtureRows(f) : null }, { brand });
+    }
     else cv = CardPainter.weeklyGames({ ...recapGameRows(r), range }, { brand });
   }
   const file = await CardPainter.toFile(cv, `${CLUB.fileSlug}-${RECAP_FILE[kind]}-${start}.png`);
@@ -228,6 +265,7 @@ function renderWeeklyRecap(){
       <button class="preset-btn" id="recapCopy">📋 Copy recap text</button>
       ${recapGames(recap).days.length ? `<button class="preset-btn" id="recapBothPicture">🖼 Share recap + games</button>` : ''}
     </div>
+    ${(() => { const f = recapFixtures(recapFixturesWhich); return f.days.length ? `<label class="recap-with-fixtures"><input type="checkbox" id="recapWithFixtures"${recapWithFixtures ? ' checked' : ''}> Add ${escapeHtml(f.title.charAt(0).toLowerCase() + f.title.slice(1))} (${escapeHtml(recapFixturesCount(f))}) to the recap picture and text</label>` : ''; })()}
     <div id="recapCopyMsg" class="section-sub" role="status"></div>
     ${recapGamesHtml(recap)}
     ${recapFixturesHtml()}`;
@@ -245,6 +283,12 @@ function renderWeeklyRecap(){
   const both = document.getElementById('recapBothPicture');
   if(both){ prepareRecapPicture('both', recap); both.onclick = (e) => shareRecapPicture('both', recap, e.currentTarget); }
   wireRecapFixtures(recap);
+  const withFx = document.getElementById('recapWithFixtures');
+  if(withFx) withFx.onchange = () => {
+    recapWithFixtures = withFx.checked;
+    try { localStorage.setItem(RECAP_FIXTURES_KEY, withFx.checked ? 'on' : 'off'); } catch(e){ /* not kept: fine */ }
+    if(document.getElementById('recapBothPicture')) prepareRecapPicture('both', recap);
+  };
   document.getElementById('recapWeekSelect').onchange = (e) => { recapWeek = e.target.value; renderWeeklyRecap(); };
   document.getElementById('recapPicture').onclick = (e) => shareRecapPicture('recap', recap, e.currentTarget);
   const gp = document.getElementById('recapGamesPicture');
@@ -278,15 +322,15 @@ function recapFixturesHtml(){
   const f = recapFixtures(recapFixturesWhich);
   const opt = (v, label) => `<option value="${v}"${recapFixturesWhich === v ? ' selected' : ''}>${label}</option>`;
   const thisWeek = recapFixtures('this'), nextWeek = recapFixtures('next');
-  return `<div class="section-heading" style="margin-top:18px;">📆 ${escapeHtml(f.title)} · ${f.count}</div>
+  return `<div class="section-heading" style="margin-top:18px;">📆 ${escapeHtml(f.title)} · ${escapeHtml(recapFixturesCount(f))}</div>
     <div class="fg-row"><label class="fg-label" for="recapFixturesWeek">Which week</label>
       <select id="recapFixturesWeek" class="fg-select">${opt('next', `Next week · ${recapRangeLabel(nextWeek.start, nextWeek.end)}`)}${opt('this', `Rest of this week · ${recapRangeLabel(thisWeek.start, thisWeek.end)}`)}</select></div>
-    ${f.count ? `<div class="recap-actions">
+    ${f.days.length ? `<div class="recap-actions">
       <button class="tab-btn active" id="recapFixturesPicture">🖼 Share fixtures picture</button>
       <button class="preset-btn" id="recapFixturesCopy">📋 Copy fixtures list</button>
     </div>
     <div class="recap-games" id="recapFixtures">${f.days.map(d => `<div class="recap-day">${escapeHtml(d.label)}</div>
-      ${d.games.map(x => `<div class="recap-game${x.booked ? ' is-booked' : ''}"><span>${escapeHtml(x.teams)}<br><small>${escapeHtml(x.when)}</small></span><span class="recap-score">${x.booked ? 'Booked' : 'Called out'}</span></div>`).join('')}`).join('')}</div>`
+      ${d.games.map(x => `<div class="recap-game${x.open ? ' is-open' : x.booked ? ' is-booked' : ''}"><span>${x.open ? 'Court booked: ' : ''}${escapeHtml(x.teams)}<br><small>${escapeHtml(x.when)}</small></span><span class="recap-score">${x.open ? `Needs ${x.open}` : x.booked ? 'Booked' : 'Called out'}</span></div>`).join('')}`).join('')}</div>`
     : `<div class="section-sub" id="recapFixtures">No games with a date in this week yet. Agreed games come from Play › Upcoming.</div>`}
     <div id="recapFixturesMsg" class="section-sub" role="status"></div>
     ${f.undated ? `<div class="section-sub" style="font-size:10.5px;">${f.undated} agreed game${f.undated === 1 ? ' has' : 's have'} no date yet, so ${f.undated === 1 ? 'it is' : 'they are'} not listed.</div>` : ''}`;
