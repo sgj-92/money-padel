@@ -64,7 +64,10 @@ async function submitGameRequest({ names, requestedBy, date, time, venue }){
   const clean = (names || []).map(n => String(n || '').trim());
   if(clean.length !== 4 || clean.some(n => !n)) return { ok: false, message: 'Enter all four players.' };
   if(new Set(clean.map(n => n.toLowerCase())).size !== 4) return { ok: false, message: 'The same name appears more than once.' };
-  const unrecognized = clean.filter(n => !PLAYERS.find(p => p.name.toLowerCase() === n.toLowerCase()));
+  // Anyone in the club, rated or waiting for their first game (Shaun, 15 Nov:
+  // Jeremy could not be put in an agreed game before he had played one).
+  const known = entryPlayerNames().concat(archivedAmong(clean)).map(n => n.toLowerCase());
+  const unrecognized = clean.filter(n => !known.includes(n.toLowerCase()));
   if(unrecognized.length) return { ok: false, message: `Unrecognized name${unrecognized.length > 1 ? 's' : ''}: ${unrecognized.join(', ')}. Add them via Manage first if they're new.` };
   const archived = archivedAmong(clean);
   if(archived.length) return { ok: false, message: archivedRefusal(archived) };

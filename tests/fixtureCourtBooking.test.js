@@ -579,3 +579,29 @@ test('DQ9: a plain request can carry an optional time and venue', () => {
   const bare = FF.createRequest({ players: ['Erf', 'Eli', 'Osh', 'Stormz'], requestedBy: 'Erf', at: T0, id: 'b' });
   assert.ok(!('preferredTime' in bare) && !('location' in bare), 'nothing invented when not given');
 });
+
+// Shaun, 15 Nov: "I can't add Jeremy because he's not played a game yet."
+maybe('a player added but not yet rated can be put in an agreed game, and the card draws', async () => {
+  const app = await H.open({ now: NOW, club: { ...club([]), moneypadel_player_tags: { Jeremy: { tier: 'A', active: true } } } });
+  try {
+    await install(app);
+    const r = await app.run(async () => {
+      isUnlocked = true; currentUserName = 'Shaun';
+      document.querySelector('#tabrow .tab-btn[data-tab="wishlist"]').click();
+      requestSectionOpen.adminAdd = true; renderWishlist();
+      const offered = [...document.querySelectorAll('#playerNamesList option')].map((o) => o.value).includes('Jeremy');
+      ['Shaun', 'Jeremy', 'Max', 'KC'].forEach((n, i) => { document.getElementById(`adminReqP${i + 1}`).value = n; });
+      document.getElementById('adminReqBooked').checked = true;
+      document.getElementById('adminReqSubmit').click();
+      await settle();
+      const f = gameRequestsState.at(-1);
+      goUpcoming(); await settle();
+      const card = cardFor(f.id);
+      return { offered, players: f && f.players, msg: (document.getElementById('adminReqMessage') || {}).textContent || '', card: card ? card.innerText : '' };
+    });
+    assert.ok(r.offered, 'offered in the names list');
+    assert.ok(r.players && r.players.includes('Jeremy'), r.msg);
+    assert.ok(r.card && !/NaN|undefined/.test(r.card), r.card);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});

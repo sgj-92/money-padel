@@ -166,7 +166,7 @@ function fixtureManageHtml(req){
   if(!open) return html;
   const seatList = FixtureFlow.seats(req);
   const size = Math.floor(seatList.length / 2);
-  const names = allPlayerNames();
+  const names = entryPlayerNames();
   const seatRow = (n, i) => {
     const options = (names.includes(n) ? names : [n, ...names])
       .map(x => `<option value="${escapeHtml(x)}"${x === n ? ' selected' : ''}>${escapeHtml(x)}</option>`).join('');
@@ -555,7 +555,7 @@ function bulkReviewed(){
 }
 
 function bulkSeatSelectHtml(row, si, pi, p, value){
-  const names = allPlayerNames();
+  const names = entryPlayerNames();
   const first = (p.options || []).filter(n => names.includes(n));
   const rest = names.filter(n => !first.includes(n));
   const opt = (n) => `<option value="${escapeHtml(n)}"${n === value ? ' selected' : ''}>${escapeHtml(n)}</option>`;
@@ -623,7 +623,7 @@ function wireBulk(box){
     const by = submissionIdentity();
     const viewer = getCurrentViewer();
     if(!by){ bulkDraft.message = 'Choose who you are first — the games are requested in your name.'; renderWishlist(); return; }
-    const rows = FixtureParse.parse(bulkDraft.text, { directory: allPlayerNames(), me: viewer ? viewer.name : null , aliases: clubNameAliases() });
+    const rows = FixtureParse.parse(bulkDraft.text, { directory: entryPlayerNames(), me: viewer ? viewer.name : null , aliases: clubNameAliases() });
     if(!rows.length){ bulkDraft.message = 'Nothing to check yet — write one game per line.'; renderWishlist(); return; }
     Object.assign(bulkDraft, { rows, by, me: viewer ? viewer.name : null, choices: {}, skip: {}, editing: {}, message: '' });
     renderWishlist();
@@ -679,7 +679,9 @@ function renderWishlist(flashMessage, adminFlashMessage){
   const viewer = getCurrentViewer();
 
   const openChallenges = challengesState.filter(c => c.state !== 'confirmed').length;
-  let html = foldHeading('reqFoldChallenges', `🎯 Challenges (${openChallenges})`, requestSectionOpen.challenges);
+  // One names list for every form here (request, admin add), open or not.
+  let html = `<datalist id="playerNamesList">${entryPlayerNames().map(n=>`<option value="${escapeHtml(n)}">`).join('')}</datalist>`;
+  html += foldHeading('reqFoldChallenges', `🎯 Challenges (${openChallenges})`, requestSectionOpen.challenges);
   if(requestSectionOpen.challenges){
     html += `<div id="reqFoldChallengesBody">${renderChallengesSection()}</div>`;
   }
@@ -718,7 +720,6 @@ function renderWishlist(flashMessage, adminFlashMessage){
       <input id="reqP3" list="playerNamesList" class="fg-select" placeholder="Player 3" style="margin-bottom:6px;" />
       <input id="reqP4" list="playerNamesList" class="fg-select" placeholder="Player 4" />
     </div>
-    <datalist id="playerNamesList">${allPlayerNames().map(n=>`<option value="${n}">`).join('')}</datalist>
     <div class="fg-row"><label class="fg-label">Preferred date (optional)</label><input id="reqDate" type="date" class="fg-select" /></div>
     <div class="fg-row"><button class="tab-btn active" id="reqSubmit" style="width:100%;">Request this game</button></div>
     <div id="reqMessage" class="section-sub">${flashMessage || ''}</div>
@@ -800,7 +801,8 @@ function renderWishlist(flashMessage, adminFlashMessage){
       const names = ['adminReqP1','adminReqP2','adminReqP3','adminReqP4'].map(id=>document.getElementById(id).value.trim());
       if(names.some(n=>!n)){ msg.textContent = 'Enter all four players.'; return; }
       if(new Set(names.map(n=>n.toLowerCase())).size !== 4){ msg.textContent = 'The same name appears more than once.'; return; }
-      const unrecognized = names.filter(n => !PLAYERS.find(p=>p.name.toLowerCase()===n.toLowerCase()));
+      const known = entryPlayerNames().concat(archivedAmong(names)).map(n => n.toLowerCase());
+      const unrecognized = names.filter(n => !known.includes(n.toLowerCase()));
       if(unrecognized.length){ msg.textContent = `Unrecognized name${unrecognized.length>1?'s':''}: ${unrecognized.join(', ')}.`; return; }
       const archived = archivedAmong(names);
       if(archived.length){ msg.textContent = archivedRefusal(archived); return; }
