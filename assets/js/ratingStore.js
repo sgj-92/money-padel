@@ -103,7 +103,13 @@
       ...(match.forfeit ? { forfeit: { by: match.forfeit.by, unaffected: (match.forfeit.unaffected || []).slice() } } : {}),
       // Only on a match someone arrived late for (ratingEngine.js).
       ...(match.late ? { late: lateCopy(match.late) } : {}),
+      // Only on a rotation pairing (ratingEngine.js).
+      ...(match.rotation ? { rotation: rotationCopy(match.rotation) } : {}),
     };
+  }
+
+  function rotationCopy(r) {
+    return { session: r.session, part: r.part, of: r.of, weight: r.weight };
   }
 
   function lateCopy(l) {
@@ -123,6 +129,7 @@
       drawSideAssignmentArbitrary: doc.drawSideAssignmentArbitrary,
       ...(doc.forfeit ? { forfeit: { by: doc.forfeit.by, unaffected: (doc.forfeit.unaffected || []).slice() } } : {}),
       ...(doc.late ? { late: lateCopy(doc.late) } : {}),
+      ...(doc.rotation ? { rotation: rotationCopy(doc.rotation) } : {}),
     };
   }
 

@@ -149,6 +149,13 @@
     // opponents are rated on it. The late player's partner was on time: he is
     // rated on the match as it was PLAYED (late.playedOutcome, same sets),
     // against the same expectation.
+    // A rotation (Shaun, 15 Nov): four players swap partners each set. Each
+    // pairing is stored as its own match and rated on its own games, but at
+    // `rotation.weight` (1 / the number of pairings) of a full match's
+    // movement and evidence, so the whole session counts as about one match.
+    const rotation = match.rotation || null;
+    const weight = rotation && rotation.weight > 0 && rotation.weight <= 1 ? rotation.weight : 1;
+
     const onTime = {};
     ((match.late && match.late.onTime) || []).forEach((n) => { onTime[n] = true; });
     const played = match.late && match.late.playedOutcome ? actualScores(sets, match.late.playedOutcome) : null;
@@ -163,11 +170,12 @@
         const evidenceBefore = s.effectiveEvidence;
         const relBefore = reliability(evidenceBefore);
         const kUsed = kFactor(relBefore); // K comes from PRE-match evidence
-        const ratingDelta = kUsed * teamResidual;
+        const ratingDelta = kUsed * teamResidual * weight;
 
         s.rating = preMatchRating + ratingDelta;
-        s.effectiveEvidence = evidenceBefore + 1;
-        s.lifetimeMatches = s.lifetimeMatches + 1;
+        s.effectiveEvidence = evidenceBefore + weight;
+        // A rotation session is one match: counted once, on its first pairing.
+        s.lifetimeMatches = s.lifetimeMatches + (rotation && rotation.part > 1 ? 0 : 1);
 
         events.push({
           playerId: name,

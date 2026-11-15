@@ -193,6 +193,19 @@ function renderH2H(){
     }).join('') + `</div>`;
   }
 
+  // Rotations (Shaun, 15 Nov): their sets as history only, no win or loss.
+  const rot = rotationH2HLines(h2hPlayerA, h2hPlayerB)
+    .filter(r => !monthActive || Period.of(r.date) === h2hMonth);
+  if(rot.length){
+    html += `<div class="section-heading">🔄 In rotations</div>
+      <div class="section-sub">Partners swapped each set. Shown as history: not counted as wins or losses.</div>
+      <div class="callout-card h2h-list">${rot.map(r => `<div class="h2h-row">
+        <span class="h2h-date">${escapeHtml(h2hShortDate(r.date))}</span>
+        <span class="h2h-teams"><span>${escapeHtml(r.line)}</span></span>
+        <span class="h2h-res" style="color:var(--text-dim);">${r.together ? 'Together' : 'Opposed'}</span>
+      </div>`).join('')}</div>`;
+  }
+
   box.innerHTML = html;
 
   box.querySelectorAll('.h2h-edit-btn').forEach(btn=>{

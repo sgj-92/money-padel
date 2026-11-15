@@ -189,6 +189,15 @@
         seen[m.id] = true;
         matches.push(m);
       });
+    } else if (change.type === 'editMany') {
+      // Several games changed together (games already entered, made into a
+      // rotation): one replay, so the numbers shown are the numbers written.
+      if (!change.matches || !change.matches.length) throw new Error('No matches to change.');
+      change.matches.forEach((m) => {
+        const i = matches.findIndex((x) => x.id === m.id);
+        if (i === -1) throw new Error(`Match ${m.id} is not in the record.`);
+        matches[i] = m;
+      });
     } else if (change.type === 'edit') {
       const i = matches.findIndex((m) => m.id === change.match.id);
       if (i === -1) throw new Error(`Match ${change.match.id} is not in the record.`);
