@@ -188,6 +188,10 @@
   .rot-actions{ display:flex; gap:8px; }
   .link-btn{ background:none; border:0; padding:0; color:var(--gold-bright); text-decoration:underline; cursor:pointer; font:inherit; }
   .recap-list{ display:flex; flex-direction:column; gap:8px; margin:8px 0; }
+  .pred-paste{ margin:0 0 10px; }
+  .pred-paste summary{ cursor:pointer; color:var(--gold-bright); font-size:14px; font-weight:600; padding:6px 0; }
+  .pred-fold-open{ background:none; border:0; padding:0; text-align:left; color:inherit; font:inherit; cursor:pointer; width:100%; }
+  .pred-quick-card{ margin:4px 0 10px; }
   .recap-actions{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0 4px; }
   .recap-actions > *{ width:100%; }
   .recap-games{ background:var(--bg1); border:1px solid var(--line); border-radius:12px; padding:4px 12px 8px; margin-top:8px; }

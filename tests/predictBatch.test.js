@@ -219,3 +219,54 @@ maybe('on a phone every editable control is at least 16px, so iOS Safari has no 
     assert.deepStrictEqual(small, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 15 Nov: "players will ask me for 3-4 games at a time" -- paste them
+// in at once, open each as a quick card, share all as one picture.
+maybe('several games pasted at once: read as written, each opens as a quick card, all share as one picture', async () => {
+  const { app, names } = await openPredict(390);
+  try {
+    const p = app.page;
+    const g = names.slice(0, 16);
+    const text = [
+      `${g[0]} & ${g[1]} vs ${g[2]} & ${g[3]}`,
+      `${g[4].toLowerCase()}/${g[5]} v ${g[6]}/${g[7]}`,
+      `- ${g[8]} and ${g[9]} vs ${g[10]} + ${g[11]}`,
+      `${g[12]} & ${g[13]} against ${g[14]} & ${g[15]}`,
+      'see you all at 7',
+    ].join('\n');
+    await p.click('.pred-paste summary');
+    await p.fill('#predPaste', text);
+    await p.click('#predPasteGo');
+    const r = await app.run(() => ({
+      folds: [...document.querySelectorAll('#predictModal .pred-fold')].length,
+      editors: document.querySelectorAll('#predictModal .pred-editor').length,
+      rows: [...document.querySelectorAll('#matchupsCard .mu-row')].map((row) => [...row.querySelectorAll('.mu-name')].map((e) => e.textContent)),
+      msg: document.querySelector('.pred-paste').innerText,
+    }));
+    assert.deepStrictEqual([r.folds, r.editors], [4, 0], 'four quick cards, none open for editing');
+    assert.deepStrictEqual(r.rows, [0, 1, 2, 3].map((k) => g.slice(4 * k, 4 * k + 4)), 'read as written, names matched whatever the case');
+    assert.match(r.msg, /Read 4 games\. Tap one to open its card\./);
+    assert.match(r.msg, /Line 5: No "vs" found/);
+    // Open the third: its full card, with the percentages of that match.
+    await p.click('[data-pred-view="2"]');
+    const opened = await app.run((gg) => {
+      const card = document.querySelector('.pred-quick-card #matchupCard, .pred-quick-card .mu-card');
+      const pred = predictMatchup([gg[8], gg[9]], [gg[10], gg[11]]);
+      return { card: !!card, nums: [...document.querySelectorAll('.pred-quick-card .mu-games-num')].map((e) => e.textContent), want: [`${pred.shareA}%`, `${pred.shareB}%`],
+        open: document.querySelectorAll('.pred-quick-card').length };
+    }, g);
+    assert.ok(opened.card);
+    assert.strictEqual(opened.open, 1);
+    assert.deepStrictEqual(opened.nums, opened.want);
+    await p.click('[data-pred-view="2"]');
+    assert.strictEqual(await app.run(() => document.querySelectorAll('.pred-quick-card').length), 0, 'tap again to close');
+    const shared = await app.run(async () => {
+      const calls = []; CardPainter.share = async (files) => { calls.push(files.map((f) => f.name)); return 'shared'; };
+      document.getElementById('predShare').click();
+      for (let k = 0; k < 200 && !calls.length; k++) await new Promise((res) => setTimeout(res, 20));
+      return calls;
+    });
+    assert.deepStrictEqual(shared, [['money-padel-predictions-4-matches.png']], 'one picture for all four');
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
