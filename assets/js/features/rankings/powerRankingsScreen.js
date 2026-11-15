@@ -195,10 +195,11 @@ function render(){
         month_performance_provisional: mv ? mv.provisional : true};
     });
   }
+  const beforeMinimum = rows;
   rows = rows.filter(p => p.total >= minGames);
   // The visible pool. Ranked and Active always; the other two only when asked
   // for, and then as full members of the same ordered list.
-  rows = rows.filter(p => {
+  const inPool = (p) => {
     const st = playerStateOf(p.name);
     if(!st) return true;
     // Archived players have left the group: never in the current (All time)
@@ -207,7 +208,8 @@ function render(){
     if(st.archived && selectedMonth === 'all') return false;
     if(st.participation === 'INACTIVE') return includeInactive;
     return st.ranking === 'RANKED' || includeIdle;
-  });
+  };
+  rows = rows.filter(inPool);
   if(query) rows = rows.filter(p => p.name.toLowerCase().includes(query));
   rows = sortRows(rows);
 
@@ -218,7 +220,8 @@ function render(){
   // another screen is showing (the data arriving under League) must not leak it.
   empty.style.display = (rows.length || list.style.display === 'none') ? 'none' : 'block';
   const waiting = awaitingFirstGame();
-  empty.innerHTML = (!PLAYERS.length && waiting.length) ? `No ratings yet.${awaitingFirstGameHtml()}` : 'No players match that filter.';
+  empty.innerHTML = (!PLAYERS.length && waiting.length) ? `No ratings yet.${awaitingFirstGameHtml()}` : powerEmptyHtml(beforeMinimum, inPool);
+  wirePowerEmpty();
 
   if(selectedMonth !== 'all'){
     const noteWrapper = document.createElement('div');
@@ -356,4 +359,32 @@ function render(){
       };
     });
   });
+}
+
+// An empty list says why, and offers the way out (Shaun, 15 Nov: a new
+// community -- Padel Championships -- where nobody has 10 rated games yet
+// read "No players match that filter" with ten players in the club).
+function powerEmptyHtml(beforeMinimum, inPool){
+  const named = (p) => !query || p.name.toLowerCase().includes(query);
+  const underMinimum = beforeMinimum.filter(p => p.total < minGames && inPool(p) && named(p)).length;
+  if(minGames > 0 && underMinimum){
+    return `Nobody here has ${minGames}+ rated games yet. <button type="button" class="link-btn" id="powerShowAllGames">Show all ${underMinimum} player${underMinimum === 1 ? '' : 's'}</button>`;
+  }
+  const idle = beforeMinimum.filter(p => p.total >= minGames && named(p) && !inPool(p)
+    && playerStateOf(p.name) && playerStateOf(p.name).participation !== 'INACTIVE' && !playerStateOf(p.name).archived).length;
+  if(!includeIdle && idle){
+    return `Nobody is ranked right now: that takes ${PlayerState.thresholdText()}. <button type="button" class="link-btn" id="powerShowIdle">Show ${idle} unranked player${idle === 1 ? '' : 's'}</button>`;
+  }
+  return 'No players match that filter.';
+}
+
+function wirePowerEmpty(){
+  const all = document.getElementById('powerShowAllGames');
+  if(all) all.onclick = () => { setMinGames(0); render(); };
+  const idle = document.getElementById('powerShowIdle');
+  if(idle) idle.onclick = () => {
+    includeIdle = true;
+    document.querySelectorAll('#stateFilterRow .state-toggle[data-toggle="idle"]').forEach(b => b.classList.add('active'));
+    render();
+  };
 }
