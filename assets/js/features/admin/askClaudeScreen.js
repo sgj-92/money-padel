@@ -9,7 +9,7 @@
 // with code. Follow-ups carry the conversation so far. Nothing is stored.
 // Loads before manageScreen.js; declarations only.
 
-let askClaudeLog = [];        // [{ role: 'user' | 'assistant', text }]
+let askClaudeLog = [];        // [{ role: 'user' | 'assistant', text, card? }]
 let askClaudeBusy = false;
 let askClaudeError = '';
 let askClaudeDraft = '';
@@ -43,7 +43,7 @@ async function saveAskClaudeConversation(){
   const existing = (askClaudeSaved || []).find(c => c.id === id);
   const doc = {
     title: askClaudeLog[0].text.slice(0, 200),
-    turns: askClaudeLog.slice(-ASK_CLAUDE_MAX_TURNS).map(t => ({ role: t.role, text: t.text, at: t.at || now })),
+    turns: askClaudeLog.slice(-ASK_CLAUDE_MAX_TURNS).map(t => ({ role: t.role, text: t.text, at: t.at || now, ...(t.card ? { card: t.card } : {}) })),
     by: (existing && existing.by) || (signedInAdmin && (signedInAdmin.name || signedInAdmin.email)) || '',
     createdAt: (existing && existing.createdAt) || now,
     updatedAt: now,
@@ -90,7 +90,8 @@ function buildAskClaudeHtml(){
   const turns = askClaudeLog.map((t, i) => t.role === 'user'
     ? `<div class="ask-q">${escapeHtml(t.text)}</div>`
     : `<div class="ask-a"><div class="ask-a-text">${askClaudeAnswerHtml(t.text)}</div>
-        <button type="button" class="preset-btn ask-copy" data-ask-copy="${i}">Copy</button></div>`).join('');
+        <div class="ask-a-actions"><button type="button" class="preset-btn ask-copy" data-ask-copy="${i}">Copy</button>
+        <button type="button" class="preset-btn ask-pic" data-ask-pic="${i}">🖼 Share picture</button></div></div>`).join('');
   return `<div class="section-sub" style="margin-top:0;">Ask anything the record can answer: results, head to heads, streaks, scores, ratings, tiers. Claude works it out from ${escapeHtml(CLUB.name)}'s matches and ratings, with the sums done properly. An answer takes up to a minute. Each question costs a few pence.</div>
     <div class="ask-log" id="askClaudeLog">${turns}</div>
     ${askClaudeBusy ? `<div class="ask-busy" role="status">Claude is working it out…</div>` : ''}
@@ -131,7 +132,7 @@ async function sendAskClaude(){
     try { body = await res.json(); } catch(e){ /* not JSON */ }
     if(!res.ok) throw new Error(body.error || `Claude couldn’t answer (${res.status}).`);
     const at = new Date().toISOString();
-    askClaudeLog = askClaudeLog.concat([{ role: 'user', text: question, at }, { role: 'assistant', text: String(body.answer || ''), at }]);
+    askClaudeLog = askClaudeLog.concat([{ role: 'user', text: question, at }, { role: 'assistant', text: String(body.answer || ''), at, ...(body.card ? { card: body.card } : {}) }]);
     askClaudeDraft = '';
     await saveAskClaudeConversation();
   } catch(e){
@@ -142,6 +143,62 @@ async function sendAskClaude(){
   const log = document.getElementById('askClaudeLog');
   const last = log && log.lastElementChild;
   if(last && last.scrollIntoView) last.scrollIntoView({ block: 'nearest' });
+}
+
+// ---------- an answer as a picture (Shaun, 16 Nov) ----------
+// "images with summaries would be nice too." Claude sends a summary card with
+// each answer (lib/askClaude/ask.js); an answer saved before that, or one
+// without a card, is drawn from its own text: the first sentence as the
+// headline, its "- " points as the figures.
+function askCardFromText(question, text){
+  const lines = String(text || '').replace(/\*\*([^*\n]+)\*\*/g, '$1').split('\n').map(l => l.trim()).filter(Boolean);
+  const isPoint = (l) => /^[-•*]\s+/.test(l);
+  const prose = lines.filter(l => !isPoint(l));
+  let items = lines.filter(isPoint).map(l => l.replace(/^[-•*]\s+/, '')).slice(0, 8).map(t => {
+    const m = t.match(/^([^:]{1,30}):\s*(.+)$/);
+    return m ? { icon: '', title: m[1], text: m[2] } : { icon: '', title: '', text: t };
+  });
+  if(!items.length) items = prose.slice(1, 5).map(t => ({ icon: '', title: '', text: t }));
+  const q = String(question || '').trim();
+  return { title: q.length > 60 ? `${q.slice(0, 57)}…` : q, subtitle: '', headline: prose[0] || '', items };
+}
+function askCardFor(i){
+  const t = askClaudeLog[i];
+  if(!t) return null;
+  if(t.card) return t.card;
+  const q = askClaudeLog.slice(0, i).reverse().find(x => x.role === 'user');
+  return askCardFromText(q && q.text, t.text);
+}
+// Made before the tap, so a phone opens its share sheet straight away.
+const askPicReady = {};   // index -> { key, file, title } | { key, pending }
+async function buildAskPicture(card){
+  const brand = await CardPainter.loadImage(CLUB.logo);
+  const cv = CardPainter.summary({ ...card, footer: `${CLUB.name} · worked out from the match record` }, { brand });
+  const slug = (card.title || 'answer').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'answer';
+  return { file: await CardPainter.toFile(cv, `${CLUB.fileSlug}-${slug}.png`), title: `${CLUB.name} — ${card.title}` };
+}
+function prepareAskPicture(i){
+  const card = askCardFor(i);
+  if(!card) return;
+  const key = JSON.stringify(card);
+  if(askPicReady[i] && askPicReady[i].key === key) return;
+  askPicReady[i] = { key, pending: true };
+  buildAskPicture(card).then(made => { if(askPicReady[i] && askPicReady[i].key === key) askPicReady[i] = { key, ...made }; },
+    () => { if(askPicReady[i] && askPicReady[i].key === key) delete askPicReady[i]; });
+}
+async function shareAskPicture(i, btn){
+  const card = askCardFor(i);
+  if(!card) return;
+  const key = JSON.stringify(card);
+  const say = (t) => { btn.textContent = t; setTimeout(() => { btn.textContent = '🖼 Share picture'; }, 2500); };
+  try {
+    let made = askPicReady[i] && askPicReady[i].key === key && askPicReady[i].file ? askPicReady[i] : null;
+    if(!made){ btn.disabled = true; made = { key, ...await buildAskPicture(card) }; askPicReady[i] = made; btn.disabled = false; }
+    const outcome = await CardPainter.share([made.file], { title: made.title });
+    if(outcome === 'shared') say('Shared ✓');
+    else if(outcome === 'saved') say('Saved ✓');
+    else if(outcome === 'ready') say('Ready: tap again');
+  } catch(e){ btn.disabled = false; say('Couldn’t make it'); }
 }
 
 function wireAskClaude(){
@@ -155,7 +212,7 @@ function wireAskClaude(){
     b.onclick = () => {
       const c = (askClaudeSaved || []).find(x => x.id === b.dataset.askOpen);
       if(!c || askClaudeBusy) return;
-      askClaudeLog = c.turns.map(t => ({ role: t.role, text: t.text, at: t.at }));
+      askClaudeLog = c.turns.map(t => ({ role: t.role, text: t.text, at: t.at, ...(t.card ? { card: t.card } : {}) }));
       askClaudeConvId = c.id; askClaudeError = ''; askClaudeDraft = '';
       redrawAskClaude();
       const log = document.getElementById('askClaudeLog');
@@ -177,6 +234,12 @@ function wireAskClaude(){
     wireAskClaude.loading = true;
     loadAskClaudeSaved().then(() => { wireAskClaude.loading = false; redrawAskClaude(); });
   }
+  Object.keys(askPicReady).forEach(k => { if(!(askClaudeLog[k] && askClaudeLog[k].role === 'assistant')) delete askPicReady[k]; });
+  document.querySelectorAll('[data-ask-pic]').forEach(b => {
+    const i = Number(b.dataset.askPic);
+    prepareAskPicture(i);
+    b.onclick = () => shareAskPicture(i, b);
+  });
   document.querySelectorAll('[data-ask-copy]').forEach(b => {
     b.onclick = () => {
       const t = askClaudeLog[Number(b.dataset.askCopy)];
