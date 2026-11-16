@@ -946,7 +946,8 @@
     const probe = canvas(10, 10).getContext('2d');
     font(probe, 36);
     const items = lines.map((l) => ({ ...l, wrapped: wrap(probe, l.text, TEXT_W) }));
-    const itemH = (it) => 40 + 34 + 14 + it.wrapped.length * 48 + 30;
+    const titleH = (it) => (it.title ? 34 + 14 : 0);
+    const itemH = (it) => 40 + titleH(it) + it.wrapped.length * 48 + 30;
     return {
       height: items.reduce((a, it) => a + itemH(it) + 20, 0),
       draw(ctx, P, y) {
@@ -955,9 +956,9 @@
           const ih = itemH(it);
           card(ctx, P, y, inner, ih);
           font(ctx, 56); textAt(ctx, it.icon, P + 40, y + 96, { color: C.text });
-          font(ctx, 28, { weight: 700, spacing: 0.08 }); textAt(ctx, it.title.toUpperCase(), P + 130, y + 40 + 28, { color: C.bright });
+          if (it.title) { font(ctx, 28, { weight: 700, spacing: 0.08 }); textAt(ctx, it.title.toUpperCase(), P + 130, y + 40 + 28, { color: C.bright }); }
           font(ctx, 36);
-          it.wrapped.forEach((line, i) => textAt(ctx, line, P + 130, y + 40 + 34 + 14 + 36 + i * 48, { color: C.text }));
+          it.wrapped.forEach((line, i) => textAt(ctx, line, P + 130, y + 40 + titleH(it) + 36 + i * 48, { color: C.text }));
           y += ih + 20;
         });
         return y;
@@ -976,6 +977,35 @@
     font(ctx, 62, { serif: true }); textAt(ctx, v.title, P, y + 56, { color: C.text }); y += 76 + 10;
     font(ctx, 32); textAt(ctx, v.range, P, y + 34, { color: C.soft }); y += 50 + 30;
     items.draw(ctx, P, y);
+    return cv;
+  }
+
+  // An Ask Claude answer as a picture (Shaun, 16 Nov): title, what it
+  // covers, the answer in a sentence, then the key figures as cards.
+  function summary(v, o = {}) {
+    const P = 64, inner = W - 2 * P;
+    const probe = canvas(10, 10).getContext('2d');
+    font(probe, 44, { weight: 700 });
+    const head = v.headline ? wrap(probe, v.headline, inner - 80).slice(0, 6) : [];
+    const headH = head.length ? 50 + head.length * 58 + 40 : 0;
+    const items = recapItems((v.items || []).map((it) => ({ ...it, icon: it.icon || '•' })));
+    const h = P + 56 + 40 + 76 + 10 + (v.subtitle ? 50 : 0) + 30 + (headH ? headH + 24 : 0) + items.height + (v.footer ? 60 : 0) + P;
+    const cv = canvas(W, h);
+    const ctx = cv.getContext('2d');
+    background(ctx, W, h);
+    let y = P;
+    brand(ctx, o.brand, v.subtitle || '', P, y, 56, W - P); y += 56 + 40;
+    font(ctx, 62, { serif: true }); textAt(ctx, fit(ctx, v.title, inner), P, y + 56, { color: C.text }); y += 76 + 10;
+    if (v.subtitle) { font(ctx, 32); textAt(ctx, fit(ctx, v.subtitle, inner), P, y + 34, { color: C.soft }); y += 50; }
+    y += 30;
+    if (headH) {
+      card(ctx, P, y, inner, headH);
+      font(ctx, 44, { weight: 700 });
+      head.forEach((line, i) => textAt(ctx, line, P + 40, y + 50 + 44 + i * 58 - 6, { color: C.bright }));
+      y += headH + 24;
+    }
+    y = items.draw(ctx, P, y);
+    if (v.footer) { font(ctx, 26); textAt(ctx, v.footer, W / 2, y + 30, { color: C.dim, align: 'center' }); }
     return cv;
   }
 
@@ -1020,5 +1050,5 @@
     return cv;
   }
 
-  return { W, SLIDE_H, loadImage, slide, sheet, matchResult, matchup, matchups, nominees, headToHead, headToHeadAll, gamesRecord, weeklyRecap, weeklyGames, weeklyCombined, toBlob, toFile, toPdf, share, save };
+  return { W, SLIDE_H, loadImage, slide, sheet, matchResult, matchup, matchups, nominees, headToHead, headToHeadAll, gamesRecord, weeklyRecap, weeklyGames, weeklyCombined, summary, toBlob, toFile, toPdf, share, save };
 });

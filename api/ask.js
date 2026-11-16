@@ -68,7 +68,7 @@ async function handler(req, res, deps) {
     const client = d.client || new (require('@anthropic-ai/sdk').default)({ apiKey });
     const today = new Date().toISOString().slice(0, 10);
     const out = await (d.ask || ask)({ client, club, question, history, files, today });
-    return send(res, 200, { answer: out.answer, model: out.model || null });
+    return send(res, 200, { answer: out.answer, card: out.card || null, model: out.model || null });
   } catch (e) {
     const status = e && e.status;
     const msg = status === 401 ? 'The Anthropic API key was refused. Check ANTHROPIC_API_KEY in Vercel.'

@@ -145,7 +145,7 @@ test('the endpoint: POST only, Admins only, says when it is not switched on, and
   const pc = firestoreFake({ admin: true });
   let asked = null;
   r = fakeRes(); await handler(req('padelchamps.sgj.luxe'), r, { fetch: pc.fetch, apiKey: 'k', client: {}, ask: async (a) => { asked = a; return { answer: 'Twelve.', model: MODEL }; } });
-  assert.deepStrictEqual([r.statusCode, r.body], [200, { answer: 'Twelve.', model: MODEL }]);
+  assert.deepStrictEqual([r.statusCode, r.body], [200, { answer: 'Twelve.', card: null, model: MODEL }]);
   assert.strictEqual(asked.club.id, 'padelchampionships');
   assert.ok(pc.seen.every((u) => u.includes('/projects/mp---dashboard/')), 'its own database only');
   assert.strictEqual(r.headers['Cache-Control'], 'no-store');
@@ -275,6 +275,62 @@ maybe('Ask Claude keeps every conversation: listed newest first, reopened to car
     assert.deepStrictEqual([r.updated.by, r.updated.turns.length, r.updated.createdAt], ['Kaz', 4, '2026-11-01T10:00:00Z'], 'the same conversation, carried on');
     assert.ok(r.deleted);
     assert.deepStrictEqual(r.left, ['Longest streak in October?']);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
+
+// Shaun, 16 Nov: "Am I able to generate card type summaries from the ask
+// claude chatboxes? ... images with summaries would be nice too."
+test('the summary card: asked for, taken off the answer, checked, and left out when it is not right', async () => {
+  const { splitCard, systemPrompt } = require('../lib/askClaude/ask.js');
+  assert.match(systemPrompt(CLUBS.moneypadel), /<card>\{"title"/);
+  const card = '<card>{"title": "Best week", "subtitle": "9–15 Nov 2026", "headline": "Fatch had the best week: 6 wins from 7.", "items": [{"icon": "🏆", "title": "Record", "text": "6W 1L"}, {"icon": "📈", "title": "Rating", "text": "+18.4"}]}</card>';
+  const ok = splitCard(`Fatch had the best week.\n- 6 wins from 7\n\n${card}`);
+  assert.strictEqual(ok.answer, 'Fatch had the best week.\n- 6 wins from 7');
+  assert.deepStrictEqual(ok.card, { title: 'Best week', subtitle: '9–15 Nov 2026', headline: 'Fatch had the best week: 6 wins from 7.',
+    items: [{ icon: '🏆', title: 'Record', text: '6W 1L' }, { icon: '📈', title: 'Rating', text: '+18.4' }] });
+  assert.deepStrictEqual(splitCard('Just text.'), { answer: 'Just text.', card: null });
+  assert.deepStrictEqual(splitCard('Text.\n<card>{not json}</card>'), { answer: 'Text.', card: null }, 'a broken card is dropped, never shown');
+  assert.deepStrictEqual(splitCard('Text.\n<card>{"title": "Cut off'), { answer: 'Text.', card: null }, 'and a cut-off one');
+  const client = fakeClient({ responses: [{ stop_reason: 'end_turn', content: [{ type: 'text', text: `Answer.\n${card}` }] }] });
+  const out = await ask({ client, club: CLUBS.moneypadel, question: 'Who had the best week?', files: [], today: '2026-11-16' });
+  assert.strictEqual(out.answer, 'Answer.');
+  assert.strictEqual(out.card.title, 'Best week');
+});
+
+maybe('an answer shares as a picture: from its summary card, or from its own text when it has none', async () => {
+  const app = await H.open({ accounts: { 'shaun@example.com': { password: 'pw', uid: 'uid-shaun' } }, admins: { 'uid-shaun': { role: 'owner', name: 'Shaun' } },
+    signedIn: 'shaun@example.com', viewport: { width: 390, height: 844 } });
+  try {
+    const r = await app.run(async () => {
+      const card = { title: 'Best week', subtitle: '9–15 Nov 2026', headline: 'Fatch had the best week: 6 wins from 7.', items: [{ icon: '🏆', title: 'Record', text: '6W 1L' }] };
+      window.fetch = async () => ({ ok: true, status: 200, json: async () => ({ answer: 'Fatch had the best week.', card }) });
+      const shared = [];
+      CardPainter.share = async (files) => { shared.push({ name: files[0].name, size: files[0].size }); return 'shared'; };
+      for (let k = 0; k < 100 && !signedInAdmin; k++) await new Promise((res) => setTimeout(res, 20));
+      isUnlocked = true; adminRole = 'owner';
+      document.querySelector('#tabrow .tab-btn[data-tab="manage"]').click();
+      adminOpenSections.ask = true; renderManage();
+      document.getElementById('askClaudeQ').value = 'Who had the best week?';
+      await sendAskClaude();
+      const kept = askClaudeLog[1].card && askClaudeLog[1].card.title;
+      const saved = (askClaudeSaved || [])[0] && askClaudeSaved[0].turns[1].card;
+      const wait = async (n) => { for (let k = 0; k < 400 && shared.length < n; k++) await new Promise((res) => setTimeout(res, 20)); };
+      document.querySelector('[data-ask-pic="1"]').click(); await wait(1);
+      // An answer saved before cards: drawn from its text.
+      const fromText = askCardFromText('How many all A games have Eli and Len played?', 'Eli and Len have played **12** all-A games.\n- Together: 7\n- Against each other: 5');
+      askClaudeLog = [{ role: 'user', text: 'Old question?' }, { role: 'assistant', text: 'Old answer.\n- one point' }];
+      redrawAskClaude();
+      document.querySelector('[data-ask-pic="1"]').click(); await wait(2);
+      return { kept, saved, shared, fromText, label: document.querySelector('[data-ask-pic="1"]').textContent };
+    });
+    assert.strictEqual(r.kept, 'Best week');
+    assert.ok(r.saved && r.saved.headline, 'the card is saved with the conversation');
+    assert.deepStrictEqual(r.shared.map((s) => s.name), ['money-padel-best-week.png', 'money-padel-old-question.png']);
+    assert.ok(r.shared.every((s) => s.size > 1000));
+    assert.deepStrictEqual(r.fromText, { title: 'How many all A games have Eli and Len played?', subtitle: '', headline: 'Eli and Len have played 12 all-A games.',
+      items: [{ icon: '', title: 'Together', text: '7' }, { icon: '', title: 'Against each other', text: '5' }] });
+    assert.match(r.label, /Shared/);
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
