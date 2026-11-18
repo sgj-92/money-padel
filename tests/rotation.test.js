@@ -96,7 +96,7 @@ maybe('Admin records a rotation: a tie-break is a set, ratings move, tables do n
       // Rankings: games and, beside them, rotations (Shaun, 18 Nov).
       document.querySelector('#tabrow .tab-btn[data-tab="power"]').click(); selectedMonth = 'all'; recomputeAll();
       const metaOf = (x) => { const row = [...document.querySelectorAll('.row')].find((el) => el.querySelector('.nm') && el.querySelector('.nm').textContent === x); return row ? row.querySelector('.meta').textContent : ''; };
-      const rankMeta = { max: metaOf(K), other: metaOf('Rhys') };
+      const rankMeta = { max: metaOf(K), other: metaOf('Rhys'), counted: v3RatedMatchList().filter((m) => m.date === '2026-09-29' && m.players.includes('Jords')).length };
       // Removed again, exactly: ratings back where they were.
       const ratingsWith = [K, A, D, N].map((x) => PLAYERS.find((p) => p.name === x).rating);
       document.querySelector('[data-rot-remove]').click();
@@ -109,6 +109,7 @@ maybe('Admin records a rotation: a tie-break is a set, ratings move, tables do n
     assert.match(r.preview, /Max & Stormzy 6-2 1-0 Jords & PDM/, 'the tie-break is a set won, no games');
     assert.match(r.rankMeta.max, /^\d+ games · 1 rotation( · |$)/, r.rankMeta.max);
     assert.doesNotMatch(r.rankMeta.other, /rotation/, 'nothing said for a player with none');
+    assert.strictEqual(r.rankMeta.counted, 1, 'towards Ranked, a rotation is one match (Shaun, 18 Nov)');
     assert.match(r.preview, /each worth 1\/3 of a match/);
     assert.match(r.head, /29 Sep/i);
     assert.strictEqual(r.removed.left, 0);

@@ -241,10 +241,19 @@ function namesWithHistoricalTier(names, date, ratings){
 }
 
 function v3RatedMatchList(){
-  return Object.values(V3_MATCH_FACTS || {}).map(f => ({
-    date: f.date,
-    players: Object.keys(f.byPlayer || {}),
-  }));
+  // A rotation counts once towards Ranked, whoever played in any of its
+  // pairings (Shaun, 18 Nov: "One match"), as it does in the match count.
+  const sessionOf = {};
+  (V3_ROTATIONS || []).forEach(m => { if(m.rotation) sessionOf[m.id] = m.rotation.session; });
+  const out = [], sessions = {};
+  Object.entries(V3_MATCH_FACTS || {}).forEach(([id, f]) => {
+    const players = Object.keys(f.byPlayer || {});
+    const s = sessionOf[id];
+    if(!s){ out.push({ date: f.date, players }); return; }
+    if(!sessions[s]){ sessions[s] = { date: f.date, players: [] }; out.push(sessions[s]); }
+    players.forEach(n => { if(!sessions[s].players.includes(n)) sessions[s].players.push(n); });
+  });
+  return out;
 }
 
 // One player's Ranked / Idle / Inactive state, from the one helper. Every
