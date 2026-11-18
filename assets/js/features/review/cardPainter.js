@@ -531,7 +531,7 @@
       textAt(ctx, line, cx, y + 146 + i * 44, { color: C.soft, align: 'center', baseline: 'middle' }));
 
     // One line of evidence: expected, performance, the difference.
-    y += panelH + 92;
+    y += panelH + 72;
     if (card.stats && card.isDraw) {
       font(ctx, 28, { spacing: 0.04 });
       textAt(ctx, fit(ctx, `${card.stats.names.join(' & ')} vs expectation`, W - 2 * M), cx, y - 64, { color: C.dim, align: 'center', baseline: 'middle' });
@@ -539,8 +539,8 @@
     if (card.stats) {
       const st = card.stats;
       const cols = [
-        [`${st.expectedPct.toFixed(1)}%`, 'Expected', C.text],
-        [`${st.performancePct.toFixed(1)}%`, 'Performance', C.text],
+        [`${st.expectedPct.toFixed(1)}%`, 'Expected score', C.text],
+        [`${st.performancePct.toFixed(1)}%`, 'Actual score', C.text],
         [`${st.vsExpectedPp > 0 ? '+' : st.vsExpectedPp < 0 ? '−' : '±'}${Math.abs(st.vsExpectedPp).toFixed(1)}pp`, 'vs expectation', st.vsExpectedPp > 0 ? '#8fcf8f' : C.text],
       ];
       const colW = (W - 2 * M) / 3;
@@ -548,15 +548,16 @@
         const ccx = M + colW * i + colW / 2;
         font(ctx, 64, { weight: 700 });
         textAt(ctx, v, ccx, y, { color, align: 'center', baseline: 'middle' });
-        font(ctx, 30, { spacing: 0.08 });
-        textAt(ctx, label.toUpperCase(), ccx, y + 58, { color: C.dim, align: 'center', baseline: 'middle' });
+        font(ctx, 26, { spacing: 0.05 });
+        textAt(ctx, fit(ctx, label.toUpperCase(), colW - 12), ccx, y + 56, { color: C.dim, align: 'center', baseline: 'middle' });
       });
+      if (st.how) { font(ctx, 26); textAt(ctx, fit(ctx, st.how, W - 2 * M), cx, y + 102, { color: C.dim, align: 'center', baseline: 'middle' }); }
     }
 
     // The winners' rating gains, quietly, at the foot.
     if (card.rewards.length) {
       const fy = H - 96;
-      hline(ctx, M, W - M, fy - 64, C.rule);
+      hline(ctx, M, W - M, fy - 50, C.rule);
       const parts = card.rewards.map((r) => [r.name + ' ', `+${r.movement.toFixed(1)}`]);
       font(ctx, 30, { weight: 700, spacing: 0.14 });
       const label = 'RATING';
