@@ -93,6 +93,10 @@ maybe('Admin records a rotation: a tie-break is a set, ratings move, tables do n
       h2hPlayerA = K; h2hPlayerB = N; h2hMonth = 'all';
       renderH2H();
       const h2h = document.getElementById('h2hView') ? document.getElementById('h2hView').innerText : document.body.innerText;
+      // Rankings: games and, beside them, rotations (Shaun, 18 Nov).
+      document.querySelector('#tabrow .tab-btn[data-tab="power"]').click(); selectedMonth = 'all'; recomputeAll();
+      const metaOf = (x) => { const row = [...document.querySelectorAll('.row')].find((el) => el.querySelector('.nm') && el.querySelector('.nm').textContent === x); return row ? row.querySelector('.meta').textContent : ''; };
+      const rankMeta = { max: metaOf(K), other: metaOf('Rhys') };
       // Removed again, exactly: ratings back where they were.
       const ratingsWith = [K, A, D, N].map((x) => PLAYERS.find((p) => p.name === x).rating);
       document.querySelector('[data-rot-remove]').click();
@@ -100,9 +104,11 @@ maybe('Admin records a rotation: a tie-break is a set, ratings move, tables do n
       document.querySelector('[data-rot-remove-yes]').click();
       for (let k = 0; k < 100 && !/removed/.test(rotationMessage); k++) await new Promise((res) => setTimeout(res, 20));
       const removed = { left: rotationSessions().length, ratings: [K, A, D, N].map((x) => PLAYERS.find((p) => p.name === x).rating), ratingsWith };
-      return { head, removed, preview, card, before, after, parts: sess.parts.map((m) => [m.winners, m.sets, m.rotation.weight]), stats: [K, A, D, N].map((x) => [stats[x].won, stats[x].lost]), h2h, wide: document.documentElement.scrollWidth };
+      return { rankMeta, head, removed, preview, card, before, after, parts: sess.parts.map((m) => [m.winners, m.sets, m.rotation.weight]), stats: [K, A, D, N].map((x) => [stats[x].won, stats[x].lost]), h2h, wide: document.documentElement.scrollWidth };
     });
     assert.match(r.preview, /Max & Stormzy 6-2 1-0 Jords & PDM/, 'the tie-break is a set won, no games');
+    assert.match(r.rankMeta.max, /^\d+ games · 1 rotation( · |$)/, r.rankMeta.max);
+    assert.doesNotMatch(r.rankMeta.other, /rotation/, 'nothing said for a player with none');
     assert.match(r.preview, /each worth 1\/3 of a match/);
     assert.match(r.head, /29 Sep/i);
     assert.strictEqual(r.removed.left, 0);

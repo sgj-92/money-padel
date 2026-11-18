@@ -34,6 +34,16 @@ function rotationSessions(){
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.session.localeCompare(a.session)));
 }
 
+// How many rotation sessions each player took part in, all time or in one
+// period (Shaun, 18 Nov: rankings show games "plus the number of
+// rotationals"). Keyed by lower-case name.
+function rotationCounts(period){
+  const out = {};
+  rotationSessions().filter(s => !period || period === 'all' || Period.of(s.date) === period)
+    .forEach(s => rotationPlayers(s).forEach(n => { const k = n.toLowerCase(); out[k] = (out[k] || 0) + 1; }));
+  return out;
+}
+
 function rotationPlayers(s){
   return [...new Set(s.parts.flatMap(m => m.winners.concat(m.losers)))];
 }

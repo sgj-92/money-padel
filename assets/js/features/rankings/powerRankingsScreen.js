@@ -255,6 +255,7 @@ function render(){
     }
   }
 
+  const rotationsBy = typeof rotationCounts === 'function' ? rotationCounts(selectedMonth) : {};
   rows.forEach((p, i)=>{
     const row = document.createElement('div');
     row.className = 'row';
@@ -310,7 +311,8 @@ function render(){
       } else if(activeSortP === 'upset_total'){
         metaHtml = `<span class="upset-drill" data-player="${p.name}" data-kind="upset_wins">${p.upset_wins} upset win${p.upset_wins===1?'':'s'}</span> · <span class="upset-drill" data-player="${p.name}" data-kind="upset_losses">${p.upset_losses} upset loss${p.upset_losses===1?'':'es'}</span>`;
       } else {
-        metaHtml = `${p.total} game${p.total===1?'':'s'}${wlHtml}`;
+        const rots = rotationsBy[String(p.name).toLowerCase()] || 0;
+        metaHtml = `${p.total} game${p.total===1?'':'s'}${rots ? ` · ${rots} rotation${rots===1?'':'s'}` : ''}${wlHtml}`;
       }
 
       // Form: one compact line (record + a trend glyph) instead of a full sentence; a stale
