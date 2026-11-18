@@ -70,7 +70,7 @@ function rankingPool(month, minGamesFloor){
 // A period's own minimum (config/club.js periodMinMatches): 5 for Money
 // Padel's month, 4 for a Padel Championships quarter.
 function defaultRankingMinGames(month){
-  return month === 'all' ? 10 : (CLUB.periodMinMatches || 5);
+  return clubSetting(month === 'all' ? 'rankingsMinAllTime' : 'rankingsMinPeriod');
 }
 
 // Three honours, three sources (Shaun, 1 Nov):
@@ -93,13 +93,13 @@ function monthLastDay(month){
 }
 
 function kingPool(month){
-  if(month === 'all' || month >= currentMonthKey()) return rankingPool('all', defaultRankingMinGames('all'));
+  if(month === 'all' || month >= currentMonthKey()) return rankingPool('all', clubSetting('kingMinGames'));
   const last = monthLastDay(month);
   const asOf = Date.parse(last + 'T23:59:59Z');
   const ratings = monthEndRatings(month);
   const rated = v3RatedMatchList().filter(m => m.date <= last);
   return PLAYERS.filter(p => p.name in ratings)
-    .filter(p => rated.filter(m => m.players.includes(p.name)).length >= defaultRankingMinGames('all'))
+    .filter(p => rated.filter(m => m.players.includes(p.name)).length >= clubSetting('kingMinGames'))
     .filter(p => { const st = playerStateOf(p.name, asOf); return !!(st && st.rankable); })
     .map(p => ({ ...p, scopeRating: ratings[p.name], scopeTier: tierAtMonthClose(p.name, month) }))
     .sort((a, b) => b.scopeRating - a.scopeRating);

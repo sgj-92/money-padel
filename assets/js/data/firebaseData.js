@@ -76,6 +76,7 @@ const STORAGE_KEY_DELETED = 'moneypadel_deleted_ids';      // array of ids, soft
 const STORAGE_KEY_VISIBILITY = 'moneypadel_visibility';    // shared: which sections non-admins can see
 const STORAGE_KEY_MY_NAME = 'moneypadel_my_name';          // personal — localStorage, this device only
 const STORAGE_KEY_GAME_REQUESTS = 'moneypadel_game_requests'; // shared: wishlist + upcoming games
+const STORAGE_KEY_CLUB_SETTINGS = 'moneypadel_settings'; // admin: the club's own numbers (ClubSettings)
 const STORAGE_KEY_COURT_BOOKINGS = 'moneypadel_court_bookings'; // admin: courts booked, players still to confirm
 const STORAGE_KEY_DEV_AREAS = 'moneypadel_dev_areas'; // shared: freeform per-player development notes
 const STORAGE_KEY_CHALLENGES = 'moneypadel_challenges'; // shared: sequential turn-based match challenges (separate from gameRequestsState -- see buildCompleteMatchWithPartner/bridgeChallengeToRequest below for why)
@@ -96,6 +97,18 @@ async function saveVisibility(vis){
 async function loadGameRequests(){
   try { const v = await fsGet(STORAGE_KEY_GAME_REQUESTS); if(v) return JSON.parse(v); } catch(e){ console.error('load game requests failed', e); }
   return [];
+}
+
+async function loadClubSettings(){
+  try { const v = await fsGet(STORAGE_KEY_CLUB_SETTINGS); if(v) return JSON.parse(v); } catch(e){ console.error('load club settings failed', e); }
+  return {};
+}
+
+async function saveClubSettings(settings){
+  try {
+    await fsSet(STORAGE_KEY_CLUB_SETTINGS, JSON.stringify(settings));
+    return true;
+  } catch(e){ lastStorageError = (e && e.message) ? e.message : String(e); console.error('save club settings failed', e); return false; }
 }
 
 async function loadCourtBookings(){

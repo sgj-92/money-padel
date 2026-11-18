@@ -102,6 +102,7 @@ function renderManage(){
     <div class="section-sub" style="font-size:10.5px; margin-top:0;">Hidden drops the Tier S section from League and Merit by tier, the Monthly Race, Kings of Tiers and the Board Pack, for everyone including Admins. Tier S players stay in Power Rankings, the month's results table, Monthly Information and their profiles; no figure changes.</div>`
     + `<div id="visMessage" class="section-sub"></div></div>`);
 
+  html += adminSection('settings', 'Ranking settings', adminOpenSections.settings ? buildClubSettingsHtml() : '');
   html += adminSection('ask', 'Ask Claude', adminOpenSections.ask ? buildAskClaudeHtml() : '');
   html += adminSection('review', 'Admin monthly review', buildReviewSectionHtml());
   html += adminSection('potm', 'Player of the Month', adminOpenSections.potm ? buildPotmSectionHtml() : '');
@@ -173,6 +174,7 @@ function renderManage(){
   });
 
   wireAskClaude();
+  wireClubSettings();
   wireReviewSection();
   wireHistoricalAdjustment();
   wireNameSpellings();

@@ -129,7 +129,7 @@ function boardPackBlocks(){ return {
       : bpTable(['#', 'Player', 'Rating', 'Month'], rows.map((r, i) => [i + 1, r.name, Math.round(r.rating), month(r)]));
   }, 'Nobody qualified.')
     .concat(bpSHiddenFoot(d))
-    .concat([bpFoot(`Month-end Power Rating and the tier held at the month's close; ${d.minGames}+ game${d.minGames === 1 ? '' : 's'} in the month${d.rankingsDefault ? ' (the Rankings month default)' : ''}${d.players === 'ranked' ? '; Ranked players only (2+ rated games in the 30 days to the month\'s end, not inactive)' : d.players === 'active' ? '; inactive players left out' : ''}.`)]),
+    .concat([bpFoot(`Month-end Power Rating and the tier held at the month's close; ${d.minGames}+ game${d.minGames === 1 ? '' : 's'} in the month${d.rankingsDefault ? ' (the Rankings month default)' : ''}${d.players === 'ranked' ? `; Ranked players only (${PlayerState.thresholdText()} to the month's end, not inactive)` : d.players === 'active' ? '; inactive players left out' : ''}.`)]),
 
   champions: (d) => {
     if(!d.tiers.length && !d.potm) return [bpEmpty('No Champions or Player of the Month for this month yet.')];

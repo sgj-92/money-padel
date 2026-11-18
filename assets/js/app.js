@@ -54,6 +54,18 @@ const TIER_IDX = {S:0,A:1,B:2,C:3};
 let visibilityState = {...VISIBILITY_DEFAULTS};
 
 
+let clubSettingsState = {};  // the Admin's own numbers (domain/settings/clubSettings.js); {} = every default
+// One setting as the app runs on it: the Admin's value, else the default.
+function clubSetting(key){ return ClubSettings.effective(CLUB, clubSettingsState)[key]; }
+// Puts the settings into effect: the Ranked rule, and the list's opening minimum.
+function applyClubSettings(){
+  PlayerState.configure({ minMatches: clubSetting('rankedMinMatches'), windowDays: clubSetting('rankedWindowDays') });
+  resetRankingsMinGames();
+}
+// The Rankings list opens on the minimum for the month on screen.
+function resetRankingsMinGames(){
+  if(typeof minGamesInput !== 'undefined') setMinGames(defaultRankingMinGames(selectedMonth));
+}
 let courtBookingsState = []; // CourtBookings: courts booked, players still to confirm (admin)
 let gameRequestsState = []; // {id, requestedBy, requestedAt, players:[4 names], confirmations:{name:bool}, status:'pending'|'confirmed'|'removed'}
 
@@ -980,8 +992,8 @@ function applyRankingsMonth(month){
   const wasAll = selectedMonth === 'all';
   const isNowAll = month === 'all';
   selectedMonth = month;
-  if(wasAll && !isNowAll) setMinGames(5);
-  else if(!wasAll && isNowAll) setMinGames(10);
+  if(wasAll && !isNowAll) setMinGames(defaultRankingMinGames(month));
+  else if(!wasAll && isNowAll) setMinGames(defaultRankingMinGames('all'));
   const sel = document.getElementById('monthSelect');
   if(sel && [...sel.options].some(o => o.value === month)) sel.value = month;
 }
@@ -2259,7 +2271,7 @@ async function init(){
   // the application has no rating without it and will not invent one -- and it
   // is, because nothing below runs until every one of these has landed.
   const [ , stored, myName, ownerHash, boardHash, unlocked,
-          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords, admin, courts ] =
+          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords, admin, courts, settings ] =
     await PerfTrace.timeAsync('load the record', Promise.all([
       loadV3State(),
       loadStoredData(),
@@ -2276,6 +2288,7 @@ async function init(){
       loadChampionRecords(),
       loadSignedInAdmin(),
       loadCourtBookings(),
+      loadClubSettings(),
     ]));
   extraMatchesState = stored.extraMatches;
   tagOverridesState = stored.tagOverrides;
@@ -2298,6 +2311,8 @@ async function init(){
   visibilityState = visibility;
   gameRequestsState = requests;
   courtBookingsState = Array.isArray(courts) ? courts : [];
+  clubSettingsState = (settings && typeof settings === 'object') ? settings : {};
+  applyClubSettings();
   devAreasState = areas;
   challengesState = challenges;
   northSouthResultsState = northSouth;
