@@ -206,6 +206,10 @@
   .court-needs{ font-size:11.5px; font-weight:700; color:var(--gold-bright); white-space:nowrap; text-transform:uppercase; letter-spacing:.04em; }
   .court-add{ width:100%; margin:6px 0 4px; }
   .court-form{ background:var(--bg1); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin:8px 0; }
+  .cs-row{ margin-bottom:10px; }
+  .cs-input{ display:flex; align-items:center; gap:10px; }
+  .cs-input .fg-select{ width:90px; flex:none; }
+  .cs-unit{ font-size:12px; color:var(--text-dim); }
   .ask-a-actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .court-remove.is-armed{ color:var(--loss, #c9574f); border-color:currentColor; }
   .recap-game.is-booked .recap-score{ color:var(--gold-bright); }

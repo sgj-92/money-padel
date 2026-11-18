@@ -33,8 +33,13 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  const WINDOW_DAYS = 30;
+  const WINDOW_DAYS = 30;   // the defaults; an Admin may change both (ClubSettings)
   const MIN_MATCHES = 2;
+  const rule = { minMatches: MIN_MATCHES, windowDays: WINDOW_DAYS };
+  function configure({ minMatches, windowDays } = {}) {
+    rule.minMatches = Number.isInteger(minMatches) && minMatches > 0 ? minMatches : MIN_MATCHES;
+    rule.windowDays = Number.isInteger(windowDays) && windowDays > 0 ? windowDays : WINDOW_DAYS;
+  }
 
   const PARTICIPATION = { ACTIVE: 'ACTIVE', INACTIVE: 'INACTIVE' };
   const RANKING = { RANKED: 'RANKED', IDLE: 'IDLE' };
@@ -49,7 +54,7 @@
 
   function windowStart(asOf) {
     const end = typeof asOf === 'number' ? asOf : Date.parse(asOf);
-    return end - WINDOW_DAYS * DAY_MS;
+    return end - rule.windowDays * DAY_MS;
   }
 
   // `ratedMatches` is [{ date: 'YYYY-MM-DD', players: [...] }] -- the v3 rated
@@ -80,7 +85,7 @@
     const away = archived || status === 'temporarilyInactive';
     const participation = (active === false || away) ? PARTICIPATION.INACTIVE : PARTICIPATION.ACTIVE;
     const recent = recentCount(ratedMatches, name, asOf);
-    const meetsThreshold = recent >= MIN_MATCHES;
+    const meetsThreshold = recent >= rule.minMatches;
 
     // An inactive player has no ranking state at all -- they are not in the
     // running. They are not "idle", which would imply they are coming back.
@@ -110,10 +115,10 @@
     return out;
   }
 
-  const thresholdText = () => `${MIN_MATCHES}+ matches in the last ${WINDOW_DAYS} days`;
+  const thresholdText = () => `${rule.minMatches}+ match${rule.minMatches === 1 ? '' : 'es'} in the last ${rule.windowDays} days`;
 
   return {
-    WINDOW_DAYS, MIN_MATCHES, PARTICIPATION, RANKING, LABEL,
+    WINDOW_DAYS, MIN_MATCHES, rule, configure, PARTICIPATION, RANKING, LABEL,
     ratedMatchesInWindow, recentCount, stateOf, statesOf, thresholdText,
   };
 });

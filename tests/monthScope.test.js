@@ -227,7 +227,7 @@ test('only Power Rankings reads or writes selectedMonth', () => {
     'renderKingsOfTiersPanel', 'applyRankingEligibility', 'rerenderCurrentTab',
     'syncHeaderSectionTitle', 'updateRankingsHero', 'buildRankingsHero',
     'rankingsMonthSelectHandler',
-    'applyRankingsMonth', 'arriveAtRankings', 'renderRankingsMonthNote',
+    'applyRankingsMonth', 'arriveAtRankings', 'renderRankingsMonthNote', 'resetRankingsMinGames',
     'computeMonthlyChampions', 'renderMonthlyChampionsPanel', 'renderKingsPanel',
   ]);
   const offenders = [];

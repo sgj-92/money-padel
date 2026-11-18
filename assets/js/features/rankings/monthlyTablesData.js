@@ -15,7 +15,7 @@
 // The matches a period needs to qualify: the community's own minimum
 // (config/club.js periodMinMatches), else the Race's default of 5.
 function raceMinMatches(){
-  return CLUB.periodMinMatches || MonthlyRace.MIN_MATCHES;
+  return clubSetting('raceMinMatches');
 }
 
 function leagueAppearances(){
