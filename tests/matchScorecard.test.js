@@ -174,7 +174,11 @@ test('Result Card: every figure is a field of the scorecard, copied -- one sourc
     else assert.ok(hero.vsExpectedPp >= other.vsExpectedPp, `${m.id}: a draw leads with the side that beat expectation`);
     assert.deepStrictEqual(card.heroes, hero.players.map((p) => ({ name: p.name, tier: p.tier })));
     assert.deepStrictEqual(card.opponents, other.players.map((p) => ({ name: p.name, tier: p.tier })));
-    assert.deepStrictEqual(card.stats, { names: hero.names, expectedPct: hero.expectedPct, performancePct: hero.actualPct, vsExpectedPp: hero.vsExpectedPp });
+    const { how, ...figures } = card.stats;
+    assert.deepStrictEqual(figures, { names: hero.names, expectedPct: hero.expectedPct, performancePct: hero.actualPct, vsExpectedPp: hero.vsExpectedPp });
+    // How the actual score is made, from the same fields (Shaun, 18 Nov).
+    assert.strictEqual(how, `Score = 80% games won (${hero.games}–${hero.opponentGames}, ${Math.round(hero.gameSharePct)}%) + 20% result (${hero.won ? 'win' : 'draw'})`);
+    assert.ok(Math.abs(0.8 * hero.gameSharePct + 20 * (hero.won ? 1 : 0.5) - hero.actualPct) < 0.1, 'and it adds up to the actual score');
     assert.deepStrictEqual(card.sets, vm.sets.map((s) => (card.heroNo === 1 ? s : [s[1], s[0]])));
     const gained = !vm.isDraw && hero.players.every((p) => p.movement > 0);
     assert.deepStrictEqual(card.rewards, gained ? hero.players.map((p) => ({ name: p.name, movement: p.movement })) : [],

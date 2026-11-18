@@ -267,6 +267,10 @@
         expectedPct: hero.expectedPct,
         performancePct: hero.actualPct,
         vsExpectedPp: hero.vsExpectedPp,
+        // How the actual score is made (Shaun, 18 Nov: the expected figure read
+        // as a win chance beside a score that "factors in the win"). Both are
+        // scores on the same scale: 80% the share of games, 20% the result.
+        how: `Score = 80% games won (${hero.games}–${hero.opponentGames}, ${Math.round(hero.gameSharePct)}%) + 20% result (${vm.isDraw ? 'draw' : hero.won ? 'win' : 'loss'})`,
       } : null,
       rewards: gains ? hero.players.map((p) => ({ name: p.name, movement: p.movement })) : [],
     };

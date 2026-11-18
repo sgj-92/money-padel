@@ -206,6 +206,7 @@
   .court-needs{ font-size:11.5px; font-weight:700; color:var(--gold-bright); white-space:nowrap; text-transform:uppercase; letter-spacing:.04em; }
   .court-add{ width:100%; margin:6px 0 4px; }
   .court-form{ background:var(--bg1); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin:8px 0; }
+  .mrc-how{ font-size:11px; color:var(--text-dim); text-align:center; margin-top:6px; }
   .cs-row{ margin-bottom:10px; }
   .cs-input{ display:flex; align-items:center; gap:10px; }
   .cs-input .fg-select{ width:90px; flex:none; }

@@ -64,10 +64,10 @@ function matchResultCardHtml(card){
   // shown as it is, in a neutral tone (the analysis keeps the colours). On a
   // draw it says whose figures these are, since nobody won.
   const stats = st ? `${card.isDraw ? `<div class="mrc-stats-who">${st.names.map(escapeHtml).join(' &amp; ')} vs expectation</div>` : ''}<div class="mrc-stats">
-      <div class="mrc-stat"><b data-fig="expected">${st.expectedPct.toFixed(1)}%</b><span>Expected</span></div>
-      <div class="mrc-stat"><b data-fig="performance">${st.performancePct.toFixed(1)}%</b><span>Performance</span></div>
+      <div class="mrc-stat"><b data-fig="expected">${st.expectedPct.toFixed(1)}%</b><span>Expected score</span></div>
+      <div class="mrc-stat"><b data-fig="performance">${st.performancePct.toFixed(1)}%</b><span>Actual score</span></div>
       <div class="mrc-stat mrc-stat-key"><b data-fig="pp" class="${st.vsExpectedPp > 0 ? 'mrc-up' : ''}">${scorecardSigned(st.vsExpectedPp, 'pp')}</b><span>vs expectation</span></div>
-    </div>` : `<div class="mrc-unrated">Not rated yet — the numbers arrive once the result is approved.</div>`;
+    </div>${st.how ? `<div class="mrc-how">${escapeHtml(st.how)}</div>` : ''}` : `<div class="mrc-unrated">Not rated yet — the numbers arrive once the result is approved.</div>`;
   const rewards = card.rewards.length
     ? `<div class="mrc-rewards"><span class="mrc-rewards-label">Rating</span>${card.rewards.map(r =>
         `<span class="mrc-reward" data-player="${escapeHtml(r.name)}">${escapeHtml(r.name)} <b>${scorecardSigned(r.movement, '')}</b></span>`).join('')}</div>`
