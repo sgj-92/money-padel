@@ -129,7 +129,8 @@ async function open(options = {}) {
     window.__auth = [];
     const authState = { user: null, listeners: [] };
     // A signed-in user's ID token is "token-<uid>" (Ask Claude sends it).
-    const userFor = (uid, email) => ({ uid, email, async getIdToken() { return `token-${uid}`; } });
+    const userFor = (uid, email) => ({ uid, email, async getIdToken() { return `token-${uid}`; },
+      async updatePassword(p) { accounts[email].password = p; window.__auth.push({ passwordChanged: email }); } });
     if (signedIn && accounts[signedIn]) authState.user = userFor(accounts[signedIn].uid, signedIn);
     const authErr = (code) => Object.assign(new Error(code), { code });
     const authApi = {
