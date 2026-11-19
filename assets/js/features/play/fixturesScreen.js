@@ -799,32 +799,17 @@ function renderWishlist(flashMessage, adminFlashMessage){
     adminReqSubmit.onclick = async ()=>{
       const msg = document.getElementById('adminReqMessage');
       const names = ['adminReqP1','adminReqP2','adminReqP3','adminReqP4'].map(id=>document.getElementById(id).value.trim());
+      // Checked before asking who the Admin is, so a typo is said first.
       if(names.some(n=>!n)){ msg.textContent = 'Enter all four players.'; return; }
-      if(new Set(names.map(n=>n.toLowerCase())).size !== 4){ msg.textContent = 'The same name appears more than once.'; return; }
-      const known = entryPlayerNames().concat(archivedAmong(names)).map(n => n.toLowerCase());
-      const unrecognized = names.filter(n => !known.includes(n.toLowerCase()));
-      if(unrecognized.length){ msg.textContent = `Unrecognized name${unrecognized.length>1?'s':''}: ${unrecognized.join(', ')}.`; return; }
-      const archived = archivedAmong(names);
-      if(archived.length){ msg.textContent = archivedRefusal(archived); return; }
       const adminName = requireName();
       if(!adminName) return;
-
-      const booked = !!(document.getElementById('adminReqBooked') || {}).checked;
-      const req = FixtureFlow.createAgreed({
-        players: names, teams: [names.slice(0,2), names.slice(2,4)], by: adminName,
-        preferredDate: document.getElementById('adminReqDate').value || '',
-        preferredTime: (document.getElementById('adminReqTime') || {}).value || '',
-        location: ((document.getElementById('adminReqPlace') || {}).value || '').trim(),
-        courtBookingMade: booked,
-      });
-      gameRequestsState.push(req);
-      const ok = await saveGameRequests(gameRequestsState);
-      if(!ok){
-        gameRequestsState.pop();
-        msg.textContent = storageAvailable() ? `Save failed (${lastStorageError || 'unknown error'}) — try again.` : `Save failed — this page can't reach shared storage.`;
-        return;
-      }
-      dataChanged({ redraw: ()=> renderWishlist(undefined, booked ? 'Added to Upcoming.' : 'Added to Called Out.') });
+      const r = await addAgreedGame({ names, by: adminName,
+        date: document.getElementById('adminReqDate').value || '',
+        time: (document.getElementById('adminReqTime') || {}).value || '',
+        venue: (document.getElementById('adminReqPlace') || {}).value || '',
+        booked: !!(document.getElementById('adminReqBooked') || {}).checked });
+      if(!r.ok){ msg.textContent = r.message; return; }
+      dataChanged({ redraw: ()=> renderWishlist(undefined, r.message) });
     };
   });
 
