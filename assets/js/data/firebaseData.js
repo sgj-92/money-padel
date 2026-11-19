@@ -145,6 +145,8 @@ async function saveCourtBookings(courts){
 async function saveGameRequests(requests){
   try {
     await fsSet(STORAGE_KEY_GAME_REQUESTS, JSON.stringify(requests));
+    // Who to tell about what changed (features/players/notificationsScreen.js).
+    if(typeof noteFixturesSaved === 'function'){ try { noteFixturesSaved(requests); } catch(e){ console.error('notices failed', e); } }
     return true;
   } catch(e){ lastStorageError = (e && e.message) ? e.message : String(e); console.error('save game requests failed', e); return false; }
 }

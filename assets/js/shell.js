@@ -88,7 +88,9 @@ function applyHomeScreenIcon(){
     icons: [{ src: abs(icon[180]), sizes: '180x180', type: 'image/png' }, { src: abs(icon[512]), sizes: '512x512', type: 'image/png' }] };
   swap('icon', { href: icon[180], type: 'image/png' });
   swap('apple-touch-icon', { href: icon[180], sizes: '180x180' });
-  swap('manifest', { href: 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest)) });
+  // A real file where the community has one (CLUB.manifest): an iPhone only
+  // sends notifications to a Home Screen app it can read a manifest file for.
+  swap('manifest', { href: CLUB.manifest || ('data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest))) });
 }
 
 function enterStandingsMode(){

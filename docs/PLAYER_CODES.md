@@ -8,7 +8,8 @@ Players sign in with a personal code instead of an email and password
 
 1. **Publish the database rules.** Firestore Database › Rules: paste the whole
    of `firestore.rules` from this repository, then **Publish**. They add
-   `playerAccounts`, `playerCodes`, `playerLogins` and `availability` (Admins
+   `playerAccounts`, `playerCodes`, `playerLogins`, `availability` and
+   `pushSubscriptions` (Admins
    only, except a player may read their own account entry, anyone may look up
    which sign-in a name uses, and anyone may read when players can play, which
    only that player or an Admin may change).
@@ -46,3 +47,17 @@ A signed-in player: Who are you? › **When I can play**. A week of morning /
 afternoon / evening, plus dates that are different (not free, or free at a
 time). An Admin can set anyone's from Admin › Player codes › **Times**. When a
 game is arranged with a date, the app shows who is free then.
+
+## Notifications
+
+**One-off, in Vercel:** Settings › Environment Variables › add
+`VAPID_PRIVATE_KEY` (the private key Claude Code gave you; never commit it),
+ticked for **Production** and **Preview**, then redeploy. The public half is in
+`lib/notify/push.js` and `features/players/notificationsScreen.js`.
+
+A signed-in player: Who are you? › **Notifications** › Turn on. On an iPhone the
+app must be added to the Home Screen (Share › Add to Home Screen) and opened
+from there first; the sheet says so. They are told when someone asks them to
+play, when all four are in, when a court is booked, and when a game is
+cancelled — never about something they did themselves. **Send me a test**
+checks it end to end.

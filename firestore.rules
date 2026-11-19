@@ -90,6 +90,16 @@ service cloud.firestore {
       allow write: if isAdmin() || (request.auth != null
         && get(/databases/$(database)/documents/playerAccounts/$(request.auth.uid)).data.player == player);
     }
+    // Phones signed up for notifications (Shaun, 19 Nov). Read -- to send to
+    // them, through the club's server with the sender's own sign-in -- and
+    // tidied away by signed-in members; each one written only for the
+    // player whose code signed in (or by an Admin, for themselves).
+    match /pushSubscriptions/{id} {
+      allow read, delete: if isAdmin() || (request.auth != null
+        && exists(/databases/$(database)/documents/playerAccounts/$(request.auth.uid)));
+      allow create, update: if isAdmin() || (request.auth != null
+        && get(/databases/$(database)/documents/playerAccounts/$(request.auth.uid)).data.player == request.resource.data.player);
+    }
     // Which account a player's name signs in to (not a mailbox). Anyone may
     // look one up -- the code is the secret, not this. An Admin writes it; the
     // player may only mark that they chose their own code.

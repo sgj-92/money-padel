@@ -221,6 +221,14 @@
   .av-panel .game-sheet-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
   .av-panel .game-sheet-head h3{ margin:0; font-size:20px; }
   .av-panel .av-close{ background:none; border:0; color:var(--text-soft); font-size:22px; line-height:1; padding:4px 8px; }
+  .nt-panel .game-sheet-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .nt-panel .game-sheet-head h3{ margin:0; font-size:20px; }
+  .nt-panel .nt-close{ background:none; border:0; color:var(--text-soft); font-size:22px; line-height:1; padding:4px 8px; }
+  .nt-sub{ font-size:12.5px; color:var(--text-soft); margin:0 0 10px; }
+  .nt-state{ font-size:14px; color:var(--text); margin:0 0 10px; }
+  .nt-steps{ font-size:13px; color:var(--text-soft); margin:0 0 12px; padding-left:20px; line-height:1.6; }
+  .nt-on{ width:100%; }
+  .nt-msg{ min-height:18px; font-size:13px; color:var(--text-soft); text-align:center; margin-top:10px; }
   .av-sub{ font-size:12.5px; color:var(--text-soft); margin:0 0 10px; }
   .av-summary{ font-size:12.5px; color:var(--gold-bright); margin:0 0 8px; }
   .av-grid{ display:flex; flex-direction:column; gap:3px; }
