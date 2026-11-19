@@ -94,7 +94,7 @@ async function loadSignedInPlayer(){
 // own player (admins/{uid}.name). null when nobody is proven.
 function verifiedPlayerName(){
   if(signedInPlayer) return signedInPlayer.name;
-  if(signedInAdmin && signedInAdmin.name && PLAYERS.some(p => p.name === signedInAdmin.name)) return signedInAdmin.name;
+  if(signedInAdmin && signedInAdmin.name && entryPlayerNames().includes(signedInAdmin.name)) return signedInAdmin.name;
   return null;
 }
 

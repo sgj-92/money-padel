@@ -52,6 +52,12 @@ function showPlayerCodeStep(panel, name, choose, back){
 
 // A line for the chooser's head: who is signed in here, with Sign out.
 function playerSignedInLineHtml(){
+  // An Admin is their own player already (Shaun, 19 Nov: "I'm unable to log
+  // out as myself then re-enter my code"): say so, and offer their code.
+  if(!signedInPlayer && signedInAdmin && playerAccountsOn() && verifiedPlayerName()){
+    return `<div class="viewer-code-signed">Signed in as <b>${escapeHtml(verifiedPlayerName())}</b> with your Admin account ✓
+      <button type="button" class="link-btn" id="playerUseCodeBtn">Use my player code instead</button></div>`;
+  }
   if(!signedInPlayer) return '';
   return `<div class="viewer-code-signed">Signed in as <b>${escapeHtml(signedInPlayer.name)}</b> ✓
     <button type="button" class="link-btn" id="playerChangeCodeBtn">Change code</button> ·
@@ -62,6 +68,8 @@ function wirePlayerSignedInLine(root, after){
   if(b) b.onclick = async () => { await playerSignOut(); clearCurrentViewer(); if(after) after(); };
   const c = root.querySelector('#playerChangeCodeBtn');
   if(c) c.onclick = () => showChangeCodeStep(root, after);
+  const u = root.querySelector('#playerUseCodeBtn');
+  if(u) u.onclick = () => showPlayerCodeStep(root, verifiedPlayerName(), (name) => { setCurrentViewer(name); if(after) after(); }, after);
 }
 
 // Shaun, 19 Nov: "Allow them to change their code to a 6 digit code of their
