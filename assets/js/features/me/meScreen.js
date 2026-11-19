@@ -19,6 +19,10 @@ function meRows(viewer){
     const set = Availability.summary(availabilityState[viewer.name] || {});
     you.push({ me: 'availability', label: 'When I can play', meta: set || 'Not set' });
   }
+  // Notifications (Shaun, 19 Nov): for a player this phone speaks for.
+  if(viewer && typeof notificationsOn === 'function' && notificationsOn() && verifiedPlayerName() === viewer.name){
+    you.push({ me: 'notifications', label: 'Notifications' });
+  }
   const settings = [
     { me: 'player', label: 'My Player', meta: viewer ? viewer.name : 'Not chosen' },
     { me: 'datarange', label: 'Data & Rankings', meta: (typeof dataRange !== 'undefined' && dataRange === 'all') ? 'Full history' : 'Verified data' },
@@ -83,6 +87,7 @@ function meOpen(which){
   if(which === 'profile' && viewer) openSheet(viewer.name);
   else if(which === 'player') buildViewerSelector();
   else if(which === 'availability' && viewer) openAvailabilitySheet(viewer.name);
+  else if(which === 'notifications') openNotificationsSheet();
   else if(which === 'datarange') openDataRangeSheet();
   else if(which === 'guide') openPowerRatingGuide();
   else if(which === 'about') openAboutPowerRankings();
