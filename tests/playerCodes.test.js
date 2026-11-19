@@ -167,3 +167,41 @@ maybe('a signed-in player swaps their code for 6 digits of their own, and signs 
     assert.deepStrictEqual(phone.pageErrors, []);
   } finally { await phone.close(); }
 });
+
+// Shaun, 19 Nov: "I'm unable to log out as myself then re-enter my code."
+maybe('an Admin, who is their own player already, can swap to their player code from Who are you?', async () => {
+  const email = 'pshaunshaun@players.sgj.luxe';
+  const accounts = { ...ADMIN.accounts, [email]: { password: '472915', uid: 'uid-shaun-player' } };
+  const docs = { playerAccounts: { 'uid-shaun-player': { player: 'Shaun' } }, playerLogins: { Shaun: { email, own: true } } };
+  const app = await H.open({ path: 'index.html?club=padelchampionships', record: EMPTY, club: TAGS, accounts, admins: ADMIN.admins, documents: docs, signedIn: 'shaun@example.com' });
+  try {
+    const r = await app.run(async () => {
+      for (let k = 0; k < 100 && !signedInAdmin; k++) await new Promise((res) => setTimeout(res, 20));
+      buildViewerSelector();
+      const line = document.querySelector('.viewer-code-signed').textContent.replace(/\s+/g, ' ');
+      document.getElementById('playerUseCodeBtn').click();
+      const step = document.querySelector('.viewer-selector-title').textContent;
+      const warned = /signs the Admin account out/.test(document.querySelector('.viewer-selector-panel').textContent);
+      document.getElementById('playerCodeInput').value = '472915';
+      document.getElementById('playerCodeGo').click();
+      for (let k = 0; k < 100 && !signedInPlayer; k++) await new Promise((res) => setTimeout(res, 20));
+      await new Promise((res) => setTimeout(res, 300));
+      const after = (document.querySelector('.viewer-code-signed') || {}).textContent || '';
+      const player = signedInPlayer && signedInPlayer.name, admin = !!signedInAdmin;
+      // And out again, then back in with the code.
+      const out = document.getElementById('playerSignOutBtn'); if (out) out.click();
+      await new Promise((res) => setTimeout(res, 300));
+      document.querySelector('.viewer-player-btn[data-name="Shaun"]').click();
+      const asked = !!document.getElementById('playerCodeInput');
+      return { line, step, warned, player, admin, after, asked };
+    });
+    assert.match(r.line, /Signed in as Shaun with your Admin account ✓ Use my player code instead/);
+    assert.strictEqual(r.step, 'Hi Shaun');
+    assert.ok(r.warned, 'it says the Admin account is signed out');
+    assert.strictEqual(r.player, 'Shaun');
+    assert.strictEqual(r.admin, false);
+    assert.match(r.after, /Signed in as Shaun ✓/);
+    assert.ok(r.asked, 'signed out, tapping his name asks for the code again');
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
