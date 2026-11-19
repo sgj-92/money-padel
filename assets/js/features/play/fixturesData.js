@@ -99,6 +99,35 @@ async function submitGameRequest({ names, requestedBy, date, time, venue }){
 // Del against Kaz & Erf is that those are the pairs. It also makes a singles
 // game expressible, which the flat split silently could not -- two names would
 // have gone in as a single partnership.
+// An Admin noting a game already agreed (in WhatsApp, on a call): the one
+// path for Play › Requests' admin form and Arrange a Game › Agreed game. The
+// four are checked like a request -- anyone in the club, rated or waiting for
+// a first game, never an archived player -- and written in the club's own
+// spelling. Called Out, or Upcoming when the court is booked.
+async function addAgreedGame({ names, by, date, time, venue, booked }){
+  const typed = (names || []).map(n => String(n || '').trim());
+  if(typed.length !== 4 || typed.some(n => !n)) return { ok: false, message: 'Enter all four players.' };
+  if(new Set(typed.map(n => n.toLowerCase())).size !== 4) return { ok: false, message: 'The same name appears more than once.' };
+  const archived = archivedAmong(typed);
+  const club = entryPlayerNames();
+  const known = club.concat(archived).map(n => n.toLowerCase());
+  const unrecognized = typed.filter(n => !known.includes(n.toLowerCase()));
+  if(unrecognized.length) return { ok: false, message: `Unrecognized name${unrecognized.length > 1 ? 's' : ''}: ${unrecognized.join(', ')}.` };
+  if(archived.length) return { ok: false, message: archivedRefusal(archived) };
+  const clean = typed.map(n => club.find(c => c.toLowerCase() === n.toLowerCase()) || n);
+  const req = FixtureFlow.createAgreed({
+    players: clean, teams: [clean.slice(0, 2), clean.slice(2, 4)], by,
+    preferredDate: date || '', preferredTime: time || '', location: String(venue || '').trim(),
+    courtBookingMade: !!booked,
+  });
+  gameRequestsState.push(req);
+  if(!await saveGameRequests(gameRequestsState)){
+    gameRequestsState.pop();
+    return { ok: false, message: storageAvailable() ? `Save failed (${lastStorageError || 'unknown error'}) — try again.` : `Save failed — this page can't reach shared storage.` };
+  }
+  return { ok: true, req, message: booked ? 'Added to Upcoming.' : 'Added to Called Out.' };
+}
+
 function requestTeams(req){
   if(req && Array.isArray(req.teams) && req.teams.length === 2
      && (req.teams[0] || []).length && (req.teams[1] || []).length){
