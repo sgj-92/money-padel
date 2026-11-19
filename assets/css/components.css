@@ -237,6 +237,12 @@
   .av-hour{ font-size:10.5px; color:var(--text-dim); text-align:right; padding-right:4px; }
   .av-cell{ height:26px; border-radius:6px; border:1px solid var(--line); background:var(--bg1); }
   .av-cell.is-on{ background:rgba(var(--gold-rgb), .55); border-color:var(--gold-bright); }
+  .av-row.is-half .av-cell{ height:18px; }
+  .av-row.is-half .av-hour{ font-size:9.5px; }
+  .av-cell.is-part{ border-color:var(--gold-bright); }
+  .av-cell.is-first{ background:linear-gradient(to bottom, rgba(var(--gold-rgb), .55) 50%, transparent 50%); }
+  .av-cell.is-second{ background:linear-gradient(to bottom, transparent 50%, rgba(var(--gold-rgb), .55) 50%); }
+  .av-halves{ display:flex; gap:8px; align-items:center; font-size:12.5px; color:var(--text-soft); margin:0 0 8px; }
   .av-label{ margin:14px 0 6px; }
   .av-ex{ display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:6px 0; border-top:1px solid var(--line); }
   .av-ex-del{ background:none; border:0; color:var(--text-dim); font-size:15px; }
