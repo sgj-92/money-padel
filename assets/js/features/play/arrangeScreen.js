@@ -15,16 +15,25 @@
 
 let arrangeMode = null;
 let arrangeDraft = null; // { names: [4], date, time, venue }
+// Agreed game (Admin; Shaun, 19 Nov: "quite inaccessible to quickly add agreed
+// games that we have sorted on WhatsApp"). Date, venue and the booking stay
+// after a save, so a run of games is quick; the names clear.
+let agreedDraft = null;  // { names: [4], date, time, venue, booked }
+let agreedFlash = '';
 
 // The modes this reader may use: finding follows Find a Game's setting,
 // requesting follows Requests'.
 function arrangeModesVisible(){
   const modes = [];
+  // An Admin's own fast path comes first, so Arrange a Game opens on it.
+  if(isUnlocked) modes.push({ id: 'agreed', label: 'Agreed' });
   if(canSeeTab('findgame')) modes.push({ id: 'find', label: 'Find a game' });
   if(canSeeTab('wishlist')){
     modes.push({ id: 'request', label: 'Request' });
     modes.push({ id: 'paste', label: 'Paste a list' });
   }
+  // Four do not fit a phone's width in full: one word each.
+  if(modes.length > 3) modes.forEach(m => { m.label = { find: 'Find', paste: 'Paste' }[m.id] || m.label; });
   return modes;
 }
 
@@ -34,6 +43,7 @@ function openArrangeGame(mode, draft){
   const has = (m) => modes.some(x => x.id === m);
   arrangeMode = has(mode) ? mode : has(arrangeMode) ? arrangeMode : modes[0].id;
   if(draft) arrangeDraft = draft;
+  agreedFlash = '';
   renderArrange(true);
 }
 
@@ -74,6 +84,30 @@ function arrangeRequestHtml(viewer){
     <div class="play-flash arrange-msg" role="status"></div>`;
 }
 
+function arrangeAgreedHtml(){
+  const d = agreedDraft || { names: ['', '', '', ''], date: '', time: '', venue: '', booked: false };
+  agreedDraft = d;
+  const field = (i, label) => `<label class="arrange-field"><span class="fx-m-label">${label}</span>
+    <input class="fg-select agreed-name" data-seat="${i}" list="agreedNames" value="${escapeHtml(d.names[i] || '')}" autocomplete="off"></label>`;
+  return `<div class="play-note">Already agreed in WhatsApp: nobody is asked to confirm.</div>
+    <datalist id="agreedNames">${entryPlayerNames().map(n => `<option value="${escapeHtml(n)}">`).join('')}</datalist>
+    <div class="arrange-sides">
+      <div class="arrange-side">${field(0, 'Player 1')}${field(1, 'Partner')}</div>
+      <div class="arrange-v arrange-v-mid">v</div>
+      <div class="arrange-side">${field(2, 'Opponent')}${field(3, 'Opponent')}</div>
+    </div>
+    <div class="fx-m-grid">
+      <label class="fx-m-field"><span class="fx-m-label">Date</span><input type="date" class="fg-select agreed-date" value="${escapeHtml(d.date || '')}"></label>
+      <label class="fx-m-field"><span class="fx-m-label">Time</span><input type="time" class="fg-select agreed-time" value="${escapeHtml(d.time || '')}"></label>
+    </div>
+    <label class="fx-m-field"><span class="fx-m-label">Venue</span><input class="fg-select agreed-venue" value="${escapeHtml(d.venue || '')}" placeholder="Court or venue"></label>
+    <label class="fx-m-booking"><input type="checkbox" class="agreed-booked"${d.booked ? ' checked' : ''}>
+      <span><b>Court booked</b><br><span class="fx-m-sub">Goes straight to Upcoming; otherwise Called Out.</span></span></label>
+    <button type="button" class="mp-btn-primary mp-btn-touch mp-btn-accent agreed-save">Add agreed game</button>
+    <div class="play-flash agreed-msg" role="status">${escapeHtml(agreedFlash)}</div>
+    <div class="shell-list arrange-onward">${mpListRowHtml({ label: 'Several at once? Paste a list', data: { arrange: 'paste' } })}</div>`;
+}
+
 function arrangePasteHtml(){
   return `<div class="play-note">Paste a list of games from WhatsApp. Each line is checked — names are matched exactly and never guessed — and nothing is sent until you have reviewed it.</div>
     <div class="shell-list">${mpListRowHtml({ label: 'Open Add multiple games', data: { arrange: 'paste' } })}</div>`;
@@ -90,7 +124,8 @@ function renderArrange(show){
   const modes = arrangeModesVisible();
   if(!modes.length){ sheet.classList.remove('show'); return; }
   const viewer = getCurrentViewer();
-  const body = arrangeMode === 'find' ? arrangeFindHtml(viewer)
+  const body = arrangeMode === 'agreed' ? arrangeAgreedHtml()
+    : arrangeMode === 'find' ? arrangeFindHtml(viewer)
     : arrangeMode === 'request' ? arrangeRequestHtml(viewer) : arrangePasteHtml();
   sheet.innerHTML = `<div class="shell-more-panel arrange-sheet" role="dialog" aria-label="Arrange a Game">
     <div class="game-sheet-head"><h3>Arrange a Game</h3><button type="button" class="mp-sheet-close arrange-close" aria-label="Close">×</button></div>
@@ -116,6 +151,30 @@ function renderArrange(show){
       }
     };
   });
+  const save = panel.querySelector('.agreed-save');
+  if(save){
+    const read = () => {
+      agreedDraft = { names: [...panel.querySelectorAll('.agreed-name')].map(i => i.value),
+        date: panel.querySelector('.agreed-date').value, time: panel.querySelector('.agreed-time').value,
+        venue: panel.querySelector('.agreed-venue').value, booked: panel.querySelector('.agreed-booked').checked };
+    };
+    panel.querySelectorAll('input').forEach(i => { i.addEventListener('input', read); i.addEventListener('change', read); });
+    save.onclick = async () => {
+      read();
+      const msg = panel.querySelector('.agreed-msg');
+      save.disabled = true;
+      const r = await addAgreedGame({ ...agreedDraft, by: fixtureAdminName() });
+      save.disabled = false;
+      if(!r.ok){ msg.textContent = r.message; return; }
+      const [a, b] = requestTeams(r.req);
+      agreedFlash = `Added: ${a.join(' & ')} v ${b.join(' & ')} — ${r.message.replace(/^Added to /, 'in ').replace(/\.$/, '')}. Add another, or close.`;
+      agreedDraft = { ...agreedDraft, names: ['', '', '', ''] };
+      dataChanged();
+      renderArrange(false);
+      const first = playSheet('arrangeSheet').querySelector('.agreed-name');
+      if(first) first.focus();
+    };
+  }
   const send = panel.querySelector('.arrange-send');
   if(send){
     const sync = () => {

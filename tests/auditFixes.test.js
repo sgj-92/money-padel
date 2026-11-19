@@ -182,7 +182,7 @@ maybe('D4: a screen switched to Admin only is hidden by every route — sub-navi
     assert.deepStrictEqual(r.home, { ideas: false, insights: false });
     assert.deepStrictEqual(r.profile, { prove: false, text: false });
     assert.strictEqual(r.admin.lands, 'mygames');
-    assert.ok(r.admin.modes.includes('Find a game'));
+    assert.ok(r.admin.modes.includes('Find'), 'an Admin has four modes, each one word (Agreed, Find, Request, Paste)');
     assert.ok(r.adminMore.some((t) => /Call-Outs/.test(t)));
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }

@@ -300,3 +300,53 @@ maybe('Play at 375: every row and control is a 44px target and nothing scrolls s
     assert.ok(r.w1 <= 375 && r.w2 <= 375, JSON.stringify(r));
   } finally { await app.close(); }
 });
+
+// Shaun, 19 Nov: "it's still quite inaccessible to quickly add agreed games
+// that we have sorted on WhatsApp. I need a button so I can note the games
+// faster." Arrange a Game opens on Agreed game for an Admin; a save keeps the
+// date, venue and booking for the next one.
+maybe('an Admin adds agreed games straight from Arrange a Game, one after another', async () => {
+  const app = await open();
+  try {
+    const r = await app.run(async () => {
+      isUnlocked = true; adminRole = 'owner'; currentUserName = 'Shaun';
+      setCurrentViewer('Shaun');
+      goToSection('play');
+      const before = gameRequestsState.length;
+      document.getElementById('arrangeGameBtn').click();
+      const sheet = document.getElementById('arrangeSheet');
+      const opensOn = (sheet.querySelector('.mp-seg-item[aria-selected="true"]') || {}).textContent;
+      const fill = (names) => sheet.querySelectorAll('.agreed-name').forEach((el, i) => { el.value = names[i]; el.dispatchEvent(new Event('input')); });
+      const wait = () => new Promise((res) => setTimeout(res, 40));
+      fill(['shaun', 'Tom', 'Max', 'Nobody']);
+      sheet.querySelector('.agreed-save').click(); await wait();
+      const refused = sheet.querySelector('.agreed-msg').textContent;
+      fill(['shaun', 'Tom', 'Max', 'KC']);
+      const date = sheet.querySelector('.agreed-date'); date.value = '2026-09-30'; date.dispatchEvent(new Event('input'));
+      const venue = sheet.querySelector('.agreed-venue'); venue.value = 'Origin'; venue.dispatchEvent(new Event('input'));
+      const booked = sheet.querySelector('.agreed-booked'); booked.checked = true; booked.dispatchEvent(new Event('change'));
+      sheet.querySelector('.agreed-save').click(); await wait();
+      const first = gameRequestsState.at(-1);
+      const after = { msg: sheet.querySelector('.agreed-msg').textContent, open: sheet.classList.contains('show'),
+        names: [...sheet.querySelectorAll('.agreed-name')].map((el) => el.value), date: sheet.querySelector('.agreed-date').value,
+        venue: sheet.querySelector('.agreed-venue').value, booked: sheet.querySelector('.agreed-booked').checked };
+      fill(['Len', 'Kaz', 'PDM', 'Rhys']);
+      sheet.querySelector('.agreed-save').click(); await wait();
+      const second = gameRequestsState.at(-1);
+      const S = FixtureFlow.STAGE, now = new Date().toISOString();
+      return { opensOn, refused, added: gameRequestsState.length - before, after,
+        first: { players: first.players, stage: FixtureFlow.stage(first, now), venue: first.location, date: first.preferredDate },
+        second: { players: second.players, stage: FixtureFlow.stage(second, now), venue: second.location }, upcoming: S.UPCOMING };
+    });
+    assert.strictEqual(r.opensOn, 'Agreed');
+    assert.match(r.refused, /Unrecognized name: Nobody/);
+    assert.strictEqual(r.added, 2);
+    assert.deepStrictEqual(r.first, { players: ['Shaun', 'Tom', 'Max', 'KC'], stage: r.upcoming, venue: 'Origin', date: '2026-09-30' }, 'written in the club\'s own spelling');
+    assert.match(r.after.msg, /Added: Shaun & Tom v Max & KC — in Upcoming\. Add another, or close\./);
+    assert.ok(r.after.open, 'the sheet stays open for the next one');
+    assert.deepStrictEqual(r.after.names, ['', '', '', '']);
+    assert.deepStrictEqual([r.after.date, r.after.venue, r.after.booked], ['2026-09-30', 'Origin', true], 'date, venue and booking carry over');
+    assert.deepStrictEqual(r.second, { players: ['Len', 'Kaz', 'PDM', 'Rhys'], stage: r.upcoming, venue: 'Origin' });
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
