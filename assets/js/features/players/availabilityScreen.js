@@ -26,7 +26,7 @@ function openAvailabilitySheet(name){
   if(!canEditAvailability(name)) return;
   const c = Availability.clean(availabilityState[name] || {});
   const today = localIsoToday();
-  availabilityDraft = { name, weekly: c.weekly, exceptions: c.exceptions.filter(x => x.date >= today) };
+  availabilityDraft = { name, halfHourGrid: c.halfHourGrid, weekly: c.weekly, exceptions: c.exceptions.filter(x => x.date >= today) };
   renderAvailabilitySheet('');
   availabilitySheet().classList.add('show');
 }
@@ -40,20 +40,27 @@ function renderAvailabilitySheet(message){
   const A = Availability;
   // Days across, hours down: seven narrow columns fit a phone.
   const head = `<div class="av-row av-head"><span></span>${A.DAYS.map(day => `<button type="button" class="av-dayhead" data-av-col="${day}" aria-label="All of ${A.DAY_LABEL[day]}">${A.DAY_LABEL[day]}</button>`).join('')}</div>`;
-  const grid = A.HOURS.map(h => `<div class="av-row"><span class="av-hour">${A.hourLabel(h)}</span>${A.DAYS.map(day => {
-    const on = (d.weekly[day] || []).includes(h);
-    return `<button type="button" class="av-cell${on ? ' is-on' : ''}" data-av-day="${day}" data-av-hour="${h}" aria-pressed="${on}" aria-label="${A.DAY_LABEL[day]} ${A.hourLabel(h)}"></button>`;
+  // Hourly, or half-hours where the player asked for them. Stored in
+  // half-hours either way: an hour is its two halves.
+  const rows = d.halfHourGrid ? A.HALVES : A.HOURS;
+  const grid = rows.map(h => `<div class="av-row${d.halfHourGrid ? ' is-half' : ''}"><span class="av-hour">${d.halfHourGrid && h % 1 ? ':30' : A.hourLabel(h)}</span>${A.DAYS.map(day => {
+    const have = d.weekly[day] || [];
+    const parts = d.halfHourGrid ? [h] : [h, h + 0.5];
+    const n = parts.filter(x => have.includes(x)).length;
+    const on = n === parts.length, some = n > 0 && !on;
+    return `<button type="button" class="av-cell${on ? ' is-on' : some ? (have.includes(h) ? ' is-part is-first' : ' is-part is-second') : ''}" data-av-day="${day}" data-av-hour="${h}" aria-pressed="${on}" aria-label="${A.DAY_LABEL[day]} ${A.hourLabel(h)}"></button>`;
   }).join('')}</div>`).join('');
   const exceptions = d.exceptions.length ? d.exceptions.map((x, i) => `<div class="av-ex">
       <span><b>${escapeHtml(fmtAvailDate(x.date))}</b> · ${x.free.length ? `free ${A.rangesText(x.free)}` : 'not free'}</span>
       <button type="button" class="av-ex-del" data-av-del="${i}" aria-label="Remove">✕</button></div>`).join('')
     : `<div class="av-empty">None. Add a date you can’t make, or an extra one you can.</div>`;
-  const hourOpts = (sel, endTimes) => A.HOURS.map(h => endTimes ? h + 1 : h).map(h => `<option value="${h}"${h === sel ? ' selected' : ''}>${A.hourLabel(h)}</option>`).join('');
+  const hourOpts = (sel, endTimes) => A.HALVES.map(h => endTimes ? h + 0.5 : h).map(h => `<option value="${h}"${h === sel ? ' selected' : ''}>${A.hourLabel(h)}</option>`).join('');
   const summary = A.summary(d);
   availabilitySheet().innerHTML = `<div class="shell-more-panel av-panel" role="dialog" aria-label="When I can play">
     <div class="game-sheet-head"><h3>${mine ? 'When I can play' : `When ${escapeHtml(d.name)} can play`}</h3><button type="button" class="mp-sheet-close av-close" aria-label="Close">×</button></div>
     <div class="av-sub">Tap the hours you can usually play (tap a day to fill or clear it). Everyone sees this when a game is being arranged.</div>
     <div class="av-summary">${summary ? escapeHtml(summary) : 'Nothing set yet.'}</div>
+    <label class="av-halves"><input type="checkbox" class="av-half-toggle"${d.halfHourGrid ? ' checked' : ''}> Half-hour blocks (e.g. from 8:30pm)</label>
     <div class="av-grid">${head}${grid}</div>
     <div class="mp-section-label av-label">Dates that are different</div>
     <div class="av-exs">${exceptions}</div>
@@ -80,31 +87,34 @@ function wireAvailabilitySheet(){
   sheet.querySelectorAll('[data-av-day]').forEach(b => {
     b.onclick = () => {
       const day = b.dataset.avDay, h = Number(b.dataset.avHour), cur = d.weekly[day] || [];
-      d.weekly[day] = cur.includes(h) ? cur.filter(x => x !== h) : cur.concat([h]);
+      const parts = d.halfHourGrid ? [h] : [h, h + 0.5];
+      const allOn = parts.every(x => cur.includes(x));
+      d.weekly[day] = allOn ? cur.filter(x => !parts.includes(x)) : [...new Set(cur.concat(parts))];
       renderAvailabilitySheet('');
     };
   });
   sheet.querySelectorAll('[data-av-col]').forEach(b => {
     b.onclick = () => {
-      const day = b.dataset.avCol, full = (d.weekly[day] || []).length === A.HOURS.length;
-      d.weekly[day] = full ? [] : A.HOURS.slice();
+      const day = b.dataset.avCol, full = (d.weekly[day] || []).length === A.HALVES.length;
+      d.weekly[day] = full ? [] : A.HALVES.slice();
       renderAvailabilitySheet('');
     };
   });
   sheet.querySelectorAll('[data-av-del]').forEach(b => {
     b.onclick = () => { d.exceptions.splice(Number(b.dataset.avDel), 1); renderAvailabilitySheet(''); };
   });
+  sheet.querySelector('.av-half-toggle').onchange = (e) => { d.halfHourGrid = e.target.checked; renderAvailabilitySheet(''); };
   const kind = sheet.querySelector('.av-add-kind'), range = sheet.querySelector('.av-add-range');
   kind.onchange = () => { range.hidden = kind.value !== 'range'; };
   sheet.querySelector('.av-add-btn').onclick = () => {
     const date = sheet.querySelector('.av-add-date').value;
     if(!date){ renderAvailabilitySheet('Choose a date first.'); return; }
     let free = [];
-    if(kind.value === 'all') free = A.HOURS.slice();
+    if(kind.value === 'all') free = A.HALVES.slice();
     if(kind.value === 'range'){
       const from = Number(sheet.querySelector('.av-add-from').value), to = Number(sheet.querySelector('.av-add-to').value);
       if(to <= from){ renderAvailabilitySheet('The end has to be after the start.'); return; }
-      free = A.HOURS.filter(h => h >= from && h < to);
+      free = A.HALVES.filter(h => h >= from && h < to);
     }
     d.exceptions = d.exceptions.filter(x => x.date !== date).concat([{ date, free }]).sort((a, b) => (a.date < b.date ? -1 : 1));
     renderAvailabilitySheet('');
@@ -112,7 +122,7 @@ function wireAvailabilitySheet(){
   sheet.querySelector('.av-save').onclick = async () => {
     const btn = sheet.querySelector('.av-save');
     btn.disabled = true;
-    const entry = { ...A.clean(d), updatedAt: new Date().toISOString(), by: verifiedPlayerName() === d.name ? d.name : ((signedInAdmin && signedInAdmin.name) || 'Admin') };
+    const entry = { ...A.clean({ ...d, unit: 'half' }), updatedAt: new Date().toISOString(), by: verifiedPlayerName() === d.name ? d.name : ((signedInAdmin && signedInAdmin.name) || 'Admin') };
     const ok = await saveAvailability(d.name, entry);
     btn.disabled = false;
     if(!ok){ renderAvailabilitySheet(storageAvailable() ? 'Couldn’t save. Publish the latest database rules (docs/PLAYER_CODES.md), or sign in with your code.' : 'Couldn’t save: no connection.'); return; }
