@@ -111,6 +111,25 @@ async function saveClubSettings(settings){
   } catch(e){ lastStorageError = (e && e.message) ? e.message : String(e); console.error('save club settings failed', e); return false; }
 }
 
+// When each player can play (domain/players/availability.js): one document
+// per player in `availability`, written by that player (signed in with their
+// code) or an Admin -- the rules check it.
+const AVAILABILITY_COLLECTION = 'availability';
+async function loadAvailability(){
+  try {
+    const snap = await db.collection(AVAILABILITY_COLLECTION).get();
+    const out = {};
+    snap.docs.forEach(d => { out[d.id] = d.data(); });
+    return out;
+  } catch(e){ console.error('load availability failed', e); return {}; }
+}
+async function saveAvailability(name, entry){
+  try {
+    await db.collection(AVAILABILITY_COLLECTION).doc(name).set(entry);
+    return true;
+  } catch(e){ lastStorageError = (e && e.message) ? e.message : String(e); console.error('save availability failed', e); return false; }
+}
+
 async function loadCourtBookings(){
   try { const v = await fsGet(STORAGE_KEY_COURT_BOOKINGS); if(v) return JSON.parse(v); } catch(e){ console.error('load court bookings failed', e); }
   return [];

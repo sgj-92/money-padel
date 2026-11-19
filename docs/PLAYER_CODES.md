@@ -8,9 +8,10 @@ Players sign in with a personal code instead of an email and password
 
 1. **Publish the database rules.** Firestore Database › Rules: paste the whole
    of `firestore.rules` from this repository, then **Publish**. They add
-   `playerAccounts`, `playerCodes` and `playerLogins` (Admins only, except a
-   player may read their own account entry, and anyone may look up which
-   sign-in a name uses).
+   `playerAccounts`, `playerCodes`, `playerLogins` and `availability` (Admins
+   only, except a player may read their own account entry, anyone may look up
+   which sign-in a name uses, and anyone may read when players can play, which
+   only that player or an Admin may change).
 2. **Allow the app to make accounts.** Authentication › Settings › User
    actions: **Enable create (sign-up)** must be ticked. It is on by default.
    Email/Password sign-in is already on (the Admin accounts use it).
@@ -38,3 +39,10 @@ the code. Firebase slows down repeated wrong attempts. Which player an account b
 `playerAccounts/{uid}`; a replaced code's account loses that entry and signs in
 to nothing. Replaced accounts stay in Authentication › Users and can be deleted
 there at any time; nothing depends on them.
+
+## When I can play
+
+A signed-in player: Who are you? › **When I can play**. A week of morning /
+afternoon / evening, plus dates that are different (not free, or free at a
+time). An Admin can set anyone's from Admin › Player codes › **Times**. When a
+game is arranged with a date, the app shows who is free then.

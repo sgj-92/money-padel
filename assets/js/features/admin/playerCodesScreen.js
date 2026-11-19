@@ -21,7 +21,8 @@ function buildPlayerCodesHtml(){
         <div class="pc-name"><b>${escapeHtml(n)}</b>${c ? (c.own ? '<span class="pc-none">chose their own code ✓</span>' : `<span class="pc-code">${escapeHtml(formatPlayerCode(c.code))}</span>`) : '<span class="pc-none">no code yet</span>'}</div>
         <div class="pc-actions">${c ? `${c.own ? '' : `<button type="button" class="preset-btn pc-copy" data-pc-copy="${escapeHtml(n)}">Copy message</button>`}
           <button type="button" class="preset-btn pc-new" data-pc-make="${escapeHtml(n)}"${busy ? ' disabled' : ''}>${busy ? 'Making…' : 'New code'}</button>`
-          : `<button type="button" class="tab-btn active pc-make" data-pc-make="${escapeHtml(n)}"${busy ? ' disabled' : ''}>${busy ? 'Making…' : 'Make code'}</button>`}</div>
+          : `<button type="button" class="tab-btn active pc-make" data-pc-make="${escapeHtml(n)}"${busy ? ' disabled' : ''}>${busy ? 'Making…' : 'Make code'}</button>`}
+          <button type="button" class="preset-btn pc-times" data-pc-times="${escapeHtml(n)}" title="When ${escapeHtml(n)} can play">Times${availabilityState[n] && Availability.hasAny(availabilityState[n]) ? ' ✓' : ''}</button></div>
       </div>`;
     }).join('')}</div>`;
 }
@@ -59,6 +60,7 @@ function wirePlayerCodes(){
       redrawPlayerCodes();
     };
   });
+  body.querySelectorAll('[data-pc-times]').forEach(b => { b.onclick = () => openAvailabilitySheet(b.dataset.pcTimes); });
   body.querySelectorAll('[data-pc-copy]').forEach(b => {
     b.onclick = async () => {
       const name = b.dataset.pcCopy, c = playerCodesState[name];
