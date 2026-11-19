@@ -545,6 +545,7 @@ function buildViewerSelector(){
     <div class="mp-section-label" style="text-align:center;">Welcome to ${escapeHtml(CLUB.name)}</div>
     <div class="mp-display-title viewer-selector-title">Who are you?</div>
     <div class="viewer-selector-sub">Choose your player to personalise your experience.</div>
+    ${typeof playerSignedInLineHtml === 'function' ? playerSignedInLineHtml() : ''}
     <input type="text" id="viewerSearchInput" class="viewer-search" placeholder="Search players…">
     <div id="viewerPlayerList" class="viewer-player-list"></div>
     <button type="button" class="viewer-skip" id="viewerSkipBtn">Not now</button>
@@ -565,14 +566,23 @@ function buildViewerSelector(){
       : `<div class="viewer-empty">${names.length ? 'No player by that name.' : `No players yet. An Admin adds them in More › Admin › Player tags.`}</div>`;
     listEl.querySelectorAll('.viewer-player-btn').forEach(btn=>{
       btn.onclick = ()=>{
-        setCurrentViewer(btn.dataset.name);
-        overlay.classList.remove('show');
-        setTimeout(()=> overlay.remove(), 250);
-        updateMyPlayerLabel();
+        const choose = (name)=>{
+          setCurrentViewer(name);
+          overlay.classList.remove('show');
+          setTimeout(()=> overlay.remove(), 250);
+          updateMyPlayerLabel();
+        };
+        // A community with player codes asks for this player's (playerSignIn.js).
+        if(typeof playerCodeStepWanted === 'function' && playerCodeStepWanted(btn.dataset.name)){
+          showPlayerCodeStep(panel, btn.dataset.name, choose, ()=>{ overlay.remove(); buildViewerSelector(); });
+          return;
+        }
+        choose(btn.dataset.name);
       };
     });
   }
   renderList('');
+  if(typeof wirePlayerSignedInLine === 'function') wirePlayerSignedInLine(panel, ()=>{ overlay.remove(); buildViewerSelector(); updateMyPlayerLabel(); });
   document.getElementById('viewerSearchInput').addEventListener('input', (e)=> renderList(e.target.value));
   // Never a trap: anyone can look around first, and choose later from More.
   document.getElementById('viewerSkipBtn').onclick = ()=>{

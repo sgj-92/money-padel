@@ -207,6 +207,16 @@
   .court-add{ width:100%; margin:6px 0 4px; }
   .court-form{ background:var(--bg1); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin:8px 0; }
   .mrc-how{ font-size:11px; color:var(--text-dim); text-align:center; margin-top:6px; }
+  .viewer-code-input{ text-align:center; letter-spacing:.12em; font-size:20px; text-transform:uppercase; }
+  .viewer-code-go{ width:100%; margin-top:10px; }
+  .viewer-code-msg{ min-height:18px; font-size:13px; color:var(--text-soft); text-align:center; margin:8px 0 2px; }
+  .viewer-code-note{ font-size:12px; color:var(--text-dim); text-align:center; margin:4px 0 8px; }
+  .viewer-code-signed{ font-size:13px; color:var(--text-soft); text-align:center; margin:0 0 10px; }
+  .pc-row{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--line); flex-wrap:wrap; }
+  .pc-name{ display:flex; flex-direction:column; gap:2px; font-size:14px; }
+  .pc-code{ font-family:ui-monospace, Menlo, monospace; letter-spacing:.08em; color:var(--gold-bright); font-size:13px; }
+  .pc-none{ font-size:12px; color:var(--text-dim); }
+  .pc-actions{ display:flex; gap:6px; }
   .cs-row{ margin-bottom:10px; }
   .cs-input{ display:flex; align-items:center; gap:10px; }
   .cs-input .fg-select{ width:90px; flex:none; }
