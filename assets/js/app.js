@@ -1008,6 +1008,10 @@ function arriveAtRankings(){
   }
   rankingsMonthChoice = null;
   rankingsMonthDefault = meaningfulMonthNow();
+  // Power keeps All time for a club's first period: a few games in a quarter
+  // would hide most of the club from its only rating list (Shaun, 19 Nov,
+  // asked for the latest quarter on This Quarter, not on Power).
+  if(rankingsMonthDefault.reason === 'first-period') rankingsMonthDefault = { ...rankingsMonthDefault, month: 'all' };
   applyRankingsMonth(rankingsMonthDefault.month);
 }
 

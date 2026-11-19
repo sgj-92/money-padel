@@ -78,11 +78,14 @@
       .map((m) => (m && typeof m.date === 'string' ? period().of(m.date) : null))
       .filter((k) => k && k < current))].sort();
     const fallback = earlier.length ? earlier[earlier.length - 1] : null;
-
+    if (fallback) return { month: fallback, current, currentCount, threshold: need, reason: 'current-too-thin' };
+    // A new club's first period (Shaun, 19 Nov: Padel Championships opened on
+    // All time): the period being played is the latest there is, so it opens
+    // on that, however few its games. All time only when nothing is played.
     return {
-      month: fallback || 'all',
+      month: currentCount ? current : 'all',
       current, currentCount, threshold: need,
-      reason: fallback ? 'current-too-thin' : 'no-completed-month',
+      reason: currentCount ? 'first-period' : 'no-completed-month',
     };
   }
 
