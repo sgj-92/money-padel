@@ -74,6 +74,16 @@ service cloud.firestore {
     // read and written; never public.
     match /askClaude/{id}         { allow read, write: if isAdmin(); }
 
+    // Player codes (data/playerAuth.js; Shaun, 19 Nov). Which player a
+    // code's account is: read by that account and by Admins, written only by
+    // an Admin. The codes themselves, so an Admin can send one again: Admins
+    // only, never public.
+    match /playerAccounts/{uid}   {
+      allow get: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+      allow list, write: if isAdmin();
+    }
+    match /playerCodes/{player}   { allow read, write: if isAdmin(); }
+
     // Who is an Admin. Each Admin may read their own entry (the app checks it
     // at sign-in); nobody may write it -- the console does that.
     match /admins/{uid} {

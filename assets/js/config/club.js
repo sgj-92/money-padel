@@ -127,6 +127,9 @@ const CLUBS = {
       },
     },
     adminAccounts: true,
+    // Players sign in with a personal code (data/playerAuth.js; Shaun, 19 Nov:
+    // Padel Championships first).
+    playerAccounts: true,
     legacyAdminPassword: false,
     dataScripts: [],
     // The old MP - Dashboard project, emptied and reused (Shaun, 8 Nov: the

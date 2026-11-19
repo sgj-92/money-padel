@@ -2275,7 +2275,7 @@ async function init(){
   // the application has no rating without it and will not invent one -- and it
   // is, because nothing below runs until every one of these has landed.
   const [ , stored, myName, ownerHash, boardHash, unlocked,
-          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords, admin, courts, settings ] =
+          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords, admin, courts, settings, player ] =
     await PerfTrace.timeAsync('load the record', Promise.all([
       loadV3State(),
       loadStoredData(),
@@ -2293,6 +2293,7 @@ async function init(){
       loadSignedInAdmin(),
       loadCourtBookings(),
       loadClubSettings(),
+      loadSignedInPlayer(),
     ]));
   extraMatchesState = stored.extraMatches;
   tagOverridesState = stored.tagOverrides;
@@ -2308,6 +2309,9 @@ async function init(){
   // while the community still allows it, someone who unlocked with the old
   // shared password on this device.
   signedInAdmin = admin;
+  // A player signed in with their code is that player on this device.
+  signedInPlayer = admin ? null : player;
+  if(signedInPlayer){ try { localStorage.setItem(VIEWER_STORAGE_KEY, signedInPlayer.name); } catch(e){ /* not kept: fine */ } }
   const byPassword = unlocked && legacyAdminPasswordOn();
   if(admin) adminRole = admin.role;
   else if(!byPassword) adminRole = null;

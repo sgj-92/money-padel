@@ -145,9 +145,23 @@ async function open(options = {}) {
       async signOut() { window.__auth.push({ signOut: authState.user && authState.user.email }); authState.user = null; },
       async sendPasswordResetEmail(email) { window.__auth.push({ reset: email }); },
     };
+    // A second, named app makes accounts (data/playerAuth.js) without
+    // touching who is signed in on the main one.
+    const secondAuth = {
+      user: null,
+      async createUserWithEmailAndPassword(email, password) {
+        if (accounts[email]) throw authErr('auth/email-already-in-use');
+        const uid = `uid-${Object.keys(accounts).length + 1}-${email.split('@')[0]}`;
+        accounts[email] = { password, uid };
+        window.__auth.push({ created: email });
+        this.user = userFor(uid, email);
+        return { user: this.user };
+      },
+      async signOut() { this.user = null; },
+    };
     window.firebase = {
       auth() { return authApi; },
-      initializeApp() {},
+      initializeApp(config, name) { return name ? { auth() { return secondAuth; } } : undefined; },
       firestore() {
         return {
           collection(name) {
