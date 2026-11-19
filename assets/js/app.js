@@ -66,6 +66,7 @@ function applyClubSettings(){
 function resetRankingsMinGames(){
   if(typeof minGamesInput !== 'undefined') setMinGames(defaultRankingMinGames(selectedMonth));
 }
+let availabilityState = {};  // { player: Availability entry } (domain/players/availability.js)
 let courtBookingsState = []; // CourtBookings: courts booked, players still to confirm (admin)
 let gameRequestsState = []; // {id, requestedBy, requestedAt, players:[4 names], confirmations:{name:bool}, status:'pending'|'confirmed'|'removed'}
 
@@ -2275,7 +2276,7 @@ async function init(){
   // the application has no rating without it and will not invent one -- and it
   // is, because nothing below runs until every one of these has landed.
   const [ , stored, myName, ownerHash, boardHash, unlocked,
-          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords, admin, courts, settings, player ] =
+          visibility, requests, areas, challenges, northSouth, potmRecords, championRecords, admin, courts, settings, player, availability ] =
     await PerfTrace.timeAsync('load the record', Promise.all([
       loadV3State(),
       loadStoredData(),
@@ -2294,6 +2295,7 @@ async function init(){
       loadCourtBookings(),
       loadClubSettings(),
       loadSignedInPlayer(),
+      playerAccountsOn() ? loadAvailability() : Promise.resolve({}),
     ]));
   extraMatchesState = stored.extraMatches;
   tagOverridesState = stored.tagOverrides;
@@ -2320,6 +2322,7 @@ async function init(){
   gameRequestsState = requests;
   courtBookingsState = Array.isArray(courts) ? courts : [];
   clubSettingsState = (settings && typeof settings === 'object') ? settings : {};
+  availabilityState = availability || {};
   applyClubSettings();
   devAreasState = areas;
   challengesState = challenges;

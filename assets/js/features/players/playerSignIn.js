@@ -60,6 +60,7 @@ function playerSignedInLineHtml(){
   }
   if(!signedInPlayer) return '';
   return `<div class="viewer-code-signed">Signed in as <b>${escapeHtml(signedInPlayer.name)}</b> ✓
+    <button type="button" class="link-btn" id="playerAvailBtn">When I can play</button> ·
     <button type="button" class="link-btn" id="playerChangeCodeBtn">Change code</button> ·
     <button type="button" class="link-btn" id="playerSignOutBtn">Sign out</button></div>`;
 }
@@ -68,6 +69,8 @@ function wirePlayerSignedInLine(root, after){
   if(b) b.onclick = async () => { await playerSignOut(); clearCurrentViewer(); if(after) after(); };
   const c = root.querySelector('#playerChangeCodeBtn');
   if(c) c.onclick = () => showChangeCodeStep(root, after);
+  const a = root.querySelector('#playerAvailBtn');
+  if(a) a.onclick = () => { const sheet = root.closest('.shell-more-sheet'); if(sheet){ sheet.classList.remove('show'); setTimeout(() => sheet.remove(), 250); } openAvailabilitySheet(signedInPlayer.name); };
   const u = root.querySelector('#playerUseCodeBtn');
   if(u) u.onclick = () => showPlayerCodeStep(root, verifiedPlayerName(), (name) => { setCurrentViewer(name); if(after) after(); }, after);
 }
