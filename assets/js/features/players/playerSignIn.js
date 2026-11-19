@@ -24,7 +24,7 @@ function showPlayerCodeStep(panel, name, choose, back){
     <div class="mp-display-title viewer-selector-title">Hi ${escapeHtml(name)}</div>
     <div class="viewer-selector-sub">Enter your code to sign in. You’ll stay signed in on this phone.</div>
     ${adminNote}${switching}
-    <input type="text" id="playerCodeInput" class="viewer-search viewer-code-input" placeholder="KZ7P-42QM" maxlength="12"
+    <input type="text" id="playerCodeInput" class="viewer-search viewer-code-input" placeholder="Your code" maxlength="12"
       autocapitalize="characters" autocomplete="one-time-code" autocorrect="off" spellcheck="false" aria-label="Your code">
     <button type="button" class="mp-btn-primary mp-btn-touch viewer-code-go" id="playerCodeGo">Sign in</button>
     <div class="viewer-code-msg" id="playerCodeMsg" role="status"></div>
@@ -35,7 +35,7 @@ function showPlayerCodeStep(panel, name, choose, back){
   const msg = panel.querySelector('#playerCodeMsg');
   const submit = async () => {
     go.disabled = true; msg.textContent = 'Signing in…';
-    const r = await playerSignIn(input.value);
+    const r = await playerSignIn(name, input.value);
     go.disabled = false;
     if(!r.ok){ msg.textContent = r.message; input.focus(); return; }
     // An Admin account signed out by this is no longer Admin on this phone.
@@ -53,9 +53,42 @@ function showPlayerCodeStep(panel, name, choose, back){
 // A line for the chooser's head: who is signed in here, with Sign out.
 function playerSignedInLineHtml(){
   if(!signedInPlayer) return '';
-  return `<div class="viewer-code-signed">Signed in as <b>${escapeHtml(signedInPlayer.name)}</b> ✓ <button type="button" class="link-btn" id="playerSignOutBtn">Sign out</button></div>`;
+  return `<div class="viewer-code-signed">Signed in as <b>${escapeHtml(signedInPlayer.name)}</b> ✓
+    <button type="button" class="link-btn" id="playerChangeCodeBtn">Change code</button> ·
+    <button type="button" class="link-btn" id="playerSignOutBtn">Sign out</button></div>`;
 }
 function wirePlayerSignedInLine(root, after){
   const b = root.querySelector('#playerSignOutBtn');
   if(b) b.onclick = async () => { await playerSignOut(); clearCurrentViewer(); if(after) after(); };
+  const c = root.querySelector('#playerChangeCodeBtn');
+  if(c) c.onclick = () => showChangeCodeStep(root, after);
+}
+
+// Shaun, 19 Nov: "Allow them to change their code to a 6 digit code of their
+// choice too." The current code once, then the new 6 digits twice.
+function showChangeCodeStep(panel, back){
+  const name = signedInPlayer ? signedInPlayer.name : '';
+  const pinInput = (id, label) => `<input type="password" id="${id}" class="viewer-search viewer-code-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" aria-label="${label}" placeholder="${label}">`;
+  panel.innerHTML = `
+    <div class="mp-section-label" style="text-align:center;">${escapeHtml(CLUB.name)}</div>
+    <div class="mp-display-title viewer-selector-title">Your own code</div>
+    <div class="viewer-selector-sub">Choose 6 digits to sign in with from now on, ${escapeHtml(name)}. Your old code stops working.</div>
+    <input type="text" id="ownCodeCurrent" class="viewer-search viewer-code-input" placeholder="Current code" maxlength="12" autocapitalize="characters" autocomplete="current-password" autocorrect="off" spellcheck="false" aria-label="Current code">
+    ${pinInput('ownCodeNew', 'New 6 digits')}
+    ${pinInput('ownCodeAgain', 'Same 6 digits again')}
+    <button type="button" class="mp-btn-primary mp-btn-touch viewer-code-go" id="ownCodeSave">Save my code</button>
+    <div class="viewer-code-msg" id="ownCodeMsg" role="status"></div>
+    <button type="button" class="viewer-skip" id="ownCodeBack">‹ Back</button>`;
+  const msg = panel.querySelector('#ownCodeMsg');
+  const save = panel.querySelector('#ownCodeSave');
+  save.onclick = async () => {
+    const pin = panel.querySelector('#ownCodeNew').value.trim();
+    if(pin !== panel.querySelector('#ownCodeAgain').value.trim()){ msg.textContent = 'The two new codes don’t match.'; return; }
+    save.disabled = true; msg.textContent = 'Saving…';
+    const r = await changeOwnCode(panel.querySelector('#ownCodeCurrent').value, pin);
+    save.disabled = false;
+    msg.textContent = r.message;
+    if(r.ok){ save.remove(); panel.querySelector('#ownCodeBack').textContent = 'Done'; }
+  };
+  panel.querySelector('#ownCodeBack').onclick = () => { if(back) back(); };
 }

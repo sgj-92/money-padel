@@ -21,6 +21,8 @@ test('switched on for Padel Championships only; the codes are Admins\' only and 
   assert.ok(!CLUBS.moneypadel.playerAccounts, 'Money Padel later');
   assert.match(RULES, /match \/playerAccounts\/\{uid\}\s*\{\s*allow get: if isAdmin\(\) \|\| \(request\.auth != null && request\.auth\.uid == uid\);\s*allow list, write: if isAdmin\(\);/);
   assert.match(RULES, /match \/playerCodes\/\{player\}\s*\{ allow read, write: if isAdmin\(\); \}/);
+  // The login entry: public to look up, the player may only mark their own choice.
+  assert.match(RULES, /match \/playerLogins\/\{player\}[\s\S]*?affectedKeys\(\)\.hasOnly\(\['own', 'changedAt'\]\)/);
 });
 
 maybe('an Admin makes a code; the player taps their name, enters it, and stays signed in on that phone', async () => {
@@ -39,7 +41,7 @@ maybe('an Admin makes a code; the player taps their name, enters it, and stays s
       document.querySelector('[data-pc-make="Kaz"]').click();
       for (let k = 0; k < 200 && !(playerCodesState && playerCodesState.Kaz); k++) await new Promise((res) => setTimeout(res, 20));
       document.querySelector('[data-pc-copy="Kaz"]').click(); await new Promise((res) => setTimeout(res, 30));
-      const writes = window.__writes.filter((w) => w.collection === 'playerAccounts' || w.collection === 'playerCodes');
+      const writes = window.__writes.filter((w) => ['playerAccounts', 'playerCodes', 'playerLogins'].includes(w.collection));
       return { before, code: playerCodesState.Kaz.code, copied, writes, stillAdmin: !!signedInAdmin, created: window.__auth.filter((a) => a.created) };
     });
     assert.match(r.before, /no code yet/);
@@ -51,13 +53,17 @@ maybe('an Admin makes a code; the player taps their name, enters it, and stays s
     assert.strictEqual(r.writes.find((w) => w.collection === 'playerCodes').id, 'Kaz');
     assert.match(r.copied[0], new RegExp(`Hi Kaz, here's your Padel Championships code: ${r.code.slice(0, 4)}-${r.code.slice(4)}`));
     code = r.code; message = r.copied[0];
-    accounts = { [`${code.toLowerCase()}@players.sgj.luxe`]: { password: code, uid: acct.id } };
+    const login = r.writes.find((w) => w.collection === 'playerLogins');
+    assert.match(login.doc.email, /^p[a-z0-9]{10}@players\.sgj\.luxe$/, 'a made-up sign-in, not derived from the code');
+    assert.strictEqual(login.id, 'Kaz');
+    accounts = { [login.doc.email]: { password: code, uid: acct.id } };
     assert.deepStrictEqual(admin.pageErrors, []);
   } finally { await admin.close(); }
   assert.ok(message);
 
   // Kaz's phone: a wrong code is refused in words, the right one signs in.
-  const docs = { playerAccounts: { [accounts[Object.keys(accounts)[0]].uid]: { player: 'Kaz' } } };
+  const email = Object.keys(accounts)[0];
+  const docs = { playerAccounts: { [accounts[email].uid]: { player: 'Kaz' } }, playerLogins: { Kaz: { email, own: false } } };
   const phone = await H.open({ path: 'index.html?club=padelchampionships', record: EMPTY, club: TAGS, accounts, documents: docs });
   try {
     const r = await phone.run(async (c) => {
@@ -120,4 +126,44 @@ maybe('a player without a code can still just browse as themselves; Money Padel 
     });
     assert.deepStrictEqual(r, { asked: false, viewer: 'Kaz' });
   } finally { await mp.close(); }
+});
+
+// Shaun, 19 Nov: "Allow them to change their code to a 6 digit code of their choice too."
+maybe('a signed-in player swaps their code for 6 digits of their own, and signs in with those after', async () => {
+  const email = 'pabcdefghij@players.sgj.luxe';
+  const accounts = { [email]: { password: 'KZ7P42QM', uid: 'uid-kaz' } };
+  const docs = { playerAccounts: { 'uid-kaz': { player: 'Kaz' } }, playerLogins: { Kaz: { email, own: false } } };
+  const phone = await H.open({ path: 'index.html?club=padelchampionships', record: EMPTY, club: TAGS, accounts, documents: docs, signedIn: email });
+  try {
+    const r = await phone.run(async () => {
+      for (let k = 0; k < 100 && !signedInPlayer; k++) await new Promise((res) => setTimeout(res, 20));
+      buildViewerSelector();
+      document.getElementById('playerChangeCodeBtn').click();
+      const set = (id, v) => { document.getElementById(id).value = v; };
+      const save = async () => { document.getElementById('ownCodeSave').click(); for (let k = 0; k < 50; k++) { await new Promise((res) => setTimeout(res, 20)); if (!/Saving/.test(document.getElementById('ownCodeMsg').textContent)) break; } return document.getElementById('ownCodeMsg').textContent; };
+      set('ownCodeCurrent', 'KZ7P-42QM'); set('ownCodeNew', '111111'); set('ownCodeAgain', '111111');
+      const easy = await save();
+      set('ownCodeNew', '472915'); set('ownCodeAgain', '472916');
+      const mismatch = await save();
+      set('ownCodeCurrent', 'AAAA-AAAA'); set('ownCodeAgain', '472915');
+      const wrongCurrent = await save();
+      set('ownCodeCurrent', 'kz7p 42qm');
+      const done = await save();
+      const marked = window.__writes.filter((w) => w.collection === 'playerLogins').pop();
+      // Signed out, then back in with the chosen digits.
+      await playerSignOut();
+      const old = await playerSignIn('Kaz', 'KZ7P-42QM');
+      const fresh = await playerSignIn('Kaz', '472915');
+      return { easy, mismatch, wrongCurrent, done, marked: marked && marked.doc, old: old.ok, fresh: fresh.ok, who: signedInPlayer && signedInPlayer.name };
+    });
+    assert.match(r.easy, /Too easy to guess/);
+    assert.match(r.mismatch, /don’t match/);
+    assert.match(r.wrongCurrent, /current code isn’t right/);
+    assert.match(r.done, /Your code is now the 6 digits you chose/);
+    assert.deepStrictEqual([r.marked.email, r.marked.own], [email, true], 'the Admin list learns it is their own; nothing else changes');
+    assert.strictEqual(r.old, false, 'the old code stops working');
+    assert.strictEqual(r.fresh, true);
+    assert.strictEqual(r.who, 'Kaz');
+    assert.deepStrictEqual(phone.pageErrors, []);
+  } finally { await phone.close(); }
 });

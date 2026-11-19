@@ -12,14 +12,14 @@ function buildPlayerCodesHtml(){
   if(playerCodesState === null) return `<div class="section-sub">Reading codes…</div>`;
   const names = entryPlayerNames();
   const made = names.filter(n => playerCodesState[n]).length;
-  return `<div class="section-sub" style="margin-top:0;">Each player signs in once with their own code and stays signed in on their phone. Copy the message and send it to them on WhatsApp. A new code replaces the old one, which stops working. ${made} of ${names.length} have a code.</div>
+  return `<div class="section-sub" style="margin-top:0;">Each player signs in once with their own code and stays signed in on their phone. Copy the message and send it to them on WhatsApp. They can then change it to 6 digits of their own. A new code (for one forgotten or shared) replaces the old one, which stops working. ${made} of ${names.length} have a code.</div>
     ${playerCodesNote ? `<div class="section-sub" role="status" id="playerCodesNote">${escapeHtml(playerCodesNote)}</div>` : ''}
     <div class="pc-list">${names.map(n => {
       const c = playerCodesState[n];
       const busy = playerCodesBusy === n;
       return `<div class="pc-row" data-pc-player="${escapeHtml(n)}">
-        <div class="pc-name"><b>${escapeHtml(n)}</b>${c ? `<span class="pc-code">${escapeHtml(formatPlayerCode(c.code))}</span>` : '<span class="pc-none">no code yet</span>'}</div>
-        <div class="pc-actions">${c ? `<button type="button" class="preset-btn pc-copy" data-pc-copy="${escapeHtml(n)}">Copy message</button>
+        <div class="pc-name"><b>${escapeHtml(n)}</b>${c ? (c.own ? '<span class="pc-none">chose their own code ✓</span>' : `<span class="pc-code">${escapeHtml(formatPlayerCode(c.code))}</span>`) : '<span class="pc-none">no code yet</span>'}</div>
+        <div class="pc-actions">${c ? `${c.own ? '' : `<button type="button" class="preset-btn pc-copy" data-pc-copy="${escapeHtml(n)}">Copy message</button>`}
           <button type="button" class="preset-btn pc-new" data-pc-make="${escapeHtml(n)}"${busy ? ' disabled' : ''}>${busy ? 'Making…' : 'New code'}</button>`
           : `<button type="button" class="tab-btn active pc-make" data-pc-make="${escapeHtml(n)}"${busy ? ' disabled' : ''}>${busy ? 'Making…' : 'Make code'}</button>`}</div>
       </div>`;
@@ -46,7 +46,7 @@ function wirePlayerCodes(){
   body.querySelectorAll('[data-pc-make]').forEach(b => {
     b.onclick = async () => {
       const name = b.dataset.pcMake, existing = playerCodesState && playerCodesState[name];
-      if(existing && !window.confirm(`Make a new code for ${name}? Their current code (${formatPlayerCode(existing.code)}) will stop working.`)) return;
+      if(existing && !window.confirm(`Make a new code for ${name}? ${existing.own ? 'The code they chose' : `Their current code (${formatPlayerCode(existing.code)})`} will stop working.`)) return;
       playerCodesBusy = name; playerCodesNote = ''; redrawPlayerCodes();
       const r = await issuePlayerCode(name, existing);
       playerCodesBusy = null;

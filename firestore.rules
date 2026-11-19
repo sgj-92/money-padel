@@ -83,6 +83,16 @@ service cloud.firestore {
       allow list, write: if isAdmin();
     }
     match /playerCodes/{player}   { allow read, write: if isAdmin(); }
+    // Which account a player's name signs in to (not a mailbox). Anyone may
+    // look one up -- the code is the secret, not this. An Admin writes it; the
+    // player may only mark that they chose their own code.
+    match /playerLogins/{player}  {
+      allow get: if true;
+      allow list, create, delete: if isAdmin();
+      allow update: if isAdmin() || (request.auth != null
+        && get(/databases/$(database)/documents/playerAccounts/$(request.auth.uid)).data.player == player
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['own', 'changedAt']));
+    }
 
     // Who is an Admin. Each Admin may read their own entry (the app checks it
     // at sign-in); nobody may write it -- the console does that.
