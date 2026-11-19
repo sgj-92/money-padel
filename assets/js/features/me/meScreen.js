@@ -14,6 +14,11 @@
 // Where each row goes. Rows a reader may not open are not drawn.
 function meRows(viewer){
   const you = viewer ? [{ me: 'profile', label: 'View my profile' }] : [];
+  // When I can play (Shaun, 19 Nov): the player's own, once signed in with their code.
+  if(viewer && typeof playerAccountsOn === 'function' && playerAccountsOn() && canEditAvailability(viewer.name)){
+    const set = Availability.summary(availabilityState[viewer.name] || {});
+    you.push({ me: 'availability', label: 'When I can play', meta: set || 'Not set' });
+  }
   const settings = [
     { me: 'player', label: 'My Player', meta: viewer ? viewer.name : 'Not chosen' },
     { me: 'datarange', label: 'Data & Rankings', meta: (typeof dataRange !== 'undefined' && dataRange === 'all') ? 'Full history' : 'Verified data' },
@@ -50,7 +55,10 @@ function meIdentityHtml(viewer){
   }
   return `<div class="mp-card-self me-identity">
     <div class="mp-serif-display me-name">${escapeHtml(viewer.name)}</div>
-    <div class="me-identity-sub">Your player on this device. There is no sign-in — anyone can change it.</div>
+    <div class="me-identity-sub">${typeof signedInPlayer !== 'undefined' && signedInPlayer && signedInPlayer.name === viewer.name
+      ? 'Signed in with your code ✓'
+      : (typeof verifiedPlayerName === 'function' && verifiedPlayerName() === viewer.name ? 'Signed in with your Admin account ✓'
+      : (typeof playerAccountsOn === 'function' && playerAccountsOn() ? 'Not signed in — tap My Player to enter your code.' : 'Your player on this device. There is no sign-in — anyone can change it.'))}</div>
   </div>`;
 }
 
@@ -74,6 +82,7 @@ function meOpen(which){
   const viewer = getCurrentViewer();
   if(which === 'profile' && viewer) openSheet(viewer.name);
   else if(which === 'player') buildViewerSelector();
+  else if(which === 'availability' && viewer) openAvailabilitySheet(viewer.name);
   else if(which === 'datarange') openDataRangeSheet();
   else if(which === 'guide') openPowerRatingGuide();
   else if(which === 'about') openAboutPowerRankings();

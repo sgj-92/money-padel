@@ -350,3 +350,28 @@ maybe('an Admin adds agreed games straight from Arrange a Game, one after anothe
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 19 Nov: availability shows when a game is arranged.
+maybe('Arrange a Game shows who is free as the date and time are filled in', async () => {
+  const app = await H.open({ path: 'index.html?club=padelchampionships', record: { players: [], matches: [], ratingJourney: [] }, now: '2026-11-19T10:00:00.000Z',
+    club: { moneypadel_player_tags: { Shaun: { tier: 'A', active: true }, Kaz: { tier: 'A', active: true }, Len: { tier: 'B', active: true }, Max: { tier: 'B', active: true } } },
+    documents: { availability: { Kaz: { weekly: { mon: ['evening'] }, exceptions: [] }, Len: { weekly: { mon: ['evening'] }, exceptions: [] }, Max: { weekly: { mon: ['morning'] }, exceptions: [] } } } });
+  try {
+    const r = await app.run(async () => {
+      isUnlocked = true; adminRole = 'owner'; currentUserName = 'Shaun';
+      goToSection('play');
+      document.getElementById('arrangeGameBtn').click();
+      const sheet = document.getElementById('arrangeSheet');
+      const before = sheet.querySelector('.agreed-hint').textContent.trim();
+      const names = sheet.querySelectorAll('.agreed-name');
+      ['Shaun', 'Kaz', 'Max', ''].forEach((n, i) => { names[i].value = n; names[i].dispatchEvent(new Event('input')); });
+      const date = sheet.querySelector('.agreed-date'); date.value = '2026-11-23'; date.dispatchEvent(new Event('input'));
+      const time = sheet.querySelector('.agreed-time'); time.value = '21:00'; time.dispatchEvent(new Event('input'));
+      return { before, after: sheet.querySelector('.agreed-hint').textContent.replace(/\s+/g, ' ').trim() };
+    });
+    assert.strictEqual(r.before, '', 'nothing until there is a date');
+    assert.match(r.after, /Mon 23 Nov evening: \? Shaun ✓ Kaz ✗ Max/);
+    assert.match(r.after, /Also free: Len/);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});

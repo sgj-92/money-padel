@@ -79,6 +79,7 @@ function arrangeRequestHtml(viewer){
       <label class="fx-m-field"><span class="fx-m-label">Date</span><input type="date" class="fg-select arrange-date" value="${escapeHtml(d.date || '')}"></label>
       <label class="fx-m-field"><span class="fx-m-label">Time</span><input type="time" class="fg-select arrange-time" value="${escapeHtml(d.time || '')}"></label>
     </div>
+    <div class="arrange-hint">${typeof availabilityHintHtml === 'function' ? availabilityHintHtml(d.names, d.date, d.time) : ''}</div>
     <label class="fx-m-field"><span class="fx-m-label">Venue</span><input class="fg-select arrange-venue" value="${escapeHtml(d.venue || '')}" placeholder="Court or venue"></label>
     <button type="button" class="mp-btn-primary mp-btn-touch mp-btn-accent arrange-send"></button>
     <div class="play-flash arrange-msg" role="status"></div>`;
@@ -100,6 +101,7 @@ function arrangeAgreedHtml(){
       <label class="fx-m-field"><span class="fx-m-label">Date</span><input type="date" class="fg-select agreed-date" value="${escapeHtml(d.date || '')}"></label>
       <label class="fx-m-field"><span class="fx-m-label">Time</span><input type="time" class="fg-select agreed-time" value="${escapeHtml(d.time || '')}"></label>
     </div>
+    <div class="agreed-hint">${typeof availabilityHintHtml === 'function' ? availabilityHintHtml(d.names, d.date, d.time) : ''}</div>
     <label class="fx-m-field"><span class="fx-m-label">Venue</span><input class="fg-select agreed-venue" value="${escapeHtml(d.venue || '')}" placeholder="Court or venue"></label>
     <label class="fx-m-booking"><input type="checkbox" class="agreed-booked"${d.booked ? ' checked' : ''}>
       <span><b>Court booked</b><br><span class="fx-m-sub">Goes straight to Upcoming; otherwise Called Out.</span></span></label>
@@ -157,6 +159,8 @@ function renderArrange(show){
       agreedDraft = { names: [...panel.querySelectorAll('.agreed-name')].map(i => i.value),
         date: panel.querySelector('.agreed-date').value, time: panel.querySelector('.agreed-time').value,
         venue: panel.querySelector('.agreed-venue').value, booked: panel.querySelector('.agreed-booked').checked };
+      const hint = panel.querySelector('.agreed-hint');
+      if(hint && typeof availabilityHintHtml === 'function') hint.innerHTML = availabilityHintHtml(agreedDraft.names, agreedDraft.date, agreedDraft.time);
     };
     panel.querySelectorAll('input').forEach(i => { i.addEventListener('input', read); i.addEventListener('change', read); });
     save.onclick = async () => {
@@ -182,6 +186,8 @@ function renderArrange(show){
       arrangeDraft.date = panel.querySelector('.arrange-date').value;
       arrangeDraft.time = panel.querySelector('.arrange-time').value;
       arrangeDraft.venue = panel.querySelector('.arrange-venue').value;
+      const hint = panel.querySelector('.arrange-hint');
+      if(hint && typeof availabilityHintHtml === 'function') hint.innerHTML = availabilityHintHtml(arrangeDraft.names, arrangeDraft.date, arrangeDraft.time);
       send.textContent = arrangeSendLabel();
       send.disabled = send.textContent !== 'Send request';
     };
