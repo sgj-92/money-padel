@@ -56,11 +56,13 @@ function playerSignedInLineHtml(){
   // out as myself then re-enter my code"): say so, and offer their code.
   if(!signedInPlayer && signedInAdmin && playerAccountsOn() && verifiedPlayerName()){
     return `<div class="viewer-code-signed">Signed in as <b>${escapeHtml(verifiedPlayerName())}</b> with your Admin account ✓
-      <button type="button" class="link-btn" id="playerUseCodeBtn">Use my player code instead</button></div>`;
+      <button type="button" class="link-btn" id="playerUseCodeBtn">Use my player code instead</button> ·
+      <button type="button" class="link-btn" id="playerNotifyBtn">Notifications</button></div>`;
   }
   if(!signedInPlayer) return '';
   return `<div class="viewer-code-signed">Signed in as <b>${escapeHtml(signedInPlayer.name)}</b> ✓
     <button type="button" class="link-btn" id="playerAvailBtn">When I can play</button> ·
+    <button type="button" class="link-btn" id="playerNotifyBtn">Notifications</button> ·
     <button type="button" class="link-btn" id="playerChangeCodeBtn">Change code</button> ·
     <button type="button" class="link-btn" id="playerSignOutBtn">Sign out</button></div>`;
 }
@@ -71,6 +73,8 @@ function wirePlayerSignedInLine(root, after){
   if(c) c.onclick = () => showChangeCodeStep(root, after);
   const a = root.querySelector('#playerAvailBtn');
   if(a) a.onclick = () => { const sheet = root.closest('.shell-more-sheet'); if(sheet){ sheet.classList.remove('show'); setTimeout(() => sheet.remove(), 250); } openAvailabilitySheet(signedInPlayer.name); };
+  const nt = root.querySelector('#playerNotifyBtn');
+  if(nt) nt.onclick = () => { const sheet = root.closest('.shell-more-sheet'); if(sheet){ sheet.classList.remove('show'); setTimeout(() => sheet.remove(), 250); } openNotificationsSheet(); };
   const u = root.querySelector('#playerUseCodeBtn');
   if(u) u.onclick = () => showPlayerCodeStep(root, verifiedPlayerName(), (name) => { setCurrentViewer(name); if(after) after(); }, after);
 }

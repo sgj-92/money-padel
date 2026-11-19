@@ -2320,6 +2320,7 @@ async function init(){
   isUnlocked = !!(admin || byPassword) && !isStandingsMode();   // the standings site has no Admin (siteMode.js)
   visibilityState = visibility;
   gameRequestsState = requests;
+  if(typeof noteFixturesLoaded === 'function') noteFixturesLoaded(requests);
   courtBookingsState = Array.isArray(courts) ? courts : [];
   clubSettingsState = (settings && typeof settings === 'object') ? settings : {};
   availabilityState = availability || {};

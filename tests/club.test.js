@@ -173,19 +173,27 @@ maybe('Padel Championships has its own Home Screen icon and name; Money Padel ke
         const href = (rel) => [...document.querySelectorAll(`link[rel="${rel}"]`)].map((l) => l.getAttribute('href'));
         const m = href('manifest');
         return { touch: href('apple-touch-icon'), icon: href('icon'), manifests: m.length,
-          manifest: JSON.parse(decodeURIComponent(m[0].replace(/^data:application\/manifest\+json,/, ''))),
+          manifestHref: m[0],
           title: document.querySelector('meta[name="apple-mobile-web-app-title"]').content, errors: [] };
       });
     } finally { await app.close(); }
   };
-  const pc = await read('index.html?club=padelchampionships');
+  // Inline, or a real file at the site's root (Padel Championships: a phone
+  // only sends notifications to a Home Screen app with a manifest file).
+  const manifestOf = (href) => (href.startsWith('data:')
+    ? JSON.parse(decodeURIComponent(href.replace(/^data:application\/manifest\+json,/, '')))
+    : JSON.parse(fs.readFileSync(path.join(ROOT, href), 'utf8')));
+  const readWithManifest = async (p) => { const r = await read(p); return { ...r, manifest: manifestOf(r.manifestHref) }; };
+  const pc = await readWithManifest('index.html?club=padelchampionships');
+  assert.strictEqual(pc.manifestHref, '/assets/brand/pc.webmanifest');
+  assert.strictEqual(pc.manifest.display, 'standalone');
   assert.deepStrictEqual([pc.touch, pc.icon, pc.manifests], [['assets/brand/pc-home-180.png'], ['assets/brand/pc-home-180.png'], 1]);
   assert.strictEqual(pc.title, 'Padel Champs');
   assert.strictEqual(pc.manifest.name, 'Padel Champs');
   assert.deepStrictEqual(pc.manifest.icons.map((i) => [i.src.replace(/^.*\/assets\//, 'assets/'), i.sizes]),
     [['assets/brand/pc-home-180.png', '180x180'], ['assets/brand/pc-home-512.png', '512x512']]);
   ['pc-home-180.png', 'pc-home-512.png'].forEach((f) => assert.ok(fs.existsSync(path.join(ROOT, 'assets/brand', f)), f));
-  const mp = await read('index.html');
+  const mp = await readWithManifest('index.html');
   assert.match(mp.touch[0], /^data:image\/png;base64,/, 'Money Padel: the icon in index.html, untouched');
   assert.match(mp.manifest.name, /^MP/, 'Money Padel: its own manifest, untouched');
 });
