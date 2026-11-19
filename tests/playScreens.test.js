@@ -370,7 +370,7 @@ maybe('Arrange a Game shows who is free as the date and time are filled in', asy
       return { before, after: sheet.querySelector('.agreed-hint').textContent.replace(/\s+/g, ' ').trim() };
     });
     assert.strictEqual(r.before, '', 'nothing until there is a date');
-    assert.match(r.after, /Mon 23 Nov evening: \? Shaun ✓ Kaz ✗ Max/);
+    assert.match(r.after, /Mon 23 Nov 9pm: \? Shaun ✓ Kaz ✗ Max/);
     assert.match(r.after, /Also free: Len/);
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
