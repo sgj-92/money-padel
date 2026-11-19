@@ -101,10 +101,14 @@ test('a month the club did not play in is skipped, not opened on', () => {
   assert.strictEqual(r.month, '2026-07');
 });
 
-test('a club with no completed month falls back to All time', () => {
+// Shaun, 19 Nov: "Default to the latest quarter in championships."
+test('a club in its first period opens on it, however few its games; All time only with no games at all', () => {
   const r = MM.evaluate({ now: on20thSept, matches: september(3) });
-  assert.strictEqual(r.month, 'all');
-  assert.strictEqual(r.reason, 'no-completed-month');
+  assert.strictEqual(r.month, '2026-09');
+  assert.strictEqual(r.reason, 'first-period');
+  const none = MM.evaluate({ now: on20thSept, matches: [] });
+  assert.strictEqual(none.month, 'all');
+  assert.strictEqual(none.reason, 'no-completed-month');
 });
 
 // --- the screens -------------------------------------------------------------
@@ -163,6 +167,21 @@ const monthsOnEveryScreen = () => {
       assert.deepStrictEqual(app.pageErrors, []);
     } finally { await app.close(); }
   });
+});
+
+// Shaun, 19 Nov (Padel Championships): "Default to the latest quarter." A
+// club whose only games are in the period being played opens This Quarter on
+// it; Power stays on All time, where the whole club is listed.
+maybe('a club in its first period: League opens on it, Power stays on All time', async () => {
+  const sep = withSeptember(2);
+  const app = await H.open({ record: { ...sep, matches: sep.matches.filter((m) => m.date.startsWith('2026-09')) }, now: NOW });
+  try {
+    const r = await app.run(monthsOnEveryScreen);
+    assert.strictEqual(r.league, '2026-09', 'League / This Quarter');
+    assert.strictEqual(r.rankings, 'all', 'Power');
+    assert.strictEqual(r.home, '2026-09');
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
 });
 
 maybe('four decided matches and one draw make five', async () => {
