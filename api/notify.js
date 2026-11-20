@@ -46,7 +46,9 @@ async function handler(req, res, deps) {
   const who = await Push.whoIsAsking({ token, projectId: club.firebase.projectId, fetchImpl });
   if (!who.ok) return send(res, who.status, { error: who.message });
 
-  const privateKey = d.privateKey !== undefined ? d.privateKey : process.env.VAPID_PRIVATE_KEY;
+  // Pasted into Vercel, a key easily keeps a line break or quotes (Shaun,
+  // 20 Nov: "Vapid private key must be a URL safe Base 64"): only the key is used.
+  const privateKey = String(d.privateKey !== undefined ? d.privateKey : (process.env.VAPID_PRIVATE_KEY || '')).replace(/[\s"'=]/g, '');
   if (!privateKey) return send(res, 503, { error: 'Notifications aren’t switched on for this deployment: VAPID_PRIVATE_KEY must be set in Vercel › Settings › Environment Variables, then redeploy.' });
 
   const body = await readBody(req);
