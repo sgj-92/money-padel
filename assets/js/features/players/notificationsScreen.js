@@ -60,6 +60,7 @@ async function enableNotifications(){
       player: name, endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth,
       createdAt: new Date().toISOString(), device: String(navigator.userAgent || '').slice(0, 160),
     });
+    if(typeof starterNotifyOn !== 'undefined') starterNotifyOn = true;
     return { ok: true, message: 'Notifications are on for this phone.' };
   } catch(e){
     console.error('turning notifications on failed', e);
@@ -72,6 +73,7 @@ async function disableNotifications(){
   if(!sub) return { ok: true, message: 'Notifications are off for this phone.' };
   try { await db.collection(PUSH_SUBSCRIPTIONS_COLLECTION).doc(await subscriptionId(sub.endpoint)).delete(); } catch(e){ /* gone already, or rules */ }
   try { await sub.unsubscribe(); } catch(e){ /* best effort */ }
+  if(typeof starterNotifyOn !== 'undefined') starterNotifyOn = false;
   return { ok: true, message: 'Notifications are off for this phone.' };
 }
 

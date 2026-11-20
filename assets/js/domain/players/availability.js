@@ -130,8 +130,15 @@
   function summary(entry) {
     const c = clean(entry);
     const groups = {};
-    DAYS.forEach((d) => { const k = rangesText(c.weekly[d] || []); if (k) (groups[k] = groups[k] || []).push(DAY_LABEL[d]); });
-    return Object.entries(groups).map(([k, days]) => `${days.join(', ')} ${k}`).join(' · ');
+    DAYS.forEach((d) => { const k = rangesText(c.weekly[d] || []); if (k) (groups[k] = groups[k] || []).push(d); });
+    // Days in a row read as a run: "Mon–Fri"; all seven as "Every day".
+    const daysText = (days) => {
+      if (days.length === 7) return 'Every day';
+      const runs = [];
+      days.forEach((d) => { const i = DAYS.indexOf(d), r = runs[runs.length - 1]; if (r && DAYS.indexOf(r[1]) === i - 1) r[1] = d; else runs.push([d, d]); });
+      return runs.map(([a, z]) => (a === z ? DAY_LABEL[a] : DAYS.indexOf(z) - DAYS.indexOf(a) === 1 ? `${DAY_LABEL[a]}, ${DAY_LABEL[z]}` : `${DAY_LABEL[a]}–${DAY_LABEL[z]}`)).join(', ');
+    };
+    return Object.entries(groups).map(([k, days]) => `${daysText(days)} ${k}`).join(' · ');
   }
 
   return { DAYS, DAY_LABEL, HOURS, HALVES, FIRST_HOUR, LAST_HOUR, hourLabel, hourOfTime, dayOf, clean, hasAny, freeOn, statusOn, whoIsFree, rangesText, summary };

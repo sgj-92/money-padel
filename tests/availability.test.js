@@ -48,6 +48,10 @@ test('hourly blocks 8am–10pm; a date that is different replaces the week; noth
   assert.strictEqual(A.rangesText([12.5, 13]), '12:30–1:30pm');
   assert.strictEqual(A.summary(kaz), 'Mon 7–10pm · Thu 5–10pm');
   assert.strictEqual(A.summary({ weekly: { mon: [19, 20], wed: [19, 20] } }), 'Mon, Wed 7–9pm');
+  const late = [20.5, 21, 21.5];
+  assert.strictEqual(A.summary({ unit: 'half', weekly: { mon: late, tue: late, wed: late, thu: late, fri: late } }), 'Mon–Fri 8:30–10pm', 'a run of days, briefly');
+  assert.strictEqual(A.summary({ unit: 'half', weekly: Object.fromEntries(A.DAYS.map((d) => [d, late])) }), 'Every day 8:30–10pm');
+  assert.strictEqual(A.summary({ unit: 'half', weekly: { mon: late, tue: late, thu: late } }), 'Mon, Tue, Thu 8:30–10pm');
 });
 
 test('everyone may read it; only that player (by their code) or an Admin may change it', () => {
