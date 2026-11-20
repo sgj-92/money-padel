@@ -42,6 +42,8 @@ function showPlayerCodeStep(panel, name, choose, back){
     if(!(typeof legacyAdminPasswordOn === 'function' && legacyAdminPasswordOn() && isUnlocked)) { isUnlocked = false; adminRole = null; }
     choose(r.player.name);
     if(typeof renderActiveTab === 'function') renderActiveTab();
+    // First sign-in: what to do next (starterChecklist.js).
+    if(typeof openStarterSheet === 'function') setTimeout(() => openStarterSheet(r.player.name), 320);
   };
   go.onclick = submit;
   input.onkeydown = (e) => { if(e.key === 'Enter') submit(); };
