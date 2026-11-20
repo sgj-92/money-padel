@@ -54,11 +54,16 @@ async function handler(req, res, deps) {
   const title = clip(body.title, 60), text = clip(body.body, 240);
   if (!to.length || !title) return send(res, 400, { error: 'Nobody to tell, or nothing to say.' });
 
-  const subs = await Push.subscriptionsFor({ names: to, token, projectId: club.firebase.projectId, fetchImpl });
+  let subs;
+  try { subs = await Push.subscriptionsFor({ names: to, token, projectId: club.firebase.projectId, fetchImpl }); }
+  catch (e) { return send(res, 502, { error: `Couldn’t read who has notifications on (${e.status || 'error'}). Publish the latest database rules (docs/PLAYER_CODES.md).` }); }
+  if (!subs.length) return send(res, 200, { sent: 0, gone: 0, failed: 0, phones: 0, from: who.name });
   const site = `https://${hostname}`;
   const icon = club.homeIcon ? `${site}/${club.homeIcon[180]}` : undefined;
   const payload = { title: `${club.homeScreenTitle || club.name} · ${title}`, body: text, tag: clip(body.tag, 80) || undefined, url: '/', icon };
-  const webpush = d.webpush || require('web-push');
+  let webpush;
+  try { webpush = d.webpush || require('web-push'); }
+  catch (e) { return send(res, 500, { error: 'The server is missing its notifications library (web-push). Redeploy.' }); }
   const out = await Push.sendAll({ subs, payload, privateKey, subject: site, webpush, token, fetchImpl });
   return send(res, 200, { ...out, phones: subs.length, from: who.name });
 }
