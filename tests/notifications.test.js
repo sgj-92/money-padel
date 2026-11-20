@@ -112,6 +112,13 @@ test('the server: signed-in members only, says when it is not switched on, sends
   r = fakeRes();
   await handler(post('padelchamps.sgj.luxe', { to: ['Len'], title: 'x' }, token), r, { fetch: fs3.fetch, privateKey: 'wrong', webpush: refusing });
   assert.deepStrictEqual([r.body.sent, r.body.failed, r.body.problems], [0, 1, [{ status: 403, detail: 'invalid JWT' }]], 'what the push service said, so the test can say why');
+  // A key pasted with a line break and quotes still works.
+  let usedKey = null;
+  const keeping = { async sendNotification(sub, payload, opts) { usedKey = opts.vapidDetails.privateKey; } };
+  const fs4 = firestore({ playerOf: 'Kaz', subs: [subs[0]] });
+  r = fakeRes();
+  await handler(post('padelchamps.sgj.luxe', { to: ['Len'], title: 'x' }, token), r, { fetch: fs4.fetch, privateKey: ' "B0aov-Key_1"\n', webpush: keeping });
+  assert.deepStrictEqual([r.body.sent, usedKey], [1, 'B0aov-Key_1']);
 });
 
 const EMPTY = { players: [], matches: [], ratingJourney: [] };
