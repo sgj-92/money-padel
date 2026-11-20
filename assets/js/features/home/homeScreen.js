@@ -365,8 +365,11 @@ function renderHomeDashboard(){
   const now = new Date().toISOString();
   const g = myGamesVisible(viewer.name, now);
 
+  // Getting started (Shaun, 20 Nov): until it is done or hidden.
+  const starter = typeof starterWanted === 'function' && starterWanted(viewer.name) ? starterChecklistHtml(viewer.name) : '';
   dash.innerHTML = `
     ${homeHeroHtml(viewer, snap, month)}
+    ${starter ? `<section class="home-section home-block">${starter}</section>` : ''}
     ${homePowerHtml(viewer, snap)}
     ${homeNeedsYouHtml(g, viewer, now)}
     ${homeNextGameHtml(g, viewer, now)}
@@ -377,6 +380,7 @@ function renderHomeDashboard(){
     ${homeAroundClubHtml(month)}
   `;
   wireHomeDashboard(dash, viewer);
+  if(starter) wireStarterChecklist(dash, (kind) => { if(kind === 'hide') renderHomeDashboard(); });
 }
 
 function wireHomeDashboard(dash, viewer){

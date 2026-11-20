@@ -375,3 +375,23 @@ maybe('Arrange a Game shows who is free as the date and time are filled in', asy
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 20 Nov: the getting-started checklist sits on Home until done or hidden.
+maybe('Home shows a signed-in player their getting-started checklist until they hide it', async () => {
+  const email = 'pkazkazkaz1@players.sgj.luxe';
+  const app = await H.open({ path: 'index.html?club=padelchampionships', now: '2026-11-20T10:00:00.000Z',
+    record: (() => { const f = H.fixture(); return { players: f.players, matches: f.matches, ratingJourney: f.ratingJourney }; })(),
+    accounts: { [email]: { password: '472915', uid: 'uid-kaz' } }, signedIn: email,
+    documents: { playerAccounts: { 'uid-kaz': { player: 'Kaz' } } } });
+  try {
+    const r = await app.run(async () => {
+      for (let k = 0; k < 100 && !signedInPlayer; k++) await new Promise((res) => setTimeout(res, 20));
+      goToSection('home'); renderHomeDashboard();
+      const shown = !!document.querySelector('#homeDashboard .starter');
+      document.querySelector('#homeDashboard .starter-hide').click();
+      return { shown, after: !!document.querySelector('#homeDashboard .starter') };
+    });
+    assert.deepStrictEqual(r, { shown: true, after: false });
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
