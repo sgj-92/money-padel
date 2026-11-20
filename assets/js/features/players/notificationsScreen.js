@@ -41,6 +41,33 @@ async function currentPushSubscription(){
   } catch(e){ return null; }
 }
 
+// This phone's subscription written under the player's name; true if saved.
+async function savePushSubscription(name){
+  const sub = await currentPushSubscription();
+  if(!sub || !name) return false;
+  try {
+    const json = sub.toJSON();
+    await db.collection(PUSH_SUBSCRIPTIONS_COLLECTION).doc(await subscriptionId(json.endpoint)).set({
+      player: name, endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth,
+      createdAt: new Date().toISOString(), device: String(navigator.userAgent || '').slice(0, 160),
+    });
+    return true;
+  } catch(e){ console.error('saving the subscription failed', e); return false; }
+}
+
+// What a test send says, in words.
+function testOutcome(r, saved){
+  if(!saved) return 'This phone couldn’t be added to the list. Publish the latest database rules (docs/PLAYER_CODES.md), then try again.';
+  if(!r) return 'Couldn’t send it just now.';
+  if(r.error) return r.error;
+  if(r.sent) return 'Sent. It should arrive in a few seconds.';
+  if(!r.phones) return 'No phone found for you on the list. Turn notifications off and on again.';
+  const p = (r.problems || [])[0];
+  if(p && (p.status === 403 || p.status === 401)) return `The push service refused the key (${p.status}). Check VAPID_PRIVATE_KEY in Vercel is exactly the key you were given, then redeploy.`;
+  if(r.gone) return 'This phone’s sign-up had expired. Turn notifications off and on again.';
+  return `The push service refused it${p && p.status ? ` (${p.status})` : ''}${p && p.detail ? `: ${p.detail}` : ''}.`;
+}
+
 // -> { ok, message }
 async function enableNotifications(){
   const name = verifiedPlayerName();
@@ -88,8 +115,9 @@ async function sendNotice(notice){
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await user.getIdToken()}` },
       body: JSON.stringify(notice),
     });
-    return await res.json().catch(() => null);
-  } catch(e){ console.error('notify failed', e); return null; }
+    const body = await res.json().catch(() => null);
+    return body || { error: `The server didn’t answer properly (${res.status}).` };
+  } catch(e){ console.error('notify failed', e); return { error: 'Couldn’t reach the server. Check your connection.' }; }
 }
 
 // The games as last saved or read here, so the next save can say what changed.
@@ -146,10 +174,15 @@ async function openNotificationsSheet(){
     const test = sheet.querySelector('.nt-test');
     if(test) test.onclick = async () => {
       test.disabled = true;
+      // Make sure this phone is on the list first (it may have been turned
+      // on before the database rules allowed it to be saved).
+      const saved = await savePushSubscription(name);
       const r = await sendNotice({ to: [name], title: 'Test', body: `Notifications work, ${name}.`, tag: 'test' });
-      draw(r && r.sent ? 'Sent. It should arrive in a few seconds.' : (r && r.error) ? r.error : 'Couldn’t send it just now.');
+      draw(testOutcome(r, saved));
     };
   };
+  // A phone turned on before the rules let it be saved is put on the list now.
+  if(verifiedPlayerName()) savePushSubscription(verifiedPlayerName());
   await draw('');
   sheet.classList.add('show');
 }

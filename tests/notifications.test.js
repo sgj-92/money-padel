@@ -95,6 +95,23 @@ test('the server: signed-in members only, says when it is not switched on, sends
   assert.strictEqual(sent[0].publicKey, Push.VAPID_PUBLIC_KEY);
   assert.strictEqual(sent[0].subject, 'https://padelchamps.sgj.luxe');
   assert.ok(fs2.seen.some((s) => s.method === 'DELETE' && s.url.endsWith('/pushSubscriptions/s1')), 'the gone phone is forgotten');
+
+  // Shaun, 20 Nov: "I still can't get notifications" -- every failure says which step.
+  const none = firestore({ playerOf: 'Kaz', subs: [] });
+  r = fakeRes();
+  await handler(post('padelchamps.sgj.luxe', { to: ['Len'], title: 'x' }, token), r, { fetch: none.fetch, privateKey: 'pk', webpush });
+  assert.deepStrictEqual([r.statusCode, r.body.phones, r.body.sent], [200, 0, 0], 'nobody signed up: said, not an error');
+  const denied = firestore({ playerOf: 'Kaz', subs });
+  const deniedFetch = async (url, opts) => (url.endsWith(':runQuery') ? { ok: false, status: 403, json: async () => ({}) } : denied.fetch(url, opts));
+  r = fakeRes();
+  await handler(post('padelchamps.sgj.luxe', { to: ['Len'], title: 'x' }, token), r, { fetch: deniedFetch, privateKey: 'pk', webpush });
+  assert.strictEqual(r.statusCode, 502);
+  assert.match(r.body.error, /Couldn’t read who has notifications on \(403\)\. Publish the latest database rules/);
+  const refusing = { async sendNotification() { throw Object.assign(new Error('bad'), { statusCode: 403, body: 'invalid JWT' }); } };
+  const fs3 = firestore({ playerOf: 'Kaz', subs: [subs[0]] });
+  r = fakeRes();
+  await handler(post('padelchamps.sgj.luxe', { to: ['Len'], title: 'x' }, token), r, { fetch: fs3.fetch, privateKey: 'wrong', webpush: refusing });
+  assert.deepStrictEqual([r.body.sent, r.body.failed, r.body.problems], [0, 1, [{ status: 403, detail: 'invalid JWT' }]], 'what the push service said, so the test can say why');
 });
 
 const EMPTY = { players: [], matches: [], ratingJourney: [] };
@@ -150,5 +167,40 @@ maybe('on an iPhone not opened from the Home Screen, it says how to add it first
     assert.match(r, /only work for the app saved to your Home Screen/);
     assert.match(r, /Tap Add to Home Screen, then Add/);
     assert.ok(!/Turn on notifications/.test(r));
+  } finally { await app.close(); }
+});
+
+maybe('Send me a test puts this phone back on the list first, and says in words what went wrong', async () => {
+  const email = 'pshaunshaun@players.sgj.luxe';
+  const app = await H.open({ path: 'index.html?club=padelchampionships', record: EMPTY, club: TAGS,
+    accounts: { [email]: { password: '472915', uid: 'uid-s' } }, signedIn: email, documents: { playerAccounts: { 'uid-s': { player: 'Kaz' } } } });
+  try {
+    const r = await app.run(async () => {
+      for (let k = 0; k < 100 && !signedInPlayer; k++) await new Promise((res) => setTimeout(res, 20));
+      const sub = { endpoint: 'https://push.example/kaz', toJSON() { return { endpoint: this.endpoint, keys: { p256dh: 'pk', auth: 'au' } }; } };
+      const pushManager = { async getSubscription() { return sub; } };
+      Object.defineProperty(navigator, 'serviceWorker', { value: { async getRegistration() { return { pushManager }; } }, configurable: true });
+      window.PushManager = function () {};
+      window.Notification = { permission: 'granted' };
+      const replies = [{ sent: 0, phones: 0 }, { sent: 0, phones: 1, failed: 1, problems: [{ status: 403, detail: 'x' }] }, { error: 'Notifications aren’t switched on for this deployment' }, { sent: 1, phones: 1 }];
+      window.fetch = async () => ({ ok: true, status: 200, json: async () => replies.shift() });
+      const said = [];
+      await openNotificationsSheet();
+      await new Promise((res) => setTimeout(res, 50));
+      const rewrote = window.__writes.filter((w) => w.collection === 'pushSubscriptions').length;
+      for (let i = 0; i < 4; i++) {
+        document.querySelector('#notificationsSheet .nt-test').click();
+        for (let k = 0; k < 50 && !document.querySelector('#notificationsSheet .nt-msg').textContent; k++) await new Promise((res) => setTimeout(res, 20));
+        await new Promise((res) => setTimeout(res, 60));
+        said.push(document.querySelector('#notificationsSheet .nt-msg').textContent);
+      }
+      return { rewrote, said };
+    });
+    assert.ok(r.rewrote >= 1, 'opening the sheet puts this phone on the list');
+    assert.match(r.said[0], /No phone found for you/);
+    assert.match(r.said[1], /refused the key \(403\)\. Check VAPID_PRIVATE_KEY/);
+    assert.match(r.said[2], /switched on for this deployment/);
+    assert.match(r.said[3], /Sent\./);
+    assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
