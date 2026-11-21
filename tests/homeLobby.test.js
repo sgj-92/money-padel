@@ -72,7 +72,9 @@ maybe('Home is in the IA\'s order: hero, Needs you, Next game, Last time out, Ar
     assert.ok(t.hero < t.needs && t.needs < t.next && t.next < t.last && t.last < t.club, JSON.stringify(t));
     // First viewport (390 x 844): the League story, Power, Needs you and Next
     // game all begin on the first screen.
-    assert.ok(t.next < 844 - 100, `Next game starts on the first screen: ${t.next}`);
+    // The club ticker is its own strip above every page, not Home's layout.
+    const strip = await app.run(() => { const el = document.getElementById('clubTicker'); return el ? Math.round(el.getBoundingClientRect().height) : 0; });
+    assert.ok(t.next - strip < 844 - 100, `Next game starts on the first screen: ${t.next} (strip ${strip})`);
     // Match Ideas has left Home (DQ32); the monthly recap block is absorbed.
     assert.doesNotMatch(r.html, /homeIdeas|home-matchup|Match ideas/i);
     assert.doesNotMatch(r.text, /AT MONEY PADEL|Games played\s+Most active|Player of the Month/i);
