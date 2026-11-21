@@ -509,13 +509,19 @@
       y += 150;
       score(y);
 
-      y += 130;
-      font(ctx, 38);
+      // The opponents, named so they can be read (Shaun, 21 Nov: "Make the
+      // names of the opponents bigger"): larger, brighter, fitted to the width.
+      y += 136;
+      let oppSize = 52;
+      const lineW = (s) => { font(ctx, s); return ctx.measureText(`${card.against} `).width + peopleWidth(ctx, card.opponents, s, false, 500); };
+      while (oppSize > 38 && lineW(oppSize) > W - 2 * M) oppSize -= 2;
+      font(ctx, oppSize);
       const lead = `${card.against} `;
       const leadW = ctx.measureText(lead).width;
-      const oppW = peopleWidth(ctx, card.opponents, 38, false, 400);
+      const oppW = peopleWidth(ctx, card.opponents, oppSize, false, 500);
       textAt(ctx, lead, cx - (leadW + oppW) / 2, y, { color: C.dim, baseline: 'middle' });
-      people(ctx, card.opponents, cx + leadW / 2, y, 38, { color: C.soft });
+      people(ctx, card.opponents, cx + leadW / 2, y, oppSize, { color: C.text, weight: 500 });
+      y += 6;
     }
 
     // The story, in its own panel.

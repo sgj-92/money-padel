@@ -152,6 +152,8 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Result Card: opponents' names bigger — DONE (this commit), 21 Nov.** Shaun: "Make the names of the opponents bigger on the match card." Picture: the "over …" line 38px → 52px (fitted down to 38 for long names), opponents in full text colour; on-screen card 13px → 17px, names semibold. 1109 / 1109.
+
 **Monthly / Quarterly Race: an All tiers table — DONE (this commit), 21 Nov.** Shaun: make the race inclusive of all tiers (Jermaine, alone in S, misses the competition). **Shaun decided (AskUserQuestion):** add an All tiers table, with an overall leader, alongside the tier tables (tier champions unchanged); both clubs. No change to points: each match is already scored against an ordinary player of the player's own tier, so scores compare across tiers. `MonthlyRace.overall(table, min)` merges a player's tier spells into one row (matches keep the tier they were scored in); qualified = total matches ≥ the race minimum. Shown first on the race screen ("🌐 All tiers · Leading: …"), with Hard/Even/Fav summed across tiers. 1109 / 1109.
 
 **Notifications: key read without stray whitespace — DONE (this commit), 20 Nov.** The diagnostics showed "Vapid private key must be a URL safe Base 64 (without \"=\")": the key in Vercel carries a trailing line break (the handed-over file ended with one; reproduced locally). `/api/notify` now strips whitespace, quotes and '=' from VAPID_PRIVATE_KEY. No Vercel change needed.
