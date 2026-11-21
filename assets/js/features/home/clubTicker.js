@@ -4,8 +4,9 @@
 // that scrolls the club's news: players, games this period, the most active,
 // the race leader, the top rating, the next booked game, the latest result,
 // doughnuts. Everything comes from what the app already holds; a fact that
-// cannot be worked out is left out, never guessed. A pause button stops it,
-// and a reader who asks their phone for less motion gets it still.
+// cannot be worked out is left out, never guessed. It moves whatever the
+// phone's Reduce Motion says (Shaun, 21 Nov: "It doesn't move"); the pause
+// button stops it, and the choice is kept.
 // Declarations only; drawn by renderClubTicker() after each recompute.
 
 let clubTickerPaused = (() => { try { return localStorage.getItem('clubTickerPaused') === '1'; } catch(e){ return false; } })();
@@ -79,6 +80,9 @@ function renderClubTicker(){
   if(items.length < 2){ el.style.display = 'none'; return; }
   el.style.display = '';
   const run = items.map(it => `<span class="club-ticker-item"><span class="club-ticker-icon" aria-hidden="true">${it.icon}</span>${escapeHtml(it.label)} <b>${escapeHtml(it.value)}</b></span><span class="club-ticker-dot" aria-hidden="true">•</span>`).join('');
+  // The same news again: left moving, not restarted from the beginning.
+  if(el.dataset.run === run && el.querySelector('.club-ticker-track')) return;
+  el.dataset.run = run;
   // Twice over, so the strip loops without a gap.
   el.innerHTML = `<div class="club-ticker-window"><div class="club-ticker-track${clubTickerPaused ? ' is-paused' : ''}">${run}<span aria-hidden="true" class="club-ticker-copy">${run}</span></div></div>
     <button type="button" class="club-ticker-pause" aria-label="${clubTickerPaused ? 'Play' : 'Pause'} the news">${clubTickerPaused ? '▶' : '❚❚'}</button>`;

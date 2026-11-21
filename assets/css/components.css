@@ -283,11 +283,8 @@
   .club-ticker-dot{ color:var(--text-dim); padding:0 10px; font-size:10px; display:inline-flex; align-items:center; }
   .club-ticker-pause{ flex:none; width:30px; height:30px; margin:0 6px; border-radius:50%; border:1px solid var(--line); background:var(--bg0, var(--bg1)); color:var(--text-soft); font-size:10px; letter-spacing:-1px; }
   @keyframes club-ticker-move{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
-  @media (prefers-reduced-motion: reduce){
-    .club-ticker-track{ animation:none; }
-    .club-ticker-window{ overflow-x:auto; }
-    .club-ticker-copy{ display:none; }
-  }
+  /* Moves even with Reduce Motion on (Shaun, 21 Nov: "It doesn't move");
+     the pause button stops it for anyone who'd rather it didn't. */
   .cs-row{ margin-bottom:10px; }
   .cs-input{ display:flex; align-items:center; gap:10px; }
   .cs-input .fg-select{ width:90px; flex:none; }
