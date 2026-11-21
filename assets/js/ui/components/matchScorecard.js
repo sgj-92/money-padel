@@ -163,7 +163,8 @@ function openMatchScorecard(matchId, view){
       if(t === modal || (t.closest && t.closest('[data-scorecard-close]'))){ modal.classList.remove('show'); return; }
       const go = t.closest && t.closest('[data-scorecard-view]');
       if(go){ openMatchScorecard(matchScorecardView.id, go.dataset.scorecardView); return; }
-      if(t.closest && t.closest('[data-scorecard-share]')) shareMatchResult(matchScorecardView.id);
+      const share = t.closest && t.closest('[data-scorecard-share]');
+      if(share) shareMatchResult(matchScorecardView.id, share.dataset.scorecardShare || 'full');
     });
   }
   if(matchScorecardView.id !== matchId) matchScorecardView = { id: matchId, view: 'result', message: '', ready: null };
@@ -179,7 +180,12 @@ function renderMatchScorecardSheet(modal){
   const body = analysis ? matchAnalysisHtml(matchScorecardFor(id)) : matchResultCardHtml(card);
   const actions = analysis
     ? `<button type="button" class="msc-action" data-scorecard-view="result">← Back to result</button>`
-    : (card ? `<button type="button" class="msc-action msc-action-primary" data-scorecard-share>${ready ? 'Tap to share' : 'Share result'}</button>
+    // Two pictures (Shaun, 21 Nov): the simple one -- players and score -- and
+    // the full card with the expectation and the rating moves.
+    : (card ? `<div class="msc-share-pair">
+         <button type="button" class="msc-action msc-action-primary" data-scorecard-share="simple">${ready && ready.kind === 'simple' ? 'Tap to share' : 'Share simple'}</button>
+         <button type="button" class="msc-action msc-action-primary" data-scorecard-share="full">${ready && ready.kind === 'full' ? 'Tap to share' : 'Share full card'}</button>
+       </div>
        <button type="button" class="msc-action" data-scorecard-view="analysis">View match analysis</button>` : '');
   modal.innerHTML = `<div class="shell-more-panel msc-panel" data-view="${analysis ? 'analysis' : 'result'}">
     <div class="msc-title-row"><h3>${analysis ? 'Match analysis' : 'Match result'}</h3><button type="button" class="msc-close" data-scorecard-close aria-label="Close">✕</button></div>
@@ -194,18 +200,21 @@ function renderMatchScorecardSheet(modal){
 // share sheet -- WhatsApp is on it -- or saved where a browser cannot share
 // files. When preparing the picture used up the tap a share sheet needs, the
 // button turns into "Tap to share", which shares at once.
-async function shareMatchResult(matchId){
+async function shareMatchResult(matchId, kind){
   const modal = document.getElementById('matchScorecardModal');
   const say = (msg) => { matchScorecardView.message = msg; if(modal) renderMatchScorecardSheet(modal); };
+  const simple = kind === 'simple';
   try {
-    let pending = matchScorecardView.ready;
+    let pending = matchScorecardView.ready && matchScorecardView.ready.kind === (simple ? 'simple' : 'full') ? matchScorecardView.ready : null;
     if(!pending){
       const card = matchResultCardFor(matchId);
       if(!card) return;
       const brand = await CardPainter.loadImage(CLUB.logo);
-      const cv = CardPainter.matchResult(card, { brand, when: matchResultContext(card) });
-      const name = `${CLUB.fileSlug}-${String(card.matchId).replace(/[^A-Za-z0-9_-]+/g, '-')}-result.png`;
-      pending = { files: [await CardPainter.toFile(cv, name)], meta: { title: card.headline, text: `${card.headline} — ${card.sets.map(s => s.join('–')).join(', ')}. ${card.story.title}.` } };
+      const cv = CardPainter.matchResult(card, { brand, when: matchResultContext(card), simple });
+      const name = `${CLUB.fileSlug}-${String(card.matchId).replace(/[^A-Za-z0-9_-]+/g, '-')}-result${simple ? '-simple' : ''}.png`;
+      const sets = card.sets.map(s => s.join('–')).join(', ');
+      pending = { kind: simple ? 'simple' : 'full', files: [await CardPainter.toFile(cv, name)],
+        meta: { title: card.headline, text: simple ? `${card.headline} — ${sets}.` : `${card.headline} — ${sets}. ${card.story.title}.` } };
     }
     const outcome = await CardPainter.share(pending.files, pending.meta);
     matchScorecardView.ready = outcome === 'ready' ? pending : null;
