@@ -630,6 +630,8 @@
 .mrc-set{ white-space: nowrap; }
 .mrc-score[data-sets="4"]{ font-size: 34px; gap: 14px; }
 .mrc-score[data-sets="5"]{ font-size: 25px; gap: 9px; }
+.msc-share-pair{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; }
+.msc-share-pair .msc-action{ width:100%; }
 .mrc-against{ margin-top: 6px; font-size: 17px; color: var(--text-dim); }
 .mrc-opp{ color: var(--text); font-weight: 600; white-space: nowrap; }
 .mrc-against .mrc-tier{ font-size: 11px; padding: 1px 4px; }

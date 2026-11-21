@@ -350,6 +350,38 @@ test('Games: a played match opens its Result Card first, with the Match Analysis
   } finally { await app.close(); }
 });
 
+// Shaun, 21 Nov: "Make two options when sharing, a simple one with the
+// players and result without the expectations and stats. And the normal one."
+test('Share simple: the players and the score on a shorter card, with nothing about expectation or rating', { skip }, async () => {
+  const app = await H.open();
+  try {
+    const r = await app.run(async () => {
+      const id = getAllApprovedMatches().filter((m) => !m.isDraw).slice(-1)[0].id;
+      const card = matchResultCardFor(id);
+      const full = CardPainter.matchResult(card, { when: matchResultContext(card) });
+      const simple = CardPainter.matchResult(card, { when: matchResultContext(card), simple: true });
+      const calls = [];
+      const real = CardPainter.share;
+      CardPainter.share = async (files, meta) => { calls.push({ name: files[0].name, size: files[0].size, meta }); return 'shared'; };
+      try {
+        openMatchScorecard(id);
+        const modal = document.getElementById('matchScorecardModal');
+        const labels = [...modal.querySelectorAll('[data-scorecard-share]')].map((b) => b.textContent.trim());
+        modal.querySelector('[data-scorecard-share="simple"]').click();
+        for (let k = 0; k < 100 && !calls.length; k++) await new Promise((res) => setTimeout(res, 20));
+        return { labels, full: [full.width, full.height], simple: [simple.width, simple.height], calls, story: card.story.title };
+      } finally { CardPainter.share = real; }
+    });
+    assert.deepStrictEqual(r.labels, ['Share simple', 'Share full card']);
+    assert.strictEqual(r.simple[0], 1080);
+    assert.ok(r.simple[1] < r.full[1] - 300, `a shorter card (${r.simple[1]} against ${r.full[1]})`);
+    assert.match(r.calls[0].name, /-result-simple\.png$/);
+    assert.ok(r.calls[0].size > 5000, 'a real picture');
+    assert.ok(!r.calls[0].meta.text.includes(r.story), 'the message leaves the story out too');
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
+
 test('Share result paints the Result Card and hands one picture to the share sheet', { skip }, async () => {
   const app = await H.open();
   try {
@@ -364,7 +396,7 @@ test('Share result paints the Result Card and hands one picture to the share she
         openMatchScorecard(id);
         const modal = document.getElementById('matchScorecardModal');
         await shareMatchResult(id);
-        const label = modal.querySelector('[data-scorecard-share]').textContent;
+        const label = modal.querySelector('[data-scorecard-share="full"]').textContent;
         await shareMatchResult(id);
         return { size: [cv.width, cv.height], calls, label, message: modal.querySelector('.msc-message').textContent, headline: card.headline };
       } finally { CardPainter.share = real; }

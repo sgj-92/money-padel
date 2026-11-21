@@ -452,8 +452,21 @@
     });
   }
 
+  // `o.simple` (Shaun, 21 Nov: "a simple one with the players and result
+  // without the expectations and stats"): who played and the score, on a
+  // shorter card, nothing below the opponents.
   function matchResult(card, o = {}) {
-    const H = SLIDE_H, M = 80, cx = W / 2;
+    const M = 80, cx = W / 2;
+    let H = SLIDE_H;
+    if (o.simple) {
+      // The same layout as below, measured first so the card ends just under
+      // the opponents.
+      const probe = canvas(10, 10).getContext('2d');
+      let size = 96;
+      while (size > 68 && peopleWidth(probe, card.heroes, size, true, 400) > W - 2 * M) size -= 4;
+      const oneLine = peopleWidth(probe, card.heroes, size, true, 400) <= W - 2 * M;
+      H = card.isDraw ? 836 : (oneLine ? 730 : 794) + 116;
+    }
     const cv = canvas(W, H);
     const ctx = cv.getContext('2d');
     background(ctx, W, H);
@@ -523,6 +536,7 @@
       people(ctx, card.opponents, cx + leadW / 2, y, oppSize, { color: C.text, weight: 500 });
       y += 6;
     }
+    if (o.simple) return cv;
 
     // The story, in its own panel.
     y += 62;
