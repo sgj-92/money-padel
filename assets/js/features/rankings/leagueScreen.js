@@ -774,7 +774,7 @@ function raceDrillRowHtml(d, tier){
     </div>
     <div class="merit-drill-teams"><b>${verb}</b>${partner} v ${who(d.opponents)}${score ? ` <span class="race-drill-score">${escapeHtml(score)}</span>` : ''}</div>
     <button type="button" class="race-stakes-toggle" aria-expanded="false">Details <span class="race-stakes-chev" aria-hidden="true">›</span></button>
-    <div class="merit-drill-meta race-drill-meta">Stakes: win ${racePoints(d.stakes.win)} · draw ${racePoints(d.stakes.draw)} · lose ${racePoints(d.stakes.loss)}<br>An ordinary Tier ${escapeHtml(tier)} player wins this ${Math.round(d.parWin*100)}% of the time</div>
+    <div class="merit-drill-meta race-drill-meta">Stakes: win ${racePoints(d.stakes.win)} · draw ${racePoints(d.stakes.draw)} · lose ${racePoints(d.stakes.loss)}<br>An ordinary Tier ${escapeHtml(d.tier || tier)} player wins this ${Math.round(d.parWin*100)}% of the time</div>
   </div>`;
 }
 
@@ -799,7 +799,13 @@ function raceMeritIndex(month){
   const tierAt = (n, d) => historicalTierOf(n, d);
   const index = {};
   MeritTable.build(meritMatches(month), tierAt, { tierForRow: tierAt }).table
-    .forEach(r => { index[`${r.playerId}\u0000${r.tier}`] = r; });
+    .forEach(r => {
+      index[`${r.playerId}\u0000${r.tier}`] = r;
+      // All tiers: a player's Hard / Even / Fav wins in every tier together.
+      const all = index[`${r.playerId}\u0000ALL`] || (index[`${r.playerId}\u0000ALL`] = { hardWins: 0, evenWins: 0, easyWins: 0, hard: [], even: [], favoured: [] });
+      all.hardWins += r.hardWins || 0; all.evenWins += r.evenWins || 0; all.easyWins += r.easyWins || 0;
+      ['hard', 'even', 'favoured'].forEach(k => { all[k] = all[k].concat(r[k] || []); });
+    });
   return index;
 }
 
@@ -832,7 +838,7 @@ function buildRaceTableHtml(rows, ranked, merit){
     const mr = merit ? merit[key] : null;
     html += `<tr style="border-top:1px solid var(--line);">
       <td style="padding:7px 2px 7px 7px; color:var(--text-dim);">${ranked ? i+1 : '–'}</td>
-      <td style="padding:7px 2px;"><span class="request-player-link" data-player="${escapeHtml(r.playerId)}" style="text-decoration:underline; cursor:pointer; font-weight:700;">${escapeHtml(r.playerId)}</span></td>
+      <td style="padding:7px 2px;"><span class="request-player-link" data-player="${escapeHtml(r.playerId)}" style="text-decoration:underline; cursor:pointer; font-weight:700;">${escapeHtml(r.playerId)}</span>${r.tiers ? ` <span class="merit-drill-tier">${escapeHtml(r.tiers.join('/'))}</span>` : ''}</td>
       <td style="padding:7px 2px; text-align:center;">${tableCountCell(raceDrill, r.playerId, r.tier, 'played', r.played, { plain: true })}</td>
       <td style="padding:7px 2px; text-align:center; color:var(--green);">${tableCountCell(raceDrill, r.playerId, r.tier, 'wins', r.wins, { plain: true, colour: 'var(--green)' })}</td>
       <td style="padding:7px 2px; text-align:center; color:var(--text-dim);">${tableCountCell(raceDrill, r.playerId, r.tier, 'draws', r.draws, { plain: true, colour: 'var(--text-dim)' })}</td>
@@ -846,7 +852,7 @@ function buildRaceTableHtml(rows, ranked, merit){
     if(open){
       html += `<tr class="merit-drill"><td colspan="${COLS}" style="padding:0;">
         <div class="merit-drill-body">
-          <div class="merit-drill-head">${escapeHtml(r.playerId)} · Tier ${escapeHtml(r.tier)} race · ${r.played} match${r.played===1?'':'es'}</div>
+          <div class="merit-drill-head">${escapeHtml(r.playerId)} · ${r.tier === 'ALL' ? 'All tiers' : `Tier ${escapeHtml(r.tier)}`} race · ${r.played} match${r.played===1?'':'es'}</div>
           ${r.matches.map(d => raceDrillRowHtml(d, r.tier)).join('')}
           <div class="race-drill-total">Total ${racePoints(r.score)}</div>
         </div>
@@ -894,6 +900,29 @@ function renderMonthlyRace(){
 
   let anyShown = false;
   const rowsByTier = {};
+  // All tiers (Shaun, 21 Nov: "inclusive of all tiers ... Jermaine ... alone
+  // in S tier misses out"): everyone in one table, the same points. The tier
+  // tables and their champions below are unchanged.
+  const everyone = MonthlyRace.overall(table, raceMinMatches());
+  if(everyone.length){
+    rowsByTier.ALL = everyone.length;
+    const openAll = tierSectionOpen(raceTierOpen, 'ALL', everyone.length);
+    const lead = everyone.find(r => r.qualified);
+    html += foldHeading('raceTierALL', '🌐 All tiers', openAll,
+      { data: { tier: 'ALL' }, bodyId: 'raceTierBodyALL', summary: lead ? `leading: ${escapeHtml(lead.playerId)}` : '' });
+    if(openAll){
+      const q = everyone.filter(r => r.qualified), p = everyone.filter(r => !r.qualified);
+      html += `<div id="raceTierBodyALL"><div class="section-sub race-all-note">Everyone together, on the same points: each match is scored against an ordinary player of the player’s own tier, so a win counts the same in any tier. Tier titles are decided in the tier tables below.</div>`;
+      html += lead ? `<div class="race-all-lead">Leading all tiers: <b>${escapeHtml(lead.playerId)}</b> ${racePoints(lead.score)}</div>` : '';
+      if(q.length) html += buildRaceTableHtml(q, true, merit);
+      else html += `<div class="race-noq">No qualifier yet</div>`;
+      if(p.length){
+        html += `<div class="race-prov-head">Provisional · fewer than ${raceMinMatches()} matches</div>`;
+        html += buildRaceTableHtml(p, false, merit);
+      }
+      html += `</div>`;
+    }
+  }
   groupedTiers().forEach(tier=>{
     const rows = table.filter(r => r.tier === tier);
     if(rows.length === 0) return;

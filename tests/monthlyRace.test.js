@@ -417,3 +417,48 @@ maybe('Hard, Even and Fav beside the Race: the Merit Table\'s own counts for the
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 21 Nov: "Is there a way for the monthly race to be inclusive of all
+// tiers rather than split? Jermaine ... alone in S tier misses out." Decided:
+// add an All tiers table (same points) alongside the tier tables, both clubs.
+test('All tiers: everyone in one table on the same points; a player in two tiers this month is one row', () => {
+  const ratings = { mover: 1450, a: 1400, b: 1400, c: 1400, d: 1650, e: 1650, f: 1650 };
+  const tiers = { mover: { before: 'B', from: '2026-09-20', to: 'A' }, a: 'B', b: 'B', c: 'B', d: 'A', e: 'A', f: 'A' };
+  const r = month([
+    game('2026-09-02', ['mover', 'a'], ['b', 'c']),
+    game('2026-09-10', ['mover', 'a'], ['b', 'c']),
+    game('2026-09-21', ['d', 'e'], ['mover', 'f']),
+  ], ratings, tiers);
+  const all = Race.overall(r.table, 2);
+  const mover = all.find((x) => x.playerId === 'mover');
+  const spells = r.table.filter((x) => x.playerId === 'mover');
+  assert.strictEqual(all.filter((x) => x.playerId === 'mover').length, 1);
+  assert.deepStrictEqual(mover.tiers.sort(), ['A', 'B']);
+  assert.strictEqual(mover.played, 3);
+  assert.ok(close(mover.score, spells.reduce((s, x) => s + x.score, 0), 1e-9), 'the same points, added together');
+  assert.deepStrictEqual(mover.matches.map((m) => m.tier), ['B', 'B', 'A'], 'each match keeps the tier it was scored in');
+  assert.strictEqual(all.length, new Set(r.table.map((x) => x.playerId)).size);
+  assert.ok(all.every((x, i) => i === 0 || (x.qualified === all[i - 1].qualified ? x.score <= all[i - 1].score : !x.qualified)), 'qualified first, then by score');
+  assert.ok(all.filter((x) => x.qualified).every((x) => x.played >= 2));
+});
+
+maybe('the race screen shows All tiers first, with its leader, and the tier tables after', async () => {
+  const app = await withRace({ now: NOW });
+  try {
+    const r = await app.run(() => {
+      openRace();
+      const { table } = buildMonthlyRace(summaryMonth);
+      const all = MonthlyRace.overall(table, raceMinMatches());
+      const body = document.getElementById('raceTierBodyALL');
+      const names = [...body.querySelectorAll('table')[0].querySelectorAll('tbody tr:not(.merit-drill) .request-player-link')].map((e) => e.textContent);
+      const firstHead = document.querySelector('#summaryContent .lg-tier-head').textContent;
+      return { names, expected: all.filter((x) => x.qualified).map((x) => x.playerId), lead: (body.querySelector('.race-all-lead') || {}).textContent || '', firstHead,
+        tierTables: !!document.getElementById('raceTierA') };
+    });
+    assert.deepStrictEqual(r.names, r.expected);
+    assert.match(r.lead, new RegExp(`Leading all tiers: ${r.expected[0]}`));
+    assert.match(r.firstHead, /All tiers/);
+    assert.ok(r.tierTables, 'the tier tables are still there');
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});

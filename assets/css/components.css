@@ -269,6 +269,8 @@
   .av-mark{ white-space:nowrap; margin-right:6px; }
   .av-free{ color:#8fcf8f; } .av-busy{ color:#e08a80; } .av-unknown{ color:var(--text-dim); }
   .av-others{ margin-top:4px; }
+  .race-all-note{ margin:2px 0 6px; font-size:11px; }
+  .race-all-lead{ font-size:13px; color:var(--gold-bright); margin:0 0 6px; }
   .cs-row{ margin-bottom:10px; }
   .cs-input{ display:flex; align-items:center; gap:10px; }
   .cs-input .fg-select{ width:90px; flex:none; }

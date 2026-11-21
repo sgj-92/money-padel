@@ -145,5 +145,28 @@
     return { table, par, unresolved };
   }
 
-  return { K, WIN_SCALE, MIN_MATCHES, DRAW_RESULT, winChance, stakesFor, parRatings, build };
+  // ALL TIERS (Shaun, 21 Nov: "the monthly race to be inclusive of all tiers
+  // ... Jermaine ... alone in S tier misses out"). The same points -- each
+  // match already scored against an ordinary player of the player's own tier
+  // -- in one table: a player's rows (one per tier they played in) added
+  // together. Tier tables and their champions are unchanged.
+  function overall(table, minMatches = MIN_MATCHES) {
+    const by = {};
+    (table || []).forEach((r) => {
+      const o = by[r.playerId] || (by[r.playerId] = { playerId: r.playerId, tier: 'ALL', tiers: [], played: 0, wins: 0, draws: 0, losses: 0, score: 0, matches: [] });
+      if (!o.tiers.includes(r.tier)) o.tiers.push(r.tier);
+      o.played += r.played; o.wins += r.wins; o.draws += r.draws; o.losses += r.losses;
+      o.score = round1(o.score + r.score);
+      r.matches.forEach((m) => o.matches.push({ ...m, tier: r.tier }));
+    });
+    const rows = Object.values(by).map((o) => ({ ...o,
+      matches: o.matches.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)),
+      qualified: o.played >= minMatches }));
+    rows.sort((a, b) => (b.qualified - a.qualified)
+      || b.score - a.score || b.wins - a.wins || a.played - b.played
+      || String(a.playerId).localeCompare(String(b.playerId)));
+    return rows;
+  }
+
+  return { K, WIN_SCALE, MIN_MATCHES, DRAW_RESULT, winChance, stakesFor, parRatings, build, overall };
 });

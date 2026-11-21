@@ -39,7 +39,7 @@ function tableCountCell(openKey, player, tier, kind, n, opts){
 // Where the detail applies, said in the heading: which month and which table.
 function tableDrillContext(tier){
   const month = summaryMonth === 'all' ? 'All Time' : monthLabel(summaryMonth);
-  return `${month} · ${tier ? `Tier ${tier}` : 'All together'}`;
+  return `${month} · ${tier === 'ALL' ? 'All tiers' : tier ? `Tier ${tier}` : 'All together'}`;
 }
 
 // One game from the row's own side of it.
