@@ -271,6 +271,23 @@
   .av-others{ margin-top:4px; }
   .race-all-note{ margin:2px 0 6px; font-size:11px; }
   .race-all-lead{ font-size:13px; color:var(--gold-bright); margin:0 0 6px; }
+  /* The club ticker (clubTicker.js): news scrolling under the header */
+  .club-ticker{ position:relative; display:flex; align-items:center; background:var(--bg1); border-bottom:1px solid var(--line); height:38px; overflow:hidden; }
+  .club-ticker-window{ flex:1; overflow:hidden; mask-image:linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent); -webkit-mask-image:linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent); }
+  .club-ticker-track{ display:inline-flex; white-space:nowrap; animation:club-ticker-move 40s linear infinite; will-change:transform; }
+  .club-ticker-track.is-paused{ animation-play-state:paused; }
+  .club-ticker-copy{ display:inline-flex; }
+  .club-ticker-item{ display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--text-soft); padding:0 4px; }
+  .club-ticker-item b{ color:var(--text); font-weight:600; }
+  .club-ticker-icon{ font-size:14px; }
+  .club-ticker-dot{ color:var(--text-dim); padding:0 10px; font-size:10px; display:inline-flex; align-items:center; }
+  .club-ticker-pause{ flex:none; width:30px; height:30px; margin:0 6px; border-radius:50%; border:1px solid var(--line); background:var(--bg0, var(--bg1)); color:var(--text-soft); font-size:10px; letter-spacing:-1px; }
+  @keyframes club-ticker-move{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce){
+    .club-ticker-track{ animation:none; }
+    .club-ticker-window{ overflow-x:auto; }
+    .club-ticker-copy{ display:none; }
+  }
   .cs-row{ margin-bottom:10px; }
   .cs-input{ display:flex; align-items:center; gap:10px; }
   .cs-input .fg-select{ width:90px; flex:none; }

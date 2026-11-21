@@ -74,9 +74,11 @@ maybe('players start near the top of the screen, filters shut or open', async ()
   const app = await H.open();
   try {
     await openDirectory(app);
-    const shut = await app.run(() => Math.round(document.querySelector('#playersView .pdir-row').getBoundingClientRect().top));
+    // The club ticker (its own strip above every page) is not this page's layout.
+    const strip = await app.run(() => { const t = document.getElementById('clubTicker'); return t ? Math.round(t.getBoundingClientRect().height) : 0; });
+    const shut = await app.run(() => Math.round(document.querySelector('#playersView .pdir-row').getBoundingClientRect().top)) - strip;
     await app.run(() => { document.getElementById('playersFilterToggle').click(); });
-    const open = await app.run(() => Math.round(document.querySelector('#playersView .pdir-row').getBoundingClientRect().top));
+    const open = await app.run(() => Math.round(document.querySelector('#playersView .pdir-row').getBoundingClientRect().top)) - strip;
     // Measured before this change at 375x812: 256px shut, 438px open.
     assert.ok(shut <= 230, `first player at ${shut}px with filters shut (was 256)`);
     assert.ok(open <= 360, `first player at ${open}px with filters open (was 438)`);

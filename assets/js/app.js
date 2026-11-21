@@ -831,7 +831,10 @@ function renderV3StatusBanner(){
 }
 
 function recomputeAll(){
-  return PerfTrace.time('recomputeAll', recomputeAllNow);
+  const out = PerfTrace.time('recomputeAll', recomputeAllNow);
+  // The club ticker under the header follows the record (clubTicker.js).
+  if(typeof renderClubTicker === 'function'){ try { renderClubTicker(); } catch(e){ console.error('ticker failed', e); } }
+  return out;
 }
 
 function recomputeAllNow(){
