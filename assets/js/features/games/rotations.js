@@ -83,7 +83,7 @@ function rotationCardHtml(s){
   const removing = rotationRemove && rotationRemove.session === s.session;
   const players = rotationPlayers(s).sort((a, b) => st[b].won - st[a].won || st[a].lost - st[b].lost);
   return `<div class="rot-card" data-rotation="${escapeHtml(s.session)}">
-    <div class="rot-head">🔄 Rotation · ${s.parts.length} pairings</div>
+    <div class="rot-head">🔄 Rotation · ${s.parts.length} set${s.parts.length === 1 ? '' : 's'}</div>
     ${s.parts.map(m => `<div class="rot-pair">${escapeHtml(rotationPairLine(m))}</div>`).join('')}
     <div class="rot-players">${players.map(n => {
       const d = Math.round(st[n].delta * 10) / 10;
@@ -111,29 +111,37 @@ function ensureRotationDraft(){
 }
 
 function rotationAddHtml(){
-  const intro = `<div class="section-sub" style="margin-top:0;">Partners swap each set. Each pairing moves ratings, and the whole session counts as about one match. Rotations are listed with the games but are not in the League, Merit, Race or W/L, and head to head shows them as history only.</div>`;
+  const intro = `<div class="section-sub" style="margin-top:0;">Partners swap each set — a full rotation, or one or two extra sets after a match. Each set moves ratings as a third of a match. Rotations are listed with the games but are not in the League, Merit, Race or W/L, and head to head shows them as history only.</div>`;
   if(!isUnlocked) return intro + `<div class="section-sub" style="color:var(--gold-bright);">An Admin records rotations: unlock Admin, or send the pairings and scores to one.</div>`;
   ensureRotationDraft();
   const d = rotationDraft;
   const onDate = V3_MATCHES.filter(m => m.date === d.date);
-  const rows = d.rows.map((r, i) => `<div class="rot-row" data-rot-row="${i}">
-    <div class="rot-row-label">Pairing ${i + 1}</div>
-    <div class="rot-row-teams">
-      <input class="fg-select" list="playerNamesList" data-rot="a1" value="${escapeHtml(r.a1)}" placeholder="Name">
+  // Each set laid out as Add a game lays out a game (Shaun, 21 Nov): Team A,
+  // Team B, then the score in boxes, Team A's first, and a tie-break if any.
+  const rows = d.rows.map((r, i) => {
+    const n = String(r.score || '').match(/\d+/g) || [];
+    const box = (k, v, ph) => `<input type="number" inputmode="numeric" min="0" max="30" class="fg-select rot-num" data-rot-s="${k}" value="${escapeHtml(v || '')}" placeholder="${ph}">`;
+    return `<div class="rot-row" data-rot-row="${i}">
+    <div class="rot-row-head"><span class="rot-row-label">Set ${i + 1}</span>${!rotationEditing && d.rows.length > 1 ? `<button type="button" class="preset-btn rot-row-del" data-rot-del="${i}">Remove</button>` : ''}</div>
+    <div class="fg-row"><label class="fg-label">Team A</label>
+      <input class="fg-select" list="playerNamesList" data-rot="a1" value="${escapeHtml(r.a1)}" placeholder="Player name" style="margin-bottom:6px;">
       <input class="fg-select" list="playerNamesList" data-rot="a2" value="${escapeHtml(r.a2)}" placeholder="Partner">
     </div>
-    <div class="rot-v">v</div>
-    <div class="rot-row-teams">
-      <input class="fg-select" list="playerNamesList" data-rot="b1" value="${escapeHtml(r.b1)}" placeholder="Name">
+    <div class="fg-row"><label class="fg-label">Team B</label>
+      <input class="fg-select" list="playerNamesList" data-rot="b1" value="${escapeHtml(r.b1)}" placeholder="Player name" style="margin-bottom:6px;">
       <input class="fg-select" list="playerNamesList" data-rot="b2" value="${escapeHtml(r.b2)}" placeholder="Partner">
     </div>
-    <input class="fg-select" data-rot="score" value="${escapeHtml(r.score)}" placeholder="Score, first pair first: 6-3 or 6-2 10-6">
-  </div>`).join('');
+    <div class="fg-row"><label class="fg-label">Score (Team A – Team B)</label>
+      <div class="rot-score">${box('a', n[0], 'A')}<span>–</span>${box('b', n[1], 'B')}
+        <span class="rot-tb-label">tie-break</span>${box('ta', n[2], 'A')}<span>–</span>${box('tb', n[3], 'B')}</div>
+    </div>
+  </div>`;
+  }).join('');
   if(rotationEditing){
     return `<div class="rot-form">
       <div class="section-sub" style="margin-top:0; color:var(--gold-bright);">Editing the rotation on ${escapeHtml(dayLabel(d.date))}. Change any name or score; the date and the number of pairings stay as they are (to change those, remove it and record it again).</div>
       ${rows}
-      <div class="section-sub" style="font-size:10.5px;">A tie-break (e.g. 10-6) counts as one set won, with no games.</div>
+      <div class="section-sub" style="font-size:10.5px;">A tie-break (e.g. 10-6) counts as one set won, with no games; a set left level (e.g. 5-5) is a draw.</div>
       <div class="difficulty-row"><button class="tab-btn active" id="rotationPreview" style="flex:2;">Preview changes</button>
         <button class="preset-btn" id="rotationEditCancel" style="flex:1;">Cancel</button></div>
       ${rotationMessage ? `<div class="section-sub" style="color:var(--gold-bright);">${rotationMessage}</div>` : ''}
@@ -145,9 +153,9 @@ function rotationAddHtml(){
     ${onDate.length ? `<div class="fg-row"><label class="fg-label">Games already entered on this date, to make into the rotation</label>
       ${onDate.map(m => `<label class="late-pick"><input type="checkbox" data-rot-convert value="${escapeHtml(m.id)}"${d.convert.includes(m.id) ? ' checked' : ''}> ${escapeHtml(rotationPairLine(m))}</label>`).join('')}
       <div class="section-sub" style="font-size:10.5px;">Tick them instead of typing the pairings below.</div></div>` : ''}
-    <div class="fg-row"><label class="fg-label">Or enter the pairings</label>${rows}
-      <button type="button" class="preset-btn" id="rotationAddRow" style="margin-top:6px;">+ Add pairing</button></div>
-    <div class="section-sub" style="font-size:10.5px;">A tie-break (e.g. 10-6) counts as one set won, with no games.</div>
+    <div class="fg-row"><label class="fg-label">Or enter the sets</label>${rows}
+      <button type="button" class="preset-btn" id="rotationAddRow" style="margin-top:6px;">+ Add set</button></div>
+    <div class="section-sub" style="font-size:10.5px;">One set is enough. A tie-break (e.g. 10-6) counts as one set won, with no games; a set left level (e.g. 5-5) is a draw.</div>
     <button class="tab-btn active" id="rotationPreview" style="width:100%;">Preview</button>
     ${rotationMessage ? `<div class="section-sub" style="color:var(--gold-bright);">${rotationMessage}</div>` : ''}
     ${rotationPlan ? rotationConfirmHtml() : ''}
@@ -166,17 +174,24 @@ function rotationConfirmHtml(){
 }
 
 // "6-2 10-6" -> [[6,2],[1,0]]: a tie-break is a set won, no games (Shaun, 14 Nov).
+// A set left level when time ran out ("5-5") is a draw on its games
+// (Shaun, 21 Nov); a level tie-break is not a result.
 function parseRotationScore(text){
   const sets = [];
   const re = /(\d{1,2})\s*[-–:]\s*(\d{1,2})/g;
   let m;
   while((m = re.exec(String(text || '')))){
     const a = Number(m[1]), b = Number(m[2]);
-    if(a === b) return null;
-    sets.push(Math.max(a, b) >= 10 ? (a > b ? [1, 0] : [0, 1]) : [a, b]);
+    if(Math.max(a, b) >= 10){ if(a === b) return null; sets.push(a > b ? [1, 0] : [0, 1]); }
+    else sets.push([a, b]);
   }
   return sets.length ? sets : null;
 }
+
+// Each rotation set counts as a third of a match, however many were played
+// (Shaun, 21 Nov: one or two extra sets after a match are a rotation too).
+// Rotations recorded before keep the weight they were rated with.
+const ROTATION_SET_WEIGHT = 1 / 3;
 
 function readRotationForm(){
   const d = rotationDraft;
@@ -185,6 +200,12 @@ function readRotationForm(){
   document.querySelectorAll('[data-rot-row]').forEach(row => {
     const r = d.rows[Number(row.dataset.rotRow)];
     row.querySelectorAll('[data-rot]').forEach(inp => { r[inp.dataset.rot] = inp.value; });
+    // The score boxes, as the score text the rest reads: "6-3", "6-2 10-6".
+    const v = (k) => { const el = row.querySelector(`[data-rot-s="${k}"]`); return el ? String(el.value).trim() : ''; };
+    if(row.querySelector('[data-rot-s]')){
+      r.score = [v('a') !== '' && v('b') !== '' ? `${v('a')}-${v('b')}` : '', v('ta') !== '' && v('tb') !== '' ? `${v('ta')}-${v('tb')}` : ''].filter(Boolean).join(' ');
+      if(!r.score && (v('a') || v('b'))) r.score = `${v('a') || '?'}-${v('b') || '?'}`;
+    }
   });
   d.convert = [...document.querySelectorAll('[data-rot-convert]:checked')].map(x => x.value);
 }
@@ -214,27 +235,27 @@ function rotationMatches(){
     for(let i = 0; i < parts.length; i++){
       const r = d.rows[i] || {};
       const names = [r.a1, r.a2, r.b1, r.b2].map(x => String(x || '').trim());
-      if(names.some(x => !x)) return { error: `Pairing ${i + 1}: enter all four players.` };
-      if(new Set(names.map(x => toId(x).toLowerCase())).size !== 4) return { error: `Pairing ${i + 1}: four different players, please.` };
+      if(names.some(x => !x)) return { error: `Set ${i + 1}: enter all four players.` };
+      if(new Set(names.map(x => toId(x).toLowerCase())).size !== 4) return { error: `Set ${i + 1}: four different players, please.` };
       const sets = parseRotationScore(r.score);
-      if(!sets) return { error: `Pairing ${i + 1}: enter the score as 6-3 (no level sets).` };
+      if(!sets) return { error: `Set ${i + 1}: enter the score, Team A’s games first (e.g. 6-3).` };
       const m = shape(parts[i].date, parts[i].id, [toId(names[0]), toId(names[1])], [toId(names[2]), toId(names[3])], sets);
       edited.push({ ...m, sourceIndex: parts[i].sourceIndex, rotation: { ...parts[i].rotation } });
     }
     return { type: 'editMany', session, matches: edited };
   }
   if(d.convert.length){
-    if(d.convert.length < 2) return { error: 'Tick at least two games.' };
+    if(d.convert.length < 1) return { error: 'Tick a game.' };
     const raw = (V3_RECORD && V3_RECORD.matches) || [];
     list = d.convert.map(id => raw.find(x => x.id === id)).filter(Boolean)
       .sort((a, b) => a.sourceIndex - b.sourceIndex)
       .map(x => RatingStore.matchFromDoc(x));
     if(list.some(x => x.forfeit || x.late)) return { error: 'A game with a forfeit or late penalty can’t be part of a rotation.' };
-    return { type: 'editMany', session, matches: list.map((x, i) => ({ ...x, rotation: { session, part: i + 1, of: list.length, weight: 1 / list.length } })) };
+    return { type: 'editMany', session, matches: list.map((x, i) => ({ ...x, rotation: { session, part: i + 1, of: list.length, weight: ROTATION_SET_WEIGHT } })) };
   }
   if(!/^\d{4}-\d{2}-\d{2}$/.test(d.date)) return { error: 'Choose the date.' };
   const filled = d.rows.filter(r => [r.a1, r.a2, r.b1, r.b2, r.score].some(v => String(v).trim()));
-  if(filled.length < 2) return { error: 'Enter at least two pairings.' };
+  if(filled.length < 1) return { error: 'Enter a set: four players and the score.' };
   const used = V3_MATCHES.concat(V3_ROTATIONS).filter(m => m.date === d.date)
     .map(m => Number(String(m.id).slice(d.date.length + 1))).filter(Number.isFinite);
   let next = (used.length ? Math.max(...used) : 0) + 1;
@@ -242,13 +263,13 @@ function rotationMatches(){
   for(let i = 0; i < filled.length; i++){
     const r = filled[i];
     const names = [r.a1, r.a2, r.b1, r.b2].map(x => String(x).trim());
-    if(names.some(x => !x)) return { error: `Pairing ${i + 1}: enter all four players.` };
-    if(new Set(names.map(x => toId(x).toLowerCase())).size !== 4) return { error: `Pairing ${i + 1}: four different players, please.` };
+    if(names.some(x => !x)) return { error: `Set ${i + 1}: enter all four players.` };
+    if(new Set(names.map(x => toId(x).toLowerCase())).size !== 4) return { error: `Set ${i + 1}: four different players, please.` };
     const sets = parseRotationScore(r.score);
-    if(!sets) return { error: `Pairing ${i + 1}: enter the score as 6-3 (no level sets).` };
+    if(!sets) return { error: `Set ${i + 1}: enter the score, Team A’s games first (e.g. 6-3).` };
     out.push(shape(d.date, `${d.date}-${next++}`, [toId(names[0]), toId(names[1])], [toId(names[2]), toId(names[3])], sets));
   }
-  return { type: 'appendMany', session, matches: out.map((x, i) => ({ ...x, rotation: { session, part: i + 1, of: out.length, weight: 1 / out.length } })) };
+  return { type: 'appendMany', session, matches: out.map((x, i) => ({ ...x, rotation: { session, part: i + 1, of: out.length, weight: ROTATION_SET_WEIGHT } })) };
 }
 
 async function stageRotation(){
@@ -265,7 +286,8 @@ async function stageRotation(){
       provenance: { createdBy: name, recordedAt: new Date().toISOString(), source: rotationEditing ? 'Rotation corrected' : built.type === 'editMany' ? 'Games made a rotation' : 'Rotation recorded' } });
     const show = (ids) => ids.map(displayNameFor).join(' & ');
     rotationPlan = { planned, lines: built.matches.map(m => `${show(m.teamA)} ${m.sets.map(s => s.join('-')).join(' ')} ${show(m.teamB)}${m.outcome === RatingEngine.OUTCOME.DRAW ? ' (level)' : ''}`) };
-    rotationMessage = `${built.matches.length} pairings, each worth 1/${built.matches.length} of a match.`;
+    const n = built.matches.length, w = built.matches[0].rotation.weight;
+    rotationMessage = `${n} set${n === 1 ? '' : 's'}, each worth ${Math.abs(w - 1 / 3) < 1e-9 ? 'a third' : `1/${Math.round(1 / w)}`} of a match.`;
   } catch(e){ rotationMessage = e.message; }
   renderGamesTab();
 }
@@ -327,6 +349,9 @@ async function commitRotationRemoval(){
 function wireRotations(){
   const add = document.getElementById('rotationAddRow');
   if(add) add.onclick = () => { readRotationForm(); rotationDraft.rows.push({ a1: '', a2: '', b1: '', b2: '', score: '' }); renderGamesTab(); };
+  document.querySelectorAll('[data-rot-del]').forEach(b => {
+    b.onclick = () => { readRotationForm(); rotationDraft.rows.splice(Number(b.dataset.rotDel), 1); renderGamesTab(); };
+  });
   const date = document.getElementById('rotationDate');
   if(date) date.onchange = () => { readRotationForm(); rotationDraft.convert = []; rotationPlan = null; renderGamesTab(); };
   const prev = document.getElementById('rotationPreview');
