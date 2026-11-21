@@ -630,9 +630,9 @@
 .mrc-set{ white-space: nowrap; }
 .mrc-score[data-sets="4"]{ font-size: 34px; gap: 14px; }
 .mrc-score[data-sets="5"]{ font-size: 25px; gap: 9px; }
-.mrc-against{ margin-top: 4px; font-size: 13px; color: var(--text-dim); }
-.mrc-opp{ color: var(--text); opacity: .85; white-space: nowrap; }
-.mrc-against .mrc-tier{ font-size: 9.5px; padding: 1px 3px; }
+.mrc-against{ margin-top: 6px; font-size: 17px; color: var(--text-dim); }
+.mrc-opp{ color: var(--text); font-weight: 600; white-space: nowrap; }
+.mrc-against .mrc-tier{ font-size: 11px; padding: 1px 4px; }
 .mrc-story{
   margin: 18px 0 0; padding: 12px 12px 13px; border-radius: 14px;
   background: rgba(var(--gold-rgb),0.07); border: 1px solid rgba(var(--gold-rgb),0.22);
