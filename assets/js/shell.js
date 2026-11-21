@@ -386,6 +386,8 @@ function buildShellDom(){
   `;
   document.body.insertBefore(header, document.body.firstChild);
   header.querySelector('#shellCaptureBtn').onclick = () => (captureState ? endCapture() : startCapture());
+  // The club ticker, once there is a header to sit under (clubTicker.js).
+  if(typeof renderClubTicker === 'function') setTimeout(() => { try { renderClubTicker(); } catch(e){ /* drawn on the next recompute */ } }, 0);
 
   // Visible section subnav mount point, right under the header.
   const subnav = document.createElement('div');
