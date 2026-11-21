@@ -41,3 +41,24 @@ maybe('a strip of club news under the header: real facts, looping, pausable (rem
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 21 Nov: "It doesn't move" -- on a phone with Reduce Motion on.
+maybe('it moves even with Reduce Motion on, and a redraw with the same news does not restart it', async () => {
+  const app = await H.open({ viewport: { width: 390, height: 844 } });
+  try {
+    await app.page.emulateMedia({ reducedMotion: 'reduce' });
+    const r = await app.run(async () => {
+      const left = () => document.querySelector('#clubTicker .club-ticker-track').getBoundingClientRect().left;
+      const a = left();
+      await new Promise((res) => setTimeout(res, 1500));
+      const track = document.querySelector('#clubTicker .club-ticker-track');
+      recomputeAll();
+      return { a, b: left(), same: track === document.querySelector('#clubTicker .club-ticker-track'),
+        copy: getComputedStyle(document.querySelector('#clubTicker .club-ticker-copy')).display };
+    });
+    assert.ok(r.b < r.a - 10, `moved: ${r.a} -> ${r.b}`);
+    assert.ok(r.same, 'not rebuilt for the same news');
+    assert.notStrictEqual(r.copy, 'none');
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
