@@ -15,7 +15,8 @@ const NOW = '2026-09-28T12:00:00.000Z';
 // one Tier S player) still appears.
 const look = () => {
   const sections = (mode) => { summaryMonth = '2026-09'; summaryMode = mode; leagueGrouped = true; leagueLastTen = false; renderSummary();
-    return [...document.querySelectorAll('#summaryContent .lg-tier-head')].map((h) => h.dataset.tier); };
+    // The tier sections (the race's All tiers table, 21 Nov, is not a tier).
+    return [...document.querySelectorAll('#summaryContent .lg-tier-head')].map((h) => h.dataset.tier).filter((t) => t !== 'ALL'); };
   const kingsStub = computeKingsOfTiers;
   // The seeded record never gives Tier S a field; give the panel one.
   computeKingsOfTiers = () => ({ S: { name: 'Manny', rating: 1800, currentTier: 'S' }, A: { name: 'Kaz', rating: 1735, currentTier: 'A' }, _fieldSize: { S: 2, A: 4 } });
