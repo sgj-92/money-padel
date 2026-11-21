@@ -74,7 +74,8 @@ maybe('Admin records a rotation: a tie-break is a set, ratings move, tables do n
       document.querySelector('[data-add-kind="rotation"]').click();
       document.getElementById('rotationDate').value = '2026-09-29';
       const rows = [...document.querySelectorAll('[data-rot-row]')];
-      const fill = (row, a1, a2, b1, b2, score) => { const set = (k, v) => { row.querySelector(`[data-rot="${k}"]`).value = v; }; set('a1', a1); set('a2', a2); set('b1', b1); set('b2', b2); set('score', score); };
+      const setScore = (row, text) => { const n = String(text).match(/\d+/g) || []; ['a', 'b', 'ta', 'tb'].forEach((k, i) => { row.querySelector(`[data-rot-s="${k}"]`).value = n[i] || ''; }); };
+      const fill = (row, a1, a2, b1, b2, score) => { const set = (k, v) => { row.querySelector(`[data-rot="${k}"]`).value = v; }; set('a1', a1); set('a2', a2); set('b1', b1); set('b2', b2); setScore(row, score); };
       fill(rows[0], K, A, D, N, '4-6');
       fill(rows[1], K, D, A, N, '6-3');
       fill(rows[2], K, N, A, D, '6-2 10-6');
@@ -110,7 +111,7 @@ maybe('Admin records a rotation: a tie-break is a set, ratings move, tables do n
     assert.match(r.rankMeta.max, /^\d+ games · 1 rotation( · |$)/, r.rankMeta.max);
     assert.doesNotMatch(r.rankMeta.other, /rotation/, 'nothing said for a player with none');
     assert.strictEqual(r.rankMeta.counted, 1, 'towards Ranked, a rotation is one match (Shaun, 18 Nov)');
-    assert.match(r.preview, /each worth 1\/3 of a match/);
+    assert.match(r.preview, /3 sets, each worth a third of a match/);
     assert.match(r.head, /29 Sep/i);
     assert.strictEqual(r.removed.left, 0);
     r.removed.ratings.forEach((x, i) => assert.ok(Math.abs(x - r.before.ratings[i]) < 1e-6, 'removing it puts every rating back'));
@@ -120,7 +121,7 @@ maybe('Admin records a rotation: a tie-break is a set, ratings move, tables do n
     assert.strictEqual(r.after.race, r.before.race, 'nor the race');
     assert.ok(r.after.ratings.some((x, i) => x !== r.before.ratings[i]), 'ratings move');
     assert.deepStrictEqual(r.stats, [[3, 1], [0, 4], [2, 2], [3, 1]], 'Max 3-1, Jords 0-4, PDM 2-2, Stormzy 3-1 in sets');
-    assert.match(r.card, /Rotation · 3 pairings/i);
+    assert.match(r.card, /Rotation · 3 sets/i);
     assert.match(r.card, /Max 3–1 sets/);
     assert.match(r.h2h, /In rotations/);
     assert.match(r.h2h, /Max & Stormzy 6-2 1-0 Jords & PDM\s*Together/);
@@ -168,7 +169,8 @@ maybe('a rotation can be corrected: Edit fills the form, a wrong score is fixed,
         document.querySelector('#tabrow .tab-btn[data-tab="games"]').click(); gamesMonth = 'all';
         addGameExpanded = true; addGameKind = 'rotation'; ensureRotationDraft(); rotationDraft.date = '2026-09-29'; renderGamesTab();
         const rows = [...document.querySelectorAll('[data-rot-row]')];
-        const fill = (row, v) => ['a1', 'a2', 'b1', 'b2', 'score'].forEach((k, i) => { row.querySelector(`[data-rot="${k}"]`).value = v[i]; });
+        const setScore = (row, text) => { const n = String(text).match(/\d+/g) || []; ['a', 'b', 'ta', 'tb'].forEach((k, i) => { row.querySelector(`[data-rot-s="${k}"]`).value = n[i] || ''; }); };
+        const fill = (row, v) => { ['a1', 'a2', 'b1', 'b2'].forEach((k, i) => { row.querySelector(`[data-rot="${k}"]`).value = v[i]; }); setScore(row, v[4]); };
         fill(rows[0], ['Max', 'Jords', 'PDM', 'Stormzy', '4-6']);
         fill(rows[1], ['Max', 'PDM', 'Jords', 'Stormzy', '6-3']);
         fill(rows[2], ['Max', 'Stormzy', 'Jords', 'PDM', fix ? '6-2 10-6' : '6-2']);
@@ -179,8 +181,10 @@ maybe('a rotation can be corrected: Edit fills the form, a wrong score is fixed,
         if (!fix) {
           gamesMonth = 'all'; renderGamesTab();
           document.querySelector('[data-rot-edit]').click();
-          form = [...document.querySelectorAll('[data-rot-row]')].map((row) => [...row.querySelectorAll('[data-rot]')].map((i) => i.value));
-          document.querySelectorAll('[data-rot-row]')[2].querySelector('[data-rot="score"]').value = '6-2 10-6';
+          // Names, then the score boxes as the score (Team A – Team B).
+          form = [...document.querySelectorAll('[data-rot-row]')].map((row) => [...row.querySelectorAll('[data-rot]')].map((i) => i.value)
+            .concat([`${row.querySelector('[data-rot-s="a"]').value}-${row.querySelector('[data-rot-s="b"]').value}`]));
+          setScore(document.querySelectorAll('[data-rot-row]')[2], '6-2 10-6');
           await stageRotation();
           const preview = document.getElementById('gamesView').innerText;
           await commitRotation();
@@ -201,4 +205,43 @@ maybe('a rotation can be corrected: Edit fills the form, a wrong score is fixed,
   assert.strictEqual(corrected.count, 1);
   assert.deepStrictEqual(corrected.sets[2], [[6, 2], [1, 0]]);
   corrected.ratings.forEach((x, i) => assert.ok(Math.abs(x - rightFirstTime.ratings[i]) < 1e-9, 'exactly as if entered right first time'));
+});
+
+// Shaun, 21 Nov: "Sometimes when the match is over, we play extra sets and
+// rotate the teams. Sometimes it's only one extra set." Decided: each rotation
+// set is a third of a match; a set left level (5-5) is a draw.
+maybe('one extra set is a rotation: it counts a third of a match, and a level set is a draw', async () => {
+  const app = await H.open({ now: '2026-09-30T10:00:00.000Z' });
+  try {
+    const r = await app.run(async () => {
+      isUnlocked = true; adminRole = 'owner'; currentUserName = 'Shaun';
+      document.querySelector('#tabrow .tab-btn[data-tab="games"]').click(); gamesMonth = 'all';
+      addGameExpanded = false; renderGamesTab();
+      document.getElementById('addGameToggle').click();
+      document.querySelector('[data-add-kind="rotation"]').click();
+      document.getElementById('rotationDate').value = '2026-09-29';
+      const row = document.querySelector('[data-rot-row]');
+      [['a1', 'Max'], ['a2', 'Jords'], ['b1', 'PDM'], ['b2', 'Stormzy']].forEach(([k, v]) => { row.querySelector(`[data-rot="${k}"]`).value = v; });
+      row.querySelector('[data-rot-s="a"]').value = '5'; row.querySelector('[data-rot-s="b"]').value = '5';
+      const labels = [...row.querySelectorAll('.fg-label')].map((l) => l.textContent);
+      const before = ['Max', 'PDM'].map((x) => PLAYERS.find((p) => p.name === x).rating);
+      await stageRotation();
+      const msg = rotationMessage;
+      await commitRotation();
+      await new Promise((res) => setTimeout(res, 50));
+      const s = rotationSessions()[0];
+      return { labels, msg, parts: s.parts.length, weight: s.parts[0].rotation.weight, draw: s.parts[0].isDraw, sets: s.parts[0].sets,
+        moved: ['Max', 'PDM'].map((x, i) => Math.abs(PLAYERS.find((p) => p.name === x).rating - before[i])),
+        card: (document.querySelector('#gamesView .rot-head') || {}).textContent };
+    });
+    assert.deepStrictEqual(r.labels, ['Team A', 'Team B', 'Score (Team A – Team B)'], 'laid out as Add a game lays out a game');
+    assert.strictEqual(r.msg, '1 set, each worth a third of a match.', 'one set is enough');
+    assert.strictEqual(r.parts, 1);
+    assert.ok(Math.abs(r.weight - 1 / 3) < 1e-12, 'a third of a match');
+    assert.strictEqual(r.draw, true, '5-5: a draw');
+    assert.deepStrictEqual(r.sets, [[5, 5]]);
+    assert.ok(r.moved.every((x) => x < 5), `a level set between near-equals barely moves anyone (${r.moved})`);
+    assert.match(r.card, /Rotation · 1 set$/);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
 });

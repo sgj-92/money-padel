@@ -237,9 +237,16 @@ differ only in which result each player is rated on.
 
 Four players swap partners each set. Each pairing is stored as its own match
 with `rotation { session, part, of, weight }`, and is rated on its own games
-and result at `weight = 1 / of` of a full match. That weight applies to both
-the rating movement and the evidence. `lifetimeMatches` counts the session
-once, on part 1. A tie-break is entered as a set won, with no games.
+and result at `weight` of a full match. That weight applies to both the rating
+movement and the evidence. `lifetimeMatches` counts the session once, on part 1.
+A tie-break is entered as a set won, with no games.
+
+**Weight (Shaun, 21 Nov):** every rotation set recorded from 21 Nov counts
+`1/3` of a match, however many were played — so one or two extra sets after a
+match (a rotation of one or two) move ratings a third of a match each, never a
+whole match. Rotations recorded before keep the weight they were rated with
+(`1 / of`); the stored weight is what replays use. **A set left level** when
+time ran out (e.g. 5-5) is recorded as a draw on its games.
 Rotations are kept out of every table (League, Merit, Race, W/L, qualifying
 minimums). Head to head lists them as history, with no win or loss.
 

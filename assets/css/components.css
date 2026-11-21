@@ -294,6 +294,12 @@
   .rot-pair{ font-size:14px; color:var(--text); padding:3px 0; }
   .rot-players{ display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:8px; padding-top:8px; border-top:1px solid var(--line); font-size:12.5px; color:var(--text-soft); }
   .rot-row{ border-top:1px solid var(--line); padding:8px 0; }
+  .rot-row-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; }
+  .rot-row-del{ padding:3px 10px; font-size:11px; }
+  .rot-score{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .rot-score .rot-num{ width:58px; padding:8px 6px; text-align:center; }
+  .rot-score span{ color:var(--text-dim); }
+  .rot-tb-label{ font-size:11px; margin-left:8px; }
   .rot-row-label{ font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
   .rot-row-teams{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:4px; }
   .rot-row-teams .fg-select{ padding:8px 6px; min-width:0; }
