@@ -1652,7 +1652,9 @@ function showBootPlaceholder(){
   if(!box || box.firstElementChild) return;
   const ph = document.createElement('div');
   ph.className = 'boot-placeholder';
-  ph.textContent = 'Loading…';
+  // The shape of a screen arriving, not a word (Shaun, 22 Nov).
+  if(typeof skeletonHtml === 'function') ph.innerHTML = skeletonHtml('Loading…', 5, 'cards');
+  else ph.textContent = 'Loading…';
   box.appendChild(ph);
 }
 

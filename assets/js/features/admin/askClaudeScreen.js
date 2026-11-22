@@ -65,7 +65,7 @@ function askClaudeWhen(iso){
 }
 
 function askClaudeSavedHtml(){
-  if(askClaudeSaved === null) return `<div class="section-sub">Reading saved questions…</div>`;
+  if(askClaudeSaved === null) return skeletonHtml('Reading saved questions…', 3);
   const list = askClaudeSaved.filter(c => c.id !== askClaudeConvId);
   if(!list.length) return '';
   return `<div class="ask-saved"><div class="fg-label" style="margin:12px 0 6px;">Previous questions · ${list.length}</div>
@@ -223,10 +223,13 @@ function wireAskClaude(){
     b.onclick = async () => {
       const id = b.dataset.askDel;
       const c = (askClaudeSaved || []).find(x => x.id === id);
-      if(!c || !window.confirm(`Delete “${c.title}”? This can’t be undone.`)) return;
-      try { await db.collection(ASK_CLAUDE_COLLECTION).doc(id).delete(); } catch(e){ askClaudeSaveNote = 'Delete failed: ' + e.message; redrawAskClaude(); return; }
+      if(!c || !await confirmSheet(`Delete “${c.title}”? This can’t be undone.`, { ok: 'Delete', danger: true })) return;
+      // Gone at once; put back if the database says no.
+      const before = askClaudeSaved;
       askClaudeSaved = askClaudeSaved.filter(x => x.id !== id);
       redrawAskClaude();
+      try { await db.collection(ASK_CLAUDE_COLLECTION).doc(id).delete(); }
+      catch(e){ askClaudeSaved = before; askClaudeSaveNote = 'Delete failed: ' + e.message; redrawAskClaude(); }
     };
   });
   // The saved list is read when the section is first shown.

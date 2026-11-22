@@ -237,7 +237,7 @@ maybe('Ask Claude keeps every conversation: listed newest first, reopened to car
     const r = await app.run(async () => {
       const sent = [];
       window.fetch = async (url, opts) => { const b = JSON.parse(opts.body); sent.push(b); return { ok: true, status: 200, json: async () => ({ answer: `Answer to ${b.question}` }) }; };
-      window.confirm = () => true;
+      window.confirmSheet = async () => true;
       const wait = async (f) => { for (let k = 0; k < 100 && !f(); k++) await new Promise((res) => setTimeout(res, 20)); };
       await wait(() => signedInAdmin);
       isUnlocked = true; adminRole = 'owner';

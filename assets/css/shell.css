@@ -304,7 +304,7 @@ body:is(.is-me, .is-mygames, .is-club) > :not(.shell-header):not(#sectionSubnav)
    while the record is on its way, and whichever screen is chosen in that
    window is the one drawn the moment it arrives. */
 .boot-placeholder{
-  padding: 28px 4px; text-align: center;
+  padding: 16px 4px; text-align: left;
   color: var(--text-dim); font-size: 13px;
 }
 

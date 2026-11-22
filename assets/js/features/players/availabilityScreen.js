@@ -119,15 +119,20 @@ function wireAvailabilitySheet(){
     d.exceptions = d.exceptions.filter(x => x.date !== date).concat([{ date, free }]).sort((a, b) => (a.date < b.date ? -1 : 1));
     renderAvailabilitySheet('');
   };
+  // Saved at once on screen (Shaun, 22 Nov: "optimistic UI updates"); put
+  // back, with the reason, if the database refuses.
   sheet.querySelector('.av-save').onclick = async () => {
-    const btn = sheet.querySelector('.av-save');
-    btn.disabled = true;
     const entry = { ...A.clean({ ...d, unit: 'half' }), updatedAt: new Date().toISOString(), by: verifiedPlayerName() === d.name ? d.name : ((signedInAdmin && signedInAdmin.name) || 'Admin') };
-    const ok = await saveAvailability(d.name, entry);
-    btn.disabled = false;
-    if(!ok){ renderAvailabilitySheet(storageAvailable() ? 'Couldn’t save. Publish the latest database rules (docs/PLAYER_CODES.md), or sign in with your code.' : 'Couldn’t save: no connection.'); return; }
+    const had = Object.prototype.hasOwnProperty.call(availabilityState, d.name), previous = availabilityState[d.name];
     availabilityState = { ...availabilityState, [d.name]: entry };
     renderAvailabilitySheet('Saved.');
+    if(typeof renderActiveTab === 'function') renderActiveTab();
+    const ok = await saveAvailability(d.name, entry);
+    if(ok) return;
+    const back = { ...availabilityState };
+    if(had) back[d.name] = previous; else delete back[d.name];
+    availabilityState = back;
+    if(availabilityDraft && availabilityDraft.name === d.name) renderAvailabilitySheet(storageAvailable() ? 'Couldn’t save. Publish the latest database rules (docs/PLAYER_CODES.md), or sign in with your code.' : 'Couldn’t save: no connection.');
     if(typeof renderActiveTab === 'function') renderActiveTab();
   };
 }

@@ -35,7 +35,7 @@ maybe('only a test player can be reset; it clears what they set up and asked for
       isUnlocked = true; adminRole = 'owner';
       const notified = []; const realFetch = window.fetch;
       window.fetch = async (url, o) => { if(String(url).includes('/api/notify')) notified.push(o.body); return realFetch(url, o); };
-      window.confirm = () => true;
+      window.confirmSheet = async () => true;
       document.querySelector('#tabrow .tab-btn[data-tab="manage"]').click();
       adminOpenSections.playercodes = true; renderManage();
       for (let k = 0; k < 100 && playerCodesState === null; k++) await new Promise((res) => setTimeout(res, 20));

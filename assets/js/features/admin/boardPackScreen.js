@@ -497,7 +497,7 @@ function buildBoardPackSectionHtml(){
     </div>`;
   if(boardPackView === 'players') return html + buildPlayerPacksHtml() + `</div>`;
   if(!boardPackDraft){
-    return html + `<div class="section-sub" id="bpLoading">Loading ${escapeHtml(monthLabel(boardPackMonth))}…</div></div>`;
+    return html + `<div id="bpLoading">${skeletonHtml(`Loading ${monthLabel(boardPackMonth)}…`, 3, 'cards')}</div></div>`;
   }
   const stored = boardPackStored[boardPackMonth];
   html += `<div class="section-sub" id="bpStatus">${escapeHtml(boardPackStatusText())}</div>`;

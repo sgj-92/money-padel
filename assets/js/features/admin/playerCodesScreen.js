@@ -66,7 +66,7 @@ function resetSummary(name, r){
 
 function buildPlayerCodesHtml(){
   if(!signedInAdmin) return `<div class="section-sub">Sign in with your own Admin account to make player codes.</div>`;
-  if(playerCodesState === null) return `<div class="section-sub">Reading codes…</div>`;
+  if(playerCodesState === null) return skeletonHtml('Reading codes…', 6);
   const names = entryPlayerNames();
   const made = names.filter(n => playerCodesState[n]).length;
   return `<div class="section-sub" style="margin-top:0;">Each player signs in once with their own code and stays signed in on their phone. Copy the message and send it to them on WhatsApp. They can then change it to 6 digits of their own. A new code (for one forgotten or shared) replaces the old one, which stops working. ${made} of ${names.length} have a code.</div>
@@ -105,7 +105,7 @@ function wirePlayerCodes(){
   body.querySelectorAll('[data-pc-make]').forEach(b => {
     b.onclick = async () => {
       const name = b.dataset.pcMake, existing = playerCodesState && playerCodesState[name];
-      if(existing && !window.confirm(`Make a new code for ${name}? ${existing.own ? 'The code they chose' : `Their current code (${formatPlayerCode(existing.code)})`} will stop working.`)) return;
+      if(existing && !await confirmSheet(`${existing.own ? 'The code they chose' : `Their current code (${formatPlayerCode(existing.code)})`} will stop working.`, { title: `New code for ${name}?`, ok: 'Make a new code' })) return;
       playerCodesBusy = name; playerCodesNote = ''; redrawPlayerCodes();
       const r = await issuePlayerCode(name, existing);
       playerCodesBusy = null;
@@ -121,7 +121,7 @@ function wirePlayerCodes(){
   body.querySelectorAll('[data-pc-reset]').forEach(b => {
     b.onclick = async () => {
       const name = b.dataset.pcReset;
-      if(!window.confirm(`Reset ${name} to a brand-new player? A new code is made, and their hours, notification phones, games, court seats and challenges are cleared. Results stay.`)) return;
+      if(!await confirmSheet('A new code is made, and their hours, notification phones, games, court seats and challenges are cleared. Results stay.', { title: `Reset ${name} to new?`, ok: 'Reset to new', danger: true })) return;
       playerCodesBusy = name; playerCodesNote = ''; redrawPlayerCodes();
       const r = await resetPlayerToNew(name, playerCodesState && playerCodesState[name]);
       playerCodesBusy = null;

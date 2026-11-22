@@ -124,10 +124,14 @@ maybe('the rail is the navigation: the same routes, highlight, sub-navigation an
   } finally { await desk.close(); await phone.close(); }
 });
 
+// Sheets slide in (assets/css/native.css): measure where they come to rest.
+const settle = (app) => app.run(() => new Promise((res) => setTimeout(res, 450)));
+
 maybe('sheets are dialogs on a monitor, bottom sheets on a phone -- the same sheet, closed by Escape, the backdrop or its button', async () => {
   const desk = await open(1440, 900);
   try {
     await desk.run(() => { goToSection('rankings'); openRankingsMoreTables(); });
+    await settle(desk);
     const box = await desk.page.$eval('#rankingsMoreSheet .shell-more-panel', (e) => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, r.width, r.bottom]; });
     assert.ok(Math.abs(box[0] - 720) < 2 && Math.abs(box[1] - 450) < 40, `centred: ${box}`);
     assert.ok(box[2] <= 560 && box[3] < 900, 'a dialog, not a full-width sheet');
@@ -135,6 +139,7 @@ maybe('sheets are dialogs on a monitor, bottom sheets on a phone -- the same she
     assert.strictEqual(await desk.run(() => document.getElementById('rankingsMoreSheet').classList.contains('show')), false, 'Escape closes it');
     // A profile opened from Rankings slides in from the right, over the page.
     await desk.run(() => { goToSection('rankings'); openSheet('Kaz'); });
+    await settle(desk);
     const sheet = await desk.page.$eval('#overlay .sheet', (e) => { const r = e.getBoundingClientRect(); return [Math.round(r.right), Math.round(r.top), Math.round(r.height)]; });
     assert.deepStrictEqual(sheet, [1440, 0, 900], 'a full-height panel on the right');
     await desk.page.keyboard.press('Escape');
@@ -145,6 +150,7 @@ maybe('sheets are dialogs on a monitor, bottom sheets on a phone -- the same she
   const phone = await H.open({ now: NOW, mobile: true });
   try {
     await phone.run(() => { goToSection('rankings'); openRankingsMoreTables(); });
+    await settle(phone);
     const box = await phone.page.$eval('#rankingsMoreSheet .shell-more-panel', (e) => { const r = e.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.bottom)]; });
     assert.deepStrictEqual(box, [375, 667], 'a bottom sheet, edge to edge');
   } finally { await phone.close(); }

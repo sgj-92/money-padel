@@ -857,6 +857,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // The standings site opens on the League.
   if(standings){ const lg = legacyTabBtn('summary'); if(lg) lg.click(); }
   shellHistoryInstall();
+  if(typeof nativeFeelInstall === 'function') nativeFeelInstall();
   // A laptop or a monitor gets the desktop layout; a phone, nothing new.
   initDesktopShell();
   initMatchScorecard();

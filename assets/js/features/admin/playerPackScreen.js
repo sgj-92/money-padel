@@ -217,7 +217,7 @@ function buildPlayerPacksHtml(){
   const month = boardPackMonth;
   const d = ppDrafts[month];
   let html = `<div class="section-sub">One pack per player: their month from their side — record and places, matchup types, partners, opponents, best and weaker results, movement and ideas for next month. Each published pack has its own private link, made of a random key, so one player’s pack cannot be reached by changing a name or a month in someone else’s.</div>`;
-  if(!d) return html + `<div class="section-sub" id="ppLoading">Loading…</div>`;
+  if(!d) return html + `<div id="ppLoading">${skeletonHtml('Loading…', 3, 'cards')}</div>`;
   const players = playerPackPlayers(month);
   html += `<div id="bpMessage" class="section-sub">${escapeHtml(boardPackMessage)}</div>`;
   if(boardPackShareReady) html += `<div class="bp-share-ready" id="bpShareReady"><span>${escapeHtml(boardPackShareReady.label)} ready.</span>
