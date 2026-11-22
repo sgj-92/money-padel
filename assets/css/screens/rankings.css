@@ -896,3 +896,14 @@
   .rk-form{ gap: 4px; }
   #list .rk-row .nm, #list .rk-row .rating-big{ font-size: 19px; }
 }
+
+/* Names whole at phone width (Shaun's screenshot, 22 Nov: "Jerm…"): tighter
+   columns and gaps give the name ~25px more, and figures are lining and
+   tabular so the ratings line up in any serif (iOS draws old-style ones). */
+@media (max-width: 767px){
+  #rankingsColumnHeader.rankings-col-header, #list .row.rk-row{ grid-template-columns: 28px minmax(0, 1fr) 28px 40px 40px 43px 6px; column-gap: 4px; padding-left: 8px; padding-right: 8px; }
+  .rk-f{ width: 7px; height: 7px; }
+  .rk-form{ gap: 2px; }
+  #list .rk-row .nm{ font-size: 16px; }
+}
+#list .rk-row .rating-big, .rk-delta, .rk-leader-value, #list .rk-row .rk-pos{ font-variant-numeric: lining-nums tabular-nums; }
