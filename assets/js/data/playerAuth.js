@@ -128,6 +128,7 @@ async function playerSignIn(name, rawCode){
   }
   signedInPlayer = player;
   signedInAdmin = null;   // one account per device: this one is now the player's
+  if(typeof forgetStarterBefore === 'function') forgetStarterBefore(name, login.resetAt);
   return { ok: true, player };
 }
 

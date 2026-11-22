@@ -10,8 +10,15 @@
 let starterNotifyOn = null;   // this phone's notifications, once checked (it is a slow question)
 
 function starterHiddenKey(name){ return `starterChecklistHidden:${CLUB.id || CLUB.name}:${name}`; }
-function starterHidden(name){ try { return localStorage.getItem(starterHiddenKey(name)) === '1'; } catch(e){ return false; } }
-function hideStarter(name){ try { localStorage.setItem(starterHiddenKey(name), '1'); } catch(e){ /* not kept: fine */ } }
+function starterHidden(name){ try { return !!localStorage.getItem(starterHiddenKey(name)); } catch(e){ return false; } }
+function hideStarter(name){ try { localStorage.setItem(starterHiddenKey(name), new Date().toISOString()); } catch(e){ /* not kept: fine */ } }
+// A player reset to new (Admin › Player codes) sees the list again: anything
+// this phone remembers from before the reset is forgotten at sign-in.
+function forgetStarterBefore(name, resetAt){
+  starterNotifyOn = null;
+  if(!resetAt) return;
+  try { const v = localStorage.getItem(starterHiddenKey(name)); if(v && (v === '1' || v < resetAt)) localStorage.removeItem(starterHiddenKey(name)); } catch(e){ /* nothing kept */ }
+}
 
 function starterSteps(name){
   return [
@@ -66,7 +73,18 @@ function wireStarterChecklist(root, after){
   // Notifications are asked about once; the card redraws when the answer is in.
   if(starterNotifyOn === null && typeof currentPushSubscription === 'function' && root.querySelector('.starter')){
     starterNotifyOn = false;
-    currentPushSubscription().then(sub => { if(sub){ starterNotifyOn = true; if(typeof renderActiveTab === 'function') renderActiveTab(); } });
+    // On only if this phone is on the list for this player (one phone can
+    // serve two people, and a reset takes a player off the list).
+    const name = root.querySelector('.starter').dataset.starter;
+    currentPushSubscription().then(async sub => {
+      if(!sub) return;
+      try {
+        const doc = await db.collection(PUSH_SUBSCRIPTIONS_COLLECTION).doc(await subscriptionId(sub.endpoint)).get();
+        if(!doc.exists || (doc.data() || {}).player !== name) return;
+      } catch(e){ return; }
+      starterNotifyOn = true;
+      if(typeof renderActiveTab === 'function') renderActiveTab();
+    });
   }
 }
 

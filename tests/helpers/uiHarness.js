@@ -178,7 +178,10 @@ async function open(options = {}) {
                     window.__reads.push({ collection: name, id, started, ended: Date.now() });
                     const v = (data[name] || {})[id]; return { exists: !!v, data: () => v };
                   },
-                  async set(v) { window.__writes.push({ collection: name, id, doc: v }); (data[name] = data[name] || {})[id] = v; },
+                  async set(v, opts) {
+                    const doc = opts && opts.merge ? { ...((data[name] || {})[id] || {}), ...v } : v;
+                    window.__writes.push({ collection: name, id, doc }); (data[name] = data[name] || {})[id] = doc;
+                  },
                   async delete() { window.__writes.push({ collection: name, id, deleted: true }); delete (data[name] || {})[id]; },
                 };
               },
@@ -188,6 +191,15 @@ async function open(options = {}) {
                 window.__reads.push({ collection: name, started, ended: Date.now() });
                 if (failReads) fail();
                 return { docs: Object.entries(data[name] || {}).map(([id, v]) => ({ id, data: () => v })) };
+              },
+              // Equality only: what the app asks.
+              where(field, op, value) {
+                const coll = this;
+                return { async get() {
+                  if (failReads) fail();
+                  return { docs: Object.entries(data[name] || {}).filter(([, v]) => v && v[field] === value)
+                    .map(([id, v]) => ({ id, data: () => v, ref: coll.doc(id) })) };
+                } };
               },
             };
           },

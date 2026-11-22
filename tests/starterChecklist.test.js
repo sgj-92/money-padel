@@ -46,7 +46,7 @@ maybe('first sign-in shows the checklist; each step ticks itself off; Hide puts 
     assert.deepStrictEqual(r.after, ['hours:done', 'notify:todo:optional', 'request:done:optional']);
     assert.match(r.sub, /All set/);
     assert.strictEqual(r.wantedAfterHide, false);
-    assert.strictEqual(r.kept, '1', 'remembered on this phone');
+    assert.ok(r.kept, 'remembered on this phone (when, so a reset can bring it back)');
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
