@@ -180,7 +180,7 @@ maybe('the hero opens the Monthly Race, on Home\'s month, without choosing a mon
     });
     assert.deepStrictEqual([r.section, r.tab, r.summaryMonth, r.summaryMode], ['rankings', 'summary', r.month, 'race']);
     assert.strictEqual(r.choiceAfter, r.choiceBefore, 'Home hands the month over; it does not make the reader\'s choice');
-    assert.deepStrictEqual(r.sub, ['This Month']);
+    assert.deepStrictEqual(r.sub, ['Month']);
     assert.ok(r.shown && r.table);
   } finally { await app.close(); }
 });

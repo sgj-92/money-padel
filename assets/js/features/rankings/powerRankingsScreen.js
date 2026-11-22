@@ -109,6 +109,9 @@ function buildMonthlyStoriesHtml(month){
   </div>`;
 }
 
+// The rows the Power leaderboard last drew: the leader cards read them.
+let powerRowsShown = [];
+
 function rankArrowHtml(change){
   if(change === null || change === undefined || change === 0) return '';
   const up = change > 0;
@@ -213,6 +216,7 @@ function render(){
   rows = rows.filter(inPool);
   if(query) rows = rows.filter(p => p.name.toLowerCase().includes(query));
   rows = sortRows(rows);
+  if(activeTab === 'power') powerRowsShown = rows;
 
   const list = document.getElementById('list');
   const empty = document.getElementById('empty');
@@ -224,6 +228,19 @@ function render(){
   empty.innerHTML = (!PLAYERS.length && waiting.length) ? `No ratings yet.${awaitingFirstGameHtml()}` : powerEmptyHtml(beforeMinimum, inPool);
   wirePowerEmpty();
 
+  // The period's methodology note and summary sit under the table on Power
+  // (Shaun's 22 Nov design: the leaderboard straight under its heading).
+  let notesHost = list;
+  if(activeTab === 'power'){
+    let host = document.getElementById('rankingsPeriodNotes');
+    if(!host){ host = document.createElement('div'); host.id = 'rankingsPeriodNotes'; }
+    if(host.previousElementSibling !== list) list.insertAdjacentElement('afterend', host);
+    host.innerHTML = '';
+    notesHost = host;
+  } else {
+    const host = document.getElementById('rankingsPeriodNotes');
+    if(host) host.innerHTML = '';
+  }
   if(selectedMonth !== 'all'){
     const noteWrapper = document.createElement('div');
     const noteToggle = document.createElement('button');
@@ -242,14 +259,14 @@ function render(){
     };
     noteWrapper.appendChild(noteToggle);
     noteWrapper.appendChild(note);
-    list.appendChild(noteWrapper);
+    notesHost.appendChild(noteWrapper);
 
     if(activeTab==='power'){
       const stories = buildMonthlyStoriesHtml(selectedMonth);
       if(stories){
         const wrap = document.createElement('div');
         wrap.innerHTML = stories;
-        list.appendChild(wrap);
+        notesHost.appendChild(wrap);
         const msToggle = wrap.querySelector('#monthlySummaryToggle');
         if(msToggle) msToggle.onclick = ()=>{ monthlySummaryOpen = !monthlySummaryOpen; render(); };
       }
@@ -257,6 +274,10 @@ function render(){
   }
 
   const rotationsBy = typeof rotationCounts === 'function' ? rotationCounts(selectedMonth) : {};
+  // On All time the change column is this period's (Shaun's 22 Nov design: "Δ (QTR)").
+  const leaderPeriod = selectedMonth !== 'all' ? selectedMonth : (typeof currentMonthKey === 'function' ? currentMonthKey() : null);
+  const periodMove = (activeTab === 'power' && selectedMonth === 'all' && leaderPeriod && typeof monthlyMovementIndex === 'function') ? monthlyMovementIndex(leaderPeriod) : {};
+  const allMatches = activeTab === 'power' ? getAllApprovedMatches() : [];
   rows.forEach((p, i)=>{
     const row = document.createElement('div');
     row.className = 'row';
@@ -307,6 +328,7 @@ function render(){
       // current sort is actually about -- everything else stays reachable by tapping into the
       // full profile, rather than all appearing on the row at once.
       let metaHtml;
+      const rotsOf = rotationsBy[String(p.name).toLowerCase()] || 0;
       if(activeSortP === 'avg_match_strength'){
         metaHtml = `avg opp. ${Math.round(p.avg_match_strength)}${wlHtml}`;
       } else if(activeSortP === 'upset_total'){
@@ -338,20 +360,34 @@ function render(){
       // only where a month has no row for them.
       const rowTier = tierInScope(p) || p.tier;
 
+      // The leaderboard row (Shaun's 22 Nov design): position (laurels for
+      // the top three), name, tier, rating, its change this period, the last
+      // five results, and a chevron. The sort's own figure appears under the
+      // name only when sorted by something other than Rating.
+      const shownRating = inMonthView ? (hasMonthGames ? Math.round(p.month_rating) : null) : Math.round(p.rating);
+      const mv = inMonthView ? p.month_rating_change : ((periodMove[p.name] || {}).ratingChange ?? null);
+      const delta = (mv === null || mv === undefined) ? '<span class="rk-delta is-none">–</span>'
+        : `<span class="rk-delta ${mv > 0 ? 'is-up' : mv < 0 ? 'is-down' : 'is-flat'}"><span class="rk-tri" aria-hidden="true">${mv > 0 ? '▲' : mv < 0 ? '▼' : ''}</span>${mv > 0 ? '+' : mv < 0 ? '−' : ''}${Math.abs(Math.round(mv))}</span>`;
+      const recent = PlayerForm.recent(allMatches, p.name, 5);
+      const run = recent ? recent.run : [];
+      const formHtml = `<span class="rk-form" aria-label="Last ${run.length} result${run.length === 1 ? '' : 's'}: ${run.join(' ') || 'none'}">${Array.from({ length: 5 }, (_, k) => {
+        const r = run[k - (5 - run.length)];
+        return `<i class="rk-f ${r === 'W' ? 'is-w' : r === 'L' ? 'is-l' : r === 'D' ? 'is-d' : 'is-none'}"></i>`;
+      }).join('')}</span>`;
+      const pos = i + 1;
+      row.classList.add('rk-row');
+      if(pos <= 3) row.classList.add('rk-top', `rk-top-${pos}`);
       row.innerHTML = `
-        <div class="rank">${i+1}</div>
-        <span class="tier-badge tier-${rowTier.toLowerCase()}">${rowTier}</span>
+        <div class="rank">${pos <= 3 ? RK_LAUREL : ''}<span class="rk-pos">${pos}</span></div>
         <div class="namecol">
           <div class="nm">${p.name}</div>
-          <div class="meta">${metaHtml}</div>
+          <div class="meta">${(activeSortP !== 'rating' || rotsOf) ? metaHtml : ''}</div>
         </div>
-        <div class="wl">
-          ${bigNumberHtml}
-          <div class="rating-sub ${perfClass}">${perfSign}${p.avg_overperf_pct}%</div>
-          ${formLine}
-          ${seasonSubHtml}
-          ${monthRatingHtml}
-        </div>
+        <span class="tier-badge tier-${rowTier.toLowerCase()}">${rowTier}</span>
+        <div class="rating-big${shownRating === null ? ' is-none' : ''}">${shownRating === null ? '–' : shownRating}</div>
+        ${delta}
+        ${formHtml}
+        <span class="rk-chev" aria-hidden="true">›</span>
       `;
     }
     list.appendChild(row);

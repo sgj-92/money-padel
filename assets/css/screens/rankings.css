@@ -756,3 +756,142 @@
 .roh-admin-btn{ font: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 8px; cursor: pointer;
   border: 1px solid var(--gold-hairline, var(--line)); background: var(--gold-wash, transparent); color: var(--gold-bright); }
 .roh-admin-btn.roh-quiet{ background: none; border-color: var(--line); color: var(--text-dim); font-weight: 500; }
+
+/* ==========================================================================
+   RANKINGS, SHAUN'S 22 NOV DESIGN
+   Underlined tabs (Power | Quarter | Stats), a big "Rankings" title over a
+   spaced capitals line, one rounded bar (‹ period › | tier | filters), the
+   Power and period leaders side by side, then the Power Leaderboard:
+   # (laurels for the top three) · player · tier · rating · Δ · form · ›.
+   Colours are the club's own tokens.
+   ========================================================================== */
+.section-subnav.is-underline{ gap: 0; border-bottom: 1px solid var(--surface-border); padding-bottom: 0; }
+.section-subnav.is-underline .mp-seg{ display: contents; }
+.section-subnav.is-underline .mp-seg-item,
+.section-subnav.is-underline .section-more-btn{
+  flex: 1 1 0; position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 48px; padding: 0 6px; background: none !important; border: 0 !important; border-radius: 0; box-shadow: none !important;
+  font-family: var(--font-prestige); font-size: 17px; color: var(--text-dim);
+}
+.section-subnav.is-underline .mp-seg-item + .mp-seg-item::before,
+.section-subnav.is-underline .section-more-btn::before{
+  content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 1px; background: var(--surface-border);
+}
+.section-subnav.is-underline .mp-seg-item svg,
+.section-subnav.is-underline .section-more-btn svg{ width: 19px; height: 19px; flex: none; }
+.section-subnav.is-underline .mp-seg-item.active,
+.section-subnav.is-underline .section-more-btn[aria-pressed="true"]{ color: var(--text); }
+.section-subnav.is-underline .mp-seg-item.active::after,
+.section-subnav.is-underline .section-more-btn[aria-pressed="true"]::after{
+  content: ""; position: absolute; left: 18%; right: 18%; bottom: -1px; height: 2px; border-radius: 2px; background: var(--gold);
+}
+
+.rankings-hero-title{ font-size: 44px; line-height: 1.05; margin: 6px 0 0; font-weight: 400; color: var(--text); }
+.rankings-hero-sub{ font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim); margin-top: 10px; }
+
+/* One bar: ‹ period › | tier | filters. */
+.rankings-toolbar{
+  grid-template-columns: minmax(0, 1fr) auto auto; gap: 0;
+  background: var(--surface-1); border: 1px solid var(--surface-border); border-radius: 999px;
+  padding: 0 4px; margin-top: 14px; height: 52px; align-items: center;
+}
+.rankings-toolbar .toolbar-control{ background: none; border: 0; border-radius: 0; height: 36px; padding: 0 8px; gap: 6px; position: relative; }
+.rankings-toolbar .toolbar-tier::before, .rankings-toolbar .filter-btn::before{
+  content: ""; position: absolute; left: 0; top: 4px; bottom: 4px; width: 1px; background: var(--surface-border);
+}
+.rankings-toolbar .toolbar-icon{ display: inline-flex; color: var(--text-dim); flex: none; }
+.rankings-toolbar .period-step{
+  flex: none; width: 30px; height: 36px; min-height: 0 !important; padding: 0; border: 0; background: none;
+  color: var(--text-soft); display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
+}
+.rankings-toolbar .period-step:disabled{ opacity: .3; }
+.rankings-toolbar .toolbar-period select{ text-align: center; text-align-last: center; padding: 0; background-image: none; }
+.rankings-toolbar .filter-btn{ background: none; border: 0; border-radius: 0; width: 46px; height: 36px; }
+.rankings-toolbar .filter-btn.has-filters{ background: none; border: 0; }
+@media (max-width: 430px){
+  .rankings-toolbar .toolbar-icon{ display: none; }
+  .rankings-toolbar .period-step{ width: 24px; }
+  .rankings-toolbar .toolbar-control{ padding: 0 6px; }
+  .rankings-toolbar .toolbar-period{ gap: 0; padding: 0 2px; }
+}
+@media (max-width: 370px){ .rankings-toolbar .toolbar-icon{ display: none; } }
+
+/* The two leaders. */
+.rk-leaders{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px var(--space-4) 4px; }
+.rk-leader{
+  display: flex; flex-direction: column; gap: 10px; text-align: left; min-width: 0;
+  padding: 14px 14px 14px; border-radius: 16px; cursor: pointer; color: var(--text);
+  background: linear-gradient(150deg, rgba(255,255,255,.05), rgba(255,255,255,.01)); border: 1px solid var(--surface-border);
+}
+.rk-leader-power{ background: linear-gradient(150deg, rgba(var(--gold-rgb),.20), rgba(var(--gold-rgb),.04) 70%); border-color: rgba(var(--gold-rgb),.45); }
+.rk-leader-label{ display: flex; align-items: center; gap: 8px; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--text-soft); white-space: nowrap; }
+.rk-leader-icon{ display: inline-flex; color: var(--gold-bright); }
+.rk-leader-icon svg{ width: 18px; height: 18px; }
+.rk-leader-body{ display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; min-width: 0; }
+.rk-leader-who{ display: flex; flex-direction: column; min-width: 0; }
+.rk-leader-name{ font-family: var(--font-prestige); font-size: 24px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-leader-tier{ font-size: 12.5px; color: var(--text-soft); margin-top: 3px; }
+.rk-leader-value{ font-family: var(--font-prestige); font-size: 26px; line-height: 1; color: var(--gold-bright); padding-left: 10px; border-left: 1px solid var(--surface-border); flex: none; }
+
+/* "Power Leaderboard" · Methodology (i) */
+.rk-board-head{ display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 22px var(--space-4) 10px; }
+/* The period's methodology and summary, under the table. */
+#rankingsPeriodNotes{ margin: 10px var(--space-4) 0; }
+#rankingsPeriodNotes:empty{ display: none; }
+.rk-board-title{ font-family: var(--font-prestige); font-weight: 400; font-size: 22px; margin: 0; color: var(--text); }
+.rk-method{ border: 0; background: none; color: var(--text-soft); font-family: var(--font-prestige); font-size: 14px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 0; min-height: 0 !important; }
+.rk-info{ display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; border: 1px solid currentColor; font: 600 10.5px/1 var(--font-ui); }
+
+/* The table. One grid for the header and the rows. */
+#rankingsColumnHeader.rankings-col-header,
+#list .row.rk-row{
+  display: grid; align-items: center; column-gap: 6px;
+  grid-template-columns: 30px minmax(0, 1fr) 30px 42px 44px 50px 8px;
+}
+#rankingsColumnHeader.rankings-col-header{
+  margin-top: 0; padding: 12px 10px 10px; border: 1px solid var(--surface-border); border-bottom: 0;
+  border-radius: 14px 14px 0 0; background: var(--surface-1);
+  font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim);
+}
+#rankingsColumnHeader .col-center{ text-align: center; }
+#rankingsColumnHeader .col-right{ text-align: right; }
+#list:has(> .rk-row){ margin-left: var(--space-4); margin-right: var(--space-4); border: 1px solid var(--surface-border); border-top: 0; border-radius: 0 0 14px 14px; background: var(--surface-1); overflow: hidden; }
+#list .row.rk-row{
+  padding: 12px 10px; margin: 0; border: 0; border-radius: 0; background: none; box-shadow: none;
+  border-top: 1px solid var(--surface-border); min-height: 56px;
+}
+#list .rk-row .rank{ position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-family: var(--font-prestige); font-size: 18px; color: var(--text-soft); margin: 0; }
+#list .rk-row .rk-laurel{ position: absolute; inset: 0; width: 100%; height: 100%; color: var(--gold); }
+#list .rk-top-1 .rank{ color: var(--gold-bright); }
+#list .rk-top-2 .rank, #list .rk-top-2 .rk-laurel{ color: var(--kings-b-bright); }
+#list .rk-top-3 .rank, #list .rk-top-3 .rk-laurel{ color: var(--kings-c-bright); }
+#list .rk-row .rk-pos{ position: relative; }
+#list .rk-row .namecol{ min-width: 0; }
+#list .rk-row .nm{ font-family: var(--font-prestige); font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#list .rk-row .meta{ font-size: 10.5px; }
+#list .rk-row .meta:empty{ display: none; }
+#list .rk-row .tier-badge{ justify-self: center; min-width: 28px; height: 20px; padding: 0 6px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-prestige); font-size: 12px; margin: 0; }
+#list .rk-row .rating-big{ text-align: right; font-family: var(--font-prestige); font-size: 17px; font-weight: 400; color: var(--text); }
+#list .rk-row .rating-big.is-none{ color: var(--text-dim); }
+.rk-delta{ text-align: right; font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rk-delta .rk-tri{ font-size: 9px; margin-right: 3px; vertical-align: 1px; }
+.rk-delta.is-up{ color: var(--green); }
+.rk-delta.is-down{ color: var(--red); }
+.rk-delta.is-flat, .rk-delta.is-none{ color: var(--text-dim); }
+.rk-form{ display: flex; gap: 2px; justify-content: center; }
+.rk-f{ width: 8px; height: 8px; border-radius: 2px; background: rgba(255,255,255,.10); }
+.rk-f.is-w{ background: var(--green); }
+.rk-f.is-l{ background: var(--red); }
+.rk-f.is-d{ background: var(--text-dim); opacity: .55; }
+.rk-f.is-none{ background: transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+.rk-chev{ color: var(--text-dim); font-size: 18px; line-height: 1; text-align: right; }
+@media (max-width: 370px){
+  #rankingsColumnHeader.rankings-col-header, #list .row.rk-row{ grid-template-columns: 26px minmax(0, 1fr) 28px 40px 40px 46px 6px; column-gap: 4px; }
+  .rk-f{ width: 7px; height: 7px; }
+}
+@media (min-width: 768px){
+  #rankingsColumnHeader.rankings-col-header, #list .row.rk-row{ grid-template-columns: 44px minmax(0, 1fr) 56px 76px 84px 86px 14px; column-gap: 12px; padding-left: 16px; padding-right: 16px; }
+  .rk-f{ width: 11px; height: 11px; border-radius: 3px; }
+  .rk-form{ gap: 4px; }
+  #list .rk-row .nm, #list .rk-row .rating-big{ font-size: 19px; }
+}

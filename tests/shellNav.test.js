@@ -43,7 +43,9 @@ maybe('five tabs -- Home, Rankings, Play, Players, Me -- and no More', async () 
   } finally { await app.close(); }
 });
 
-maybe('Rankings is Power | This Month, one segmented control, with the rest under More tables', async () => {
+// Shaun's 22 Nov design: underlined tabs Power | Month (Quarter at Padel
+// Championships) | Stats, Stats being what More tables held.
+maybe('Rankings is Power | Month | Stats, underlined tabs, with the other tables under Stats', async () => {
   const app = await open();
   try {
     const r = await app.run((segSrc) => {
@@ -53,6 +55,8 @@ maybe('Rankings is Power | This Month, one segmented control, with the rest unde
       out.selected = [...document.querySelectorAll('#sectionSubnav [aria-selected="true"]')].map((b) => b.textContent.trim());
       document.querySelector('#sectionSubnav [data-tab="summary"]').click();
       out.thisMonth = activeTab;
+      out.stats = document.getElementById('rankingsMoreBtn').textContent.trim();
+      out.underline = document.getElementById('sectionSubnav').classList.contains('is-underline');
       document.getElementById('rankingsMoreBtn').click();
       out.more = [...document.querySelectorAll('#rankingsMoreSheet .mp-list-row')].map((b) => b.textContent.trim());
       document.querySelector('#rankingsMoreSheet [data-tab="wl"]').click();
@@ -61,10 +65,12 @@ maybe('Rankings is Power | This Month, one segmented control, with the rest unde
       return out;
     }, `(${seg})`);
     assert.strictEqual(r.lands, 'power');
-    assert.deepStrictEqual(r.seg, ['Power', 'This Month']);
+    assert.deepStrictEqual(r.seg, ['Power', 'Month']);
+    assert.strictEqual(r.stats, 'Stats');
+    assert.ok(r.underline);
     assert.strictEqual(r.role, 'tablist');
     assert.deepStrictEqual(r.selected, ['Power']);
-    assert.strictEqual(r.thisMonth, 'summary', 'This Month is the League / Merit / Race screen');
+    assert.strictEqual(r.thisMonth, 'summary', 'Month is the League / Merit / Race screen');
     // North vs South lives in Admin / Manage (Shaun, 4 Oct), not in More tables.
     assert.deepStrictEqual(r.more, ['Win / Loss', 'Insights / Call-Outs', 'Doughnuts']);
     assert.deepStrictEqual(r.wl, { tab: 'wl', section: 'rankings', pressed: 'true', sheetOpen: false });

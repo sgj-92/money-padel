@@ -55,7 +55,7 @@ maybe('opens on the League, offers League, Power and Results only, and nothing p
 
     // Power draws the rankings; a name opens nothing.
     await app.run(() => legacyTabBtn('power').click());
-    const power = await app.run(() => { openSheet(PLAYERS[0].name); return { drawn: document.getElementById('list').children.length, sheet: document.getElementById('overlay').classList.contains('show') }; });
+    const power = await app.run(() => { openSheet(PLAYERS[0].name); return { drawn: document.getElementById('list').children.length + ((document.getElementById('rankingsPeriodNotes') || {}).children || []).length, sheet: document.getElementById('overlay').classList.contains('show') }; });
     assert.ok(power.drawn > 0, 'the Power screen is drawn');
     assert.strictEqual(power.sheet, false, 'no player profile');
     assert.deepStrictEqual(app.pageErrors, []);

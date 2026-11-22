@@ -156,7 +156,7 @@ maybe('sheets are dialogs on a monitor, bottom sheets on a phone -- the same she
   } finally { await phone.close(); }
 });
 
-maybe('Rankings: Kings of Tiers beside the podium, the filters in one toolbar, the list in the column', async () => {
+maybe('Rankings: on a month Kings beside Champions; the leaders side by side over the leaderboard, the list in the column', async () => {
   const app = await open(1440, 900);
   try {
     // A month: Kings beside the month's Champions, and no podium (1 Nov).
@@ -169,19 +169,20 @@ maybe('Rankings: Kings of Tiers beside the podium, the filters in one toolbar, t
     assert.strictEqual(month.podium, null, 'no podium on a month');
     assert.strictEqual(month.kings.t, month.champs.t, 'Kings and Champions side by side');
     assert.ok(month.kings.r <= month.champs.l);
+    // All time (Shaun's 22 Nov design): the two leaders side by side over the
+    // leaderboard; no podium; sorting lives in Filters; Kings under the table.
     const r = await app.run(() => {
       applyRankingsMonth('all'); render();
-      const b = (sel) => { const e = document.querySelector(sel); const r = e.getBoundingClientRect(); return { l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), w: Math.round(r.width) }; };
-      return { kings: b('#kingsOfTiersPanel'), podium: b('#rankingsPodium'), bar: b('#rankingsToolbar'), sort: b('#sortbarPower'), list: b('#list'),
-        rows: document.querySelectorAll('#list .row').length, legacy: renderRankingsPodium.length };
+      const b = (sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { l: Math.round(r.left), r: Math.round(r.right), t: Math.round(r.top), w: Math.round(r.width) }; };
+      return { power: b('.rk-leader-power'), race: b('.rk-leader-race'), podium: b('#rankingsPodium'), kings: b('#kingsOfTiersPanel'), list: b('#list'),
+        sortInFilters: !!document.querySelector('#shellFiltersSheet #sortbarPower'), rows: document.querySelectorAll('#list .row').length };
     });
-    assert.strictEqual(r.kings.t, r.podium.t, 'side by side');
-    assert.ok(r.kings.r <= r.podium.l, 'Kings, then the podium');
-    assert.ok(Math.abs(r.bar.t - r.sort.t) < 20, 'month, tier and sort on one row');
+    assert.strictEqual(r.podium, null);
+    assert.strictEqual(r.power.t, r.race.t, 'the leaders side by side');
+    assert.ok(r.power.r <= r.race.l);
+    assert.ok(r.kings.t > r.list.t, 'Kings under the leaderboard');
+    assert.ok(r.sortInFilters);
     assert.ok(r.list.w <= 1120 && r.rows > 5, `the ranking list sits in the column (${r.list.w}px, ${r.rows} rows)`);
-    // Re-rendered (a month or tier change), they still pair up.
-    const again = await app.run(() => { renderKingsOfTiersPanel(); renderRankingsPodium(); return [document.getElementById('kingsOfTiersPanel').getBoundingClientRect().top, document.getElementById('rankingsPodium').getBoundingClientRect().top]; });
-    assert.strictEqual(again[0], again[1]);
   } finally { await app.close(); }
 });
 

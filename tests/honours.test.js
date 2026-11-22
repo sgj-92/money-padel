@@ -69,13 +69,16 @@ maybe('a Monthly Champion is the tier\'s Race leader among qualified players; "L
   } finally { await app.close(); }
 });
 
-maybe('Power Rankings: a month shows Kings then its Champions and no podium; a Champion opens the Race; All time shows Kings and the podium', async () => {
+// Shaun's 22 Nov design: the leader cards and the laurelled top three in the
+// leaderboard replace the podium; Kings and Champions sit under the table.
+maybe('Power Rankings: a month shows Kings then its Champions under the leaderboard; a Champion opens the Race; All time shows Kings, no podium', async () => {
   const app = await H.open({ viewport: { width: 390, height: 844 }, now: NOW });
   try {
     const r = await app.run(() => {
       legacyTabBtn('power').click();
       const month = selectedMonth;
       const order = [...document.querySelectorAll('#kingsOfTiersPanel, #monthlyChampionsPanel, #rankingsPodium')].map((e) => e.id);
+      const below = document.getElementById('list').compareDocumentPosition(document.getElementById('kingsOfTiersPanel')) & Node.DOCUMENT_POSITION_FOLLOWING;
       const title = document.querySelector('#monthlyChampionsPanel .kings-panel-title').textContent;
       const champ = document.querySelector('#monthlyChampionsPanel .champ-card');
       const name = champ.dataset.player;
@@ -83,15 +86,16 @@ maybe('Power Rankings: a month shows Kings then its Champions and no podium; a C
       const opened = { tab: activeTab, mode: summaryMode, month: summaryMonth, heading: document.querySelector('#summaryContent .section-heading').textContent };
       legacyTabBtn('power').click();
       applyRankingsMonth('all'); render();
-      return { month, order, title, name, opened, allTime: [...document.querySelectorAll('#kingsOfTiersPanel, #monthlyChampionsPanel, #rankingsPodium')].map((e) => e.id) };
+      return { month, order, below: !!below, title, name, opened, allTime: [...document.querySelectorAll('#kingsOfTiersPanel, #monthlyChampionsPanel, #rankingsPodium')].map((e) => e.id) };
     });
     // Shaun, 1 Nov: a month's podium ranked regulars by Power Rating, so Len
     // stood third in October on 0W 1D 6L. The month's winners are its Champions.
     assert.deepStrictEqual(r.order, ['kingsOfTiersPanel', 'monthlyChampionsPanel']);
+    assert.ok(r.below, 'under the leaderboard');
     assert.match(r.title, /^(Leading \w+|\w+ Champions)$/);
     assert.deepStrictEqual([r.opened.tab, r.opened.mode, r.opened.month], ['summary', 'race', r.month]);
     assert.match(r.opened.heading, /Monthly Race/);
-    assert.deepStrictEqual(r.allTime, ['kingsOfTiersPanel', 'rankingsPodium'], 'All time: Kings and the All-time top three');
+    assert.deepStrictEqual(r.allTime, ['kingsOfTiersPanel'], 'All time: Kings; the top three are the laurelled rows');
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });

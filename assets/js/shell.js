@@ -39,6 +39,12 @@ const SECTION_SUBNAV = {
   ],
 };
 
+// The Rankings tabs' icons (Shaun's 22 Nov design): Quarter a trophy, Stats bars.
+const RANKINGS_TAB_ICONS = {
+  summary: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 3.4M17 6h2.5a2.5 2.5 0 0 1-2.6 3.4"/><path d="M12 14v3M8.5 20h7M9.5 17h5"/></svg>',
+  stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M6 20v-7M12 20V5M18 20v-10"/></svg>',
+};
+
 // Rankings › More tables: the tables and stories that are not Power or This
 // Month. The Power Rating Guide, About, Data & Rankings, My Player and Admin
 // moved to Me (features/me/meScreen.js); Doughnuts is reachable from both.
@@ -280,14 +286,21 @@ function renderSectionSubnav(){
   if(entries.length < 2 && !moreTables.length && !arrange.length){ container.style.display = 'none'; container.innerHTML = ''; syncDesktopShell(); return; }
   container.style.display = 'flex';
   const onMore = moreTables.some(it => it.tab === activeTab);
+  // Rankings (Shaun, 22 Nov, from his design): Power | Quarter | Stats as
+  // underlined tabs, with icons; "This Quarter" reads "Quarter", and More
+  // tables is "Stats".
+  const underline = activeSection === 'rankings' && !document.body.classList.contains('standings-mode');
+  container.classList.toggle('is-underline', underline);
+  const rkIcon = (tab) => underline ? (RANKINGS_TAB_ICONS[tab] || '') : '';
+  const rkLabel = (label) => underline ? String(label).replace(/^This /, '') : label;
   container.innerHTML = `<div class="mp-seg" role="tablist" aria-label="${escapeHtml(SECTION_LABELS[activeSection] || '')}">`
     + entries.map(it => it.href
       // A page of its own (the standings site's Monthly: review/), so a link.
       ? `<a class="section-subnav-item mp-seg-item" ${it.attr} href="${it.href}" tabindex="-1">${escapeHtml(it.label)}</a>`
-      : `<button type="button" role="tab" class="section-subnav-item mp-seg-item${it.on ? ' active' : ''}" ${it.attr} aria-selected="${it.on}" tabindex="${it.on ? 0 : -1}">${escapeHtml(it.label)}</button>`
+      : `<button type="button" role="tab" class="section-subnav-item mp-seg-item${it.on ? ' active' : ''}" ${it.attr} aria-selected="${it.on}" tabindex="${it.on ? 0 : -1}">${rkIcon((it.attr.match(/data-tab="([^"]+)"/) || [])[1])}<span>${escapeHtml(rkLabel(it.label))}</span></button>`
     ).join('')
     + `</div>`
-    + (moreTables.length ? `<button type="button" class="section-more-btn" id="rankingsMoreBtn" aria-haspopup="dialog" aria-pressed="${onMore}">More tables</button>` : '')
+    + (moreTables.length ? `<button type="button" class="section-more-btn" id="rankingsMoreBtn" aria-haspopup="dialog" aria-pressed="${onMore}">${underline ? `${RANKINGS_TAB_ICONS.stats}<span>Stats</span>` : 'More tables'}</button>` : '')
     + (arrange.length ? `<button type="button" class="section-more-btn section-arrange-btn" id="arrangeGameBtn" aria-haspopup="dialog">Arrange a Game</button>` : '');
   const tabs = [...container.querySelectorAll('.section-subnav-item')];
   tabs.forEach((btn, i)=>{
@@ -494,6 +507,7 @@ function buildShellDom(){
     if(!e.target.closest('.tab-btn')) return;
     renderRankingsPodium();
     renderKingsOfTiersPanel();
+    renderRankingsLeaders();
     renderSectionSubnav();
     updatePlayBadge();
     shellNavChanged();
@@ -765,6 +779,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     applyRankingEligibility();
     renderRankingsPodium();
     renderKingsOfTiersPanel();
+    renderRankingsLeaders();
     hero.style.display = (activeTab === 'power') ? 'block' : 'none';
     syncHeaderSectionTitle();
     updatePlayBadge();

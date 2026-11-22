@@ -51,7 +51,9 @@ for (const width of [360, 390]) {
           c.font = `${cs.fontWeight} ${cs.fontSize} Inter`;
           const room = s.clientWidth - parseFloat(cs.paddingRight);
           const longest = Math.max(...[...s.options].map((o) => c.measureText(o.text).width));
-          return { id, room, longest, icons: s.parentElement.querySelectorAll('svg').length };
+          // Shaun's 22 Nov design adds ‹ › either side of the period: they are
+          // not leading icons; an icon beside the name is still not shown on a phone.
+          return { id, room, longest, icons: [...s.parentElement.querySelectorAll('.toolbar-icon')].filter((e) => e.getClientRects().length).length };
         }).concat([{ page: document.documentElement.scrollWidth > window.innerWidth + 1 }]);
       });
       r.slice(0, 2).forEach((x) => {
