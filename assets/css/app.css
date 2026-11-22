@@ -49,6 +49,10 @@
     min-height:100vh;
     min-height:100dvh;
     overflow-x: hidden;
+    /* 'clip' where the browser has it: still no sideways scroll, but the body
+       is not a scroll container, so the sticky header stays at the top and
+       nothing scrolls under the iPhone's clock (Shaun's screenshot, 22 Nov). */
+    overflow-x: clip;
     max-width: 100vw;
   }
 
