@@ -11,6 +11,11 @@
 
 let clubTickerPaused = (() => { try { return localStorage.getItem('clubTickerPaused') === '1'; } catch(e){ return false; } })();
 
+// Drawn, not typed: some phones have no ❚❚ in their font and showed a box
+// (Shaun's screenshot, 22 Nov).
+const TICKER_PAUSE_ICON = '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><rect x="2" y="1.5" width="2.6" height="9" rx=".8" fill="currentColor"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".8" fill="currentColor"/></svg>';
+const TICKER_PLAY_ICON = '<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M3 1.8v8.4c0 .5.5.8.9.5l6.4-4.2a.6.6 0 0 0 0-1L3.9 1.3c-.4-.3-.9 0-.9.5z" fill="currentColor"/></svg>';
+
 function clubTickerItems(){
   const items = [];
   const add = (fn) => { try { const x = fn(); if(x) items.push(x); } catch(e){ /* that fact is left out */ } };
@@ -85,7 +90,7 @@ function renderClubTicker(){
   el.dataset.run = run;
   // Twice over, so the strip loops without a gap.
   el.innerHTML = `<div class="club-ticker-window"><div class="club-ticker-track${clubTickerPaused ? ' is-paused' : ''}">${run}<span aria-hidden="true" class="club-ticker-copy">${run}</span></div></div>
-    <button type="button" class="club-ticker-pause" aria-label="${clubTickerPaused ? 'Play' : 'Pause'} the news">${clubTickerPaused ? '▶' : '❚❚'}</button>`;
+    <button type="button" class="club-ticker-pause" aria-label="${clubTickerPaused ? 'Play' : 'Pause'} the news">${clubTickerPaused ? TICKER_PLAY_ICON : TICKER_PAUSE_ICON}</button>`;
   const track = el.querySelector('.club-ticker-track');
   // A steady reading pace, however much there is to say.
   requestAnimationFrame(() => { track.style.animationDuration = `${Math.max(20, Math.round(track.scrollWidth / 2 / 40))}s`; });
@@ -94,7 +99,7 @@ function renderClubTicker(){
     try { localStorage.setItem('clubTickerPaused', clubTickerPaused ? '1' : '0'); } catch(e){ /* not kept: fine */ }
     track.classList.toggle('is-paused', clubTickerPaused);
     const b = el.querySelector('.club-ticker-pause');
-    b.textContent = clubTickerPaused ? '▶' : '❚❚';
+    b.innerHTML = clubTickerPaused ? TICKER_PLAY_ICON : TICKER_PAUSE_ICON;
     b.setAttribute('aria-label', `${clubTickerPaused ? 'Play' : 'Pause'} the news`);
   };
 }
