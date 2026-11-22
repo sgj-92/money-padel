@@ -819,7 +819,7 @@
 /* The two leaders. */
 .rk-leaders{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px var(--space-4) 4px; }
 .rk-leader{
-  display: flex; flex-direction: column; gap: 10px; text-align: left; min-width: 0;
+  display: flex; flex-direction: column; gap: 6px; text-align: left; min-width: 0;
   padding: 14px 14px 14px; border-radius: 16px; cursor: pointer; color: var(--text);
   background: linear-gradient(150deg, rgba(255,255,255,.05), rgba(255,255,255,.01)); border: 1px solid var(--surface-border);
 }
@@ -827,10 +827,11 @@
 .rk-leader-label{ display: flex; align-items: center; gap: 8px; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--text-soft); white-space: nowrap; }
 .rk-leader-icon{ display: inline-flex; color: var(--gold-bright); }
 .rk-leader-icon svg{ width: 18px; height: 18px; }
+.rk-leader-label{ margin-bottom: 4px; }
 .rk-leader-body{ display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; min-width: 0; }
 .rk-leader-who{ display: flex; flex-direction: column; min-width: 0; }
-.rk-leader-name{ font-family: var(--font-prestige); font-size: 24px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rk-leader-tier{ font-size: 12.5px; color: var(--text-soft); margin-top: 3px; }
+.rk-leader-name{ font-family: var(--font-prestige); font-size: 24px; line-height: 1.1; overflow-wrap: anywhere; }
+.rk-leader-tier{ font-size: 12.5px; color: var(--text-soft); padding-bottom: 3px; }
 .rk-leader-value{ font-family: var(--font-prestige); font-size: 26px; line-height: 1; color: var(--gold-bright); padding-left: 10px; border-left: 1px solid var(--surface-border); flex: none; }
 
 /* "Power Leaderboard" · Methodology (i) */

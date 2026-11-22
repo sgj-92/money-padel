@@ -325,7 +325,8 @@ function renderRankingsLeaders(){
   const noun = (CLUB.period && CLUB.period.noun) || 'month';
   const card = (kind, icon, label, d) => d ? `<button type="button" class="rk-leader rk-leader-${kind}" data-leader="${kind}" data-player="${escapeHtml(d.name)}">
       <span class="rk-leader-label"><span class="rk-leader-icon">${icon}</span>${escapeHtml(label)}</span>
-      <span class="rk-leader-body"><span class="rk-leader-who"><span class="rk-leader-name">${escapeHtml(d.name)}</span><span class="rk-leader-tier">${d.tier ? `Tier ${escapeHtml(d.tier)}` : ''}</span></span>
+      <span class="rk-leader-name">${escapeHtml(d.name)}</span>
+      <span class="rk-leader-body"><span class="rk-leader-tier">${d.tier ? `Tier ${escapeHtml(d.tier)}` : ''}</span>
       <span class="rk-leader-value">${escapeHtml(String(d.value))}</span></span></button>` : '';
   const html = card('power', RK_ICON_CROWN, 'Power Leader', power) + card('race', RK_ICON_TREND, `${noun} Leader`, race);
   if(!box){ box = document.createElement('div'); box.id = 'rankingsLeaders'; box.className = 'rk-leaders'; }
@@ -372,7 +373,10 @@ function syncRankingsFilterDot(){
   const btn = document.getElementById('openFiltersBtn');
   const search = document.getElementById('search');
   if(!btn) return;
-  const nonDefault = minGames !== (selectedMonth === 'all' ? 10 : 5)
+  // The club's own default for this view (Club settings), not a fixed 10 / 5:
+  // the dot was lit at Padel Championships with nothing changed.
+  const dflt = typeof defaultRankingMinGames === 'function' ? defaultRankingMinGames(selectedMonth) : (selectedMonth === 'all' ? 10 : 5);
+  const nonDefault = minGames !== dflt
     || (search && search.value.trim() !== '') || includeIdle || includeInactive
     || (typeof activeSortP !== 'undefined' && activeSortP !== 'rating');
   btn.classList.toggle('has-filters', nonDefault);

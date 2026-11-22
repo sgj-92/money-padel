@@ -40,6 +40,8 @@ maybe('Padel Championships: the tabs, the title, the bar, the two leaders and th
         form: form(first), run, fourthForm: form(fourth).length,
         delta: t('#list .rk-row .rk-delta'),
         chevron: !!first.querySelector('.rk-chev'),
+        // A long name is shown whole (Shaun's screenshot: "Jerm…").
+        nameWhole: (() => { const n = document.querySelector('.rk-leader-power .rk-leader-name'); n.textContent = 'Jermaine-Alexander'; return n.scrollWidth <= n.clientWidth + 1 && getComputedStyle(n).textOverflow !== 'ellipsis'; })(),
         wide: document.documentElement.scrollWidth,
       };
     });
@@ -60,6 +62,7 @@ maybe('Padel Championships: the tabs, the title, the bar, the two leaders and th
     assert.strictEqual(r.fourthForm, 5);
     assert.match(r.delta, /^(▲\+\d+|▼−\d+|0|–)$/);
     assert.ok(r.chevron);
+    assert.ok(r.nameWhole, 'the leader\'s name is never cut short');
     assert.strictEqual(r.wide, 390);
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }

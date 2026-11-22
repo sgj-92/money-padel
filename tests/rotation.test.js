@@ -108,7 +108,8 @@ maybe('Admin records a rotation: a tie-break is a set, ratings move, tables do n
       return { rankMeta, head, removed, preview, card, before, after, parts: sess.parts.map((m) => [m.winners, m.sets, m.rotation.weight]), stats: [K, A, D, N].map((x) => [stats[x].won, stats[x].lost]), h2h, wide: document.documentElement.scrollWidth };
     });
     assert.match(r.preview, /Max & Stormzy 6-2 1-0 Jords & PDM/, 'the tie-break is a set won, no games');
-    assert.match(r.rankMeta.max, /^\d+ games · 1 rotation( · |$)/, r.rankMeta.max);
+    // Shaun's 22 Nov leaderboard: under the name, just the rotations.
+    assert.match(r.rankMeta.max, /^1 rotation$/, r.rankMeta.max);
     assert.doesNotMatch(r.rankMeta.other, /rotation/, 'nothing said for a player with none');
     assert.strictEqual(r.rankMeta.counted, 1, 'towards Ranked, a rotation is one match (Shaun, 18 Nov)');
     assert.match(r.preview, /3 sets, each worth a third of a match/);

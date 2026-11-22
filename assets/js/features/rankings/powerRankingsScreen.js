@@ -381,7 +381,7 @@ function render(){
         <div class="rank">${pos <= 3 ? RK_LAUREL : ''}<span class="rk-pos">${pos}</span></div>
         <div class="namecol">
           <div class="nm">${p.name}</div>
-          <div class="meta">${(activeSortP !== 'rating' || rotsOf) ? metaHtml : ''}</div>
+          <div class="meta">${activeSortP !== 'rating' ? metaHtml : (rotsOf ? `${rotsOf} rotation${rotsOf === 1 ? '' : 's'}` : '')}</div>
         </div>
         <span class="tier-badge tier-${rowTier.toLowerCase()}">${rowTier}</span>
         <div class="rating-big${shownRating === null ? ' is-none' : ''}">${shownRating === null ? '–' : shownRating}</div>
