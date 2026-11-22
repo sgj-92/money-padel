@@ -216,7 +216,7 @@
   .pc-name{ display:flex; flex-direction:column; gap:2px; font-size:14px; }
   .pc-code{ font-family:ui-monospace, Menlo, monospace; letter-spacing:.08em; color:var(--gold-bright); font-size:13px; }
   .pc-none{ font-size:12px; color:var(--text-dim); }
-  .pc-actions{ display:flex; gap:6px; }
+  .pc-actions{ display:flex; gap:6px; flex-wrap:wrap; }
   .av-panel{ max-height:92vh; overflow-y:auto; }
   .av-panel .game-sheet-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
   .av-panel .game-sheet-head h3{ margin:0; font-size:20px; }
