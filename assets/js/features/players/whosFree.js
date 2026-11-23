@@ -65,6 +65,26 @@ function whosFreeChipLabel(date){
   return i === 0 || i === 1 ? whosFreeDayLabel(date, i) : `${Availability.DAY_LABEL[Availability.dayOf(date)]} ${Number(date.slice(8))}`;
 }
 
+// Games I'm already in on a date (Shaun, 23 Nov: "if there is a game booked
+// within these timeslots I'm already a part of, it should note that"): open
+// requests and agreed games, earliest first.
+function whosFreeMyGames(name, date){
+  if(!name || typeof gameRequestsState === 'undefined') return [];
+  return gameRequestsState.filter(r => FixtureFlow.isOpen(r) && r.preferredDate === date && FixtureFlow.participantName(r, name))
+    .sort((a, b) => String(a.preferredTime || '').localeCompare(String(b.preferredTime || '')));
+}
+// "Booked 21:00 · You & Fabian v Khalid & John" -- what it is, when, who.
+function whosFreeGameText(r, name){
+  const now = new Date().toISOString();
+  const stage = FixtureFlow.stage(r, now);
+  const what = stage === FixtureFlow.STAGE.UPCOMING ? 'Booked' : FixtureFlow.isAgreed(r) ? 'Agreed' : 'Asked';
+  const teams = typeof playTeamsText === 'function' ? playTeamsText(r, name) : (r.players || []).join(', ');
+  return `${what}${r.preferredTime ? ` ${r.preferredTime}` : ''}${r.location ? ` · ${r.location}` : ''} · ${teams}`;
+}
+function whosFreeGamesHtml(name, date, cls){
+  return whosFreeMyGames(name, date).map(r => `<span class="${cls}"><span aria-hidden="true">🎾</span> ${escapeHtml(whosFreeGameText(r, name))}</span>`).join('');
+}
+
 // ---- Home: my week -------------------------------------------------------
 function homeFreeWeekHtml(viewer){
   if(!whosFreeOn() || !viewer) return '';
@@ -85,7 +105,8 @@ function homeFreeWeekHtml(viewer){
       <span class="wf-day-name">${escapeHtml(whosFreeDayLabel(date, i))}</span>
       <span class="wf-day-time">${escapeHtml(Availability.rangesText(f))}</span>
       <span class="wf-day-who${others.length ? '' : ' is-none'}">${others.length ? escapeHtml(who) : 'nobody else yet'}</span>
-      <span class="wf-chev" aria-hidden="true">›</span></button>`;
+      <span class="wf-chev" aria-hidden="true">›</span>
+      ${whosFreeGamesHtml(name, date, 'wf-day-game')}</button>`;
   }).join('');
   return `<div class="wf-week">${head}${rows || `<div class="wf-empty">Not free in the next ${WHOS_FREE_DAYS} days.</div><button type="button" class="wf-browse" data-free-day="${whosFreeDates()[0]}">See who's free this week ›</button>`}</div>`;
 }
@@ -124,7 +145,8 @@ function renderWhosFree(){
     <span class="wf-week-label">${escapeHtml(whosFreeWeekLabel(v.week))}</span>
     <button type="button" class="wf-step" data-wf-week="1" aria-label="Later week"${v.week >= WHOS_FREE_WEEKS_AHEAD ? ' disabled' : ''}>›</button>
   </div>`;
-  const you = me ? `<div class="wf-you">${myFree.length ? `You: <b>${escapeHtml(A.rangesText(myFree))}</b> · showing who's free then` : `You haven't said you're free this day · showing everyone who is`}</div>` : '';
+  const you = me ? `<div class="wf-you">${myFree.length ? `You: <b>${escapeHtml(A.rangesText(myFree))}</b> · showing who's free then` : `You haven't said you're free this day · showing everyone who is`}</div>
+    ${whosFreeGamesHtml(me, v.date, 'wf-you-game')}` : '';
   const rows = list.length ? list.map(o => {
     const on = v.picked.includes(o.name);
     const sharedText = (me && myFree.length) ? `<span class="wf-shared">With you ${escapeHtml(A.rangesText(o.shared))}</span>` : '';

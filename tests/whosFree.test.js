@@ -135,3 +135,24 @@ maybe('by the week: ‹ › move a week at a time, up to eight ahead; past days 
     if (r.draftDate) assert.strictEqual(r.draftDate, r.day, 'a game booked weeks ahead keeps its date');
   } finally { await app.close(); }
 });
+
+// Shaun, 23 Nov: "If there is a game booked within these timeslots I'm
+// already a part of, it should note that."
+maybe('a game I am already in shows on its day, on Home and in Who\'s free', async () => {
+  const app = await open();
+  try {
+    const r = await app.run(() => {
+      gameRequestsState.push(FixtureFlow.createAgreed({ players: ['Kaz', 'Fatch', 'KC', 'Len'], by: 'Kaz', preferredDate: '2026-11-24', preferredTime: '21:00', location: 'Origin', courtBookingMade: true }));
+      gameRequestsState.push(FixtureFlow.createAgreed({ players: ['Osh', 'Fatch', 'KC', 'Len'], by: 'Osh', preferredDate: '2026-11-24', preferredTime: '19:00' }));
+      setCurrentViewer('Kaz'); goToSection('home');
+      const days = [...document.querySelectorAll('#homeNextGame .wf-day')];
+      const notes = days.map((d) => (d.querySelector('.wf-day-game') || {}).textContent || '');
+      openWhosFree('2026-11-24');
+      return { notes, sheet: document.querySelector('#whosFreeSheet .wf-you-game').textContent };
+    });
+    assert.strictEqual(r.notes[0], '', 'nothing on a day with no game of mine');
+    assert.match(r.notes[1], /Booked 21:00 · Origin · You & \w+ v \w+ & \w+/);
+    assert.strictEqual(r.notes.filter(Boolean).length, 1, 'a game I am not in is not mine');
+    assert.match(r.sheet, /Booked 21:00 · Origin/);
+  } finally { await app.close(); }
+});

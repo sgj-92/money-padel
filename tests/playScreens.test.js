@@ -425,3 +425,29 @@ maybe('My Games and Club each have Add a result, which opens the Add a game form
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 23 Nov: "Can the arrange a game match the format as the add a game does."
+maybe('Arrange a Game lays out the four as Add a game does: Team A over Team B, Player name and Partner', async () => {
+  const app = await H.open({ viewport: { width: 390, height: 844 }, mobile: true });
+  try {
+    const r = await app.run(() => {
+      isUnlocked = true; adminRole = 'owner';
+      setCurrentViewer('Kaz');
+      const read = () => ({ labels: [...document.querySelectorAll('#arrangeSheet .arrange-form .fg-label')].map((l) => l.textContent),
+        boxes: [...document.querySelectorAll('#arrangeSheet .arrange-form [data-seat]')].map((i) => [i.dataset.seat, i.placeholder]),
+        widths: [...document.querySelectorAll('#arrangeSheet .arrange-form [data-seat]')].map((i) => Math.round(i.getBoundingClientRect().width)) });
+      openArrangeGame('agreed');
+      const agreed = read();
+      arrangeMode = 'request'; renderArrange(false);
+      const request = read();
+      return { agreed, request, wide: document.documentElement.scrollWidth };
+    });
+    const four = [['0', 'Player name'], ['1', 'Partner'], ['2', 'Player name'], ['3', 'Partner']];
+    assert.deepStrictEqual(r.agreed.labels.slice(0, 2), ['Team A', 'Team B']);
+    assert.deepStrictEqual(r.agreed.boxes, four);
+    assert.deepStrictEqual(r.request.labels.slice(0, 2), ['Team A (you)', 'Team B']);
+    assert.deepStrictEqual(r.request.boxes, four);
+    assert.strictEqual(new Set(r.agreed.widths).size, 1, 'four full-width boxes, one above another');
+    assert.strictEqual(r.wide, 390);
+  } finally { await app.close(); }
+});

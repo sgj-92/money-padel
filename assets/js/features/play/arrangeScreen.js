@@ -61,52 +61,54 @@ function arrangeFindHtml(viewer){
   return suggestion + `<div class="shell-list arrange-onward">${mpListRowHtml({ label: 'Open Find a Game', meta: 'filters, partners, rematches', data: { arrange: 'finder' } })}</div>`;
 }
 
+// The four, laid out as Add a game lays them out (Shaun, 23 Nov: "can the
+// arrange a game match the format as the add a game does"): Team A over Team
+// B, a full-width box each, Player name and Partner.
+function arrangeTeamsHtml(names, cls, listId, firstLabel){
+  const box = (i, placeholder, last) => `<input class="fg-select ${cls}" data-seat="${i}" list="${listId}" value="${escapeHtml(names[i] || '')}" placeholder="${placeholder}" autocomplete="off" aria-label="${placeholder}"${last ? '' : ' style="margin-bottom:6px;"'}>`;
+  return `<div class="arrange-form">
+    <div class="fg-row"><label class="fg-label">${firstLabel}</label>${box(0, 'Player name')}${box(1, 'Partner', true)}</div>
+    <div class="arrange-vs" aria-hidden="true">v</div>
+    <div class="fg-row"><label class="fg-label">Team B</label>${box(2, 'Player name')}${box(3, 'Partner', true)}</div>`;
+}
+const arrangeRowHtml = (label, input) => `<div class="fg-row"><label class="fg-label">${label}</label>${input}</div>`;
+
 function arrangeRequestHtml(viewer){
   if(!viewer) return playWhoAreYouHtml();
   const d = arrangeDraft || { names: [viewer.name, '', '', ''], date: '', time: '', venue: '' };
   arrangeDraft = d;
-  const field = (i, label) => `<label class="arrange-field"><span class="fx-m-label">${label}</span>
-    <input class="fg-select arrange-name" data-seat="${i}" list="arrangeNames" value="${escapeHtml(d.names[i] || '')}" autocomplete="off"></label>`;
   return `<div class="play-note">You're in as soon as you ask; the other three answer from Needs you.</div>
     <datalist id="arrangeNames">${allPlayerNames().map(n => `<option value="${escapeHtml(n)}">`).join('')}</datalist>
-    <div class="arrange-sides">
-      <div class="arrange-side">${field(0, 'Player 1')}${field(1, 'Partner')}</div>
-      <div class="arrange-v arrange-v-mid">v</div>
-      <div class="arrange-side">${field(2, 'Opponent')}${field(3, 'Opponent')}</div>
-    </div>
+    ${arrangeTeamsHtml(d.names, 'arrange-name', 'arrangeNames', 'Team A (you)')}
     <div class="mp-section-label arrange-optional">Suggest a time and place — optional</div>
-    <div class="fx-m-grid">
-      <label class="fx-m-field"><span class="fx-m-label">Date</span><input type="date" class="fg-select arrange-date" value="${escapeHtml(d.date || '')}"></label>
-      <label class="fx-m-field"><span class="fx-m-label">Time</span><input type="time" class="fg-select arrange-time" value="${escapeHtml(d.time || '')}"></label>
+    <div class="arrange-when">
+      ${arrangeRowHtml('Date', `<input type="date" class="fg-select arrange-date" value="${escapeHtml(d.date || '')}">`)}
+      ${arrangeRowHtml('Time', `<input type="time" class="fg-select arrange-time" value="${escapeHtml(d.time || '')}">`)}
     </div>
     <div class="arrange-hint">${typeof availabilityHintHtml === 'function' ? availabilityHintHtml(d.names, d.date, d.time) : ''}</div>
-    <label class="fx-m-field"><span class="fx-m-label">Venue</span><input class="fg-select arrange-venue" value="${escapeHtml(d.venue || '')}" placeholder="Court or venue"></label>
+    ${arrangeRowHtml('Venue', `<input class="fg-select arrange-venue" value="${escapeHtml(d.venue || '')}" placeholder="Court or venue">`)}
     <button type="button" class="mp-btn-primary mp-btn-touch mp-btn-accent arrange-send"></button>
-    <div class="play-flash arrange-msg" role="status"></div>`;
+    <div class="play-flash arrange-msg" role="status"></div>
+    </div>`;
 }
 
 function arrangeAgreedHtml(){
   const d = agreedDraft || { names: ['', '', '', ''], date: '', time: '', venue: '', booked: false };
   agreedDraft = d;
-  const field = (i, label) => `<label class="arrange-field"><span class="fx-m-label">${label}</span>
-    <input class="fg-select agreed-name" data-seat="${i}" list="agreedNames" value="${escapeHtml(d.names[i] || '')}" autocomplete="off"></label>`;
   return `<div class="play-note">Already agreed in WhatsApp: nobody is asked to confirm.</div>
     <datalist id="agreedNames">${entryPlayerNames().map(n => `<option value="${escapeHtml(n)}">`).join('')}</datalist>
-    <div class="arrange-sides">
-      <div class="arrange-side">${field(0, 'Player 1')}${field(1, 'Partner')}</div>
-      <div class="arrange-v arrange-v-mid">v</div>
-      <div class="arrange-side">${field(2, 'Opponent')}${field(3, 'Opponent')}</div>
-    </div>
-    <div class="fx-m-grid">
-      <label class="fx-m-field"><span class="fx-m-label">Date</span><input type="date" class="fg-select agreed-date" value="${escapeHtml(d.date || '')}"></label>
-      <label class="fx-m-field"><span class="fx-m-label">Time</span><input type="time" class="fg-select agreed-time" value="${escapeHtml(d.time || '')}"></label>
+    ${arrangeTeamsHtml(d.names, 'agreed-name', 'agreedNames', 'Team A')}
+    <div class="arrange-when">
+      ${arrangeRowHtml('Date', `<input type="date" class="fg-select agreed-date" value="${escapeHtml(d.date || '')}">`)}
+      ${arrangeRowHtml('Time', `<input type="time" class="fg-select agreed-time" value="${escapeHtml(d.time || '')}">`)}
     </div>
     <div class="agreed-hint">${typeof availabilityHintHtml === 'function' ? availabilityHintHtml(d.names, d.date, d.time) : ''}</div>
-    <label class="fx-m-field"><span class="fx-m-label">Venue</span><input class="fg-select agreed-venue" value="${escapeHtml(d.venue || '')}" placeholder="Court or venue"></label>
+    ${arrangeRowHtml('Venue', `<input class="fg-select agreed-venue" value="${escapeHtml(d.venue || '')}" placeholder="Court or venue">`)}
     <label class="fx-m-booking"><input type="checkbox" class="agreed-booked"${d.booked ? ' checked' : ''}>
       <span><b>Court booked</b><br><span class="fx-m-sub">Goes straight to Upcoming; otherwise Called Out.</span></span></label>
     <button type="button" class="mp-btn-primary mp-btn-touch mp-btn-accent agreed-save">Add agreed game</button>
     <div class="play-flash agreed-msg" role="status">${escapeHtml(agreedFlash)}</div>
+    </div>
     <div class="shell-list arrange-onward">${mpListRowHtml({ label: 'Several at once? Paste a list', data: { arrange: 'paste' } })}</div>`;
 }
 
