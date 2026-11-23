@@ -76,7 +76,7 @@ function buildPlayerCodesHtml(){
       const busy = playerCodesBusy === n;
       return `<div class="pc-row" data-pc-player="${escapeHtml(n)}">
         <div class="pc-name"><b>${escapeHtml(n)}</b>${c ? (c.own ? '<span class="pc-none">chose their own code ✓</span>' : `<span class="pc-code">${escapeHtml(formatPlayerCode(c.code))}</span>`) : '<span class="pc-none">no code yet</span>'}</div>
-        <div class="pc-actions">${c ? `${c.own ? '' : `<button type="button" class="preset-btn pc-copy" data-pc-copy="${escapeHtml(n)}">Copy message</button>`}
+        <div class="pc-actions">${c ? `${c.own ? '' : `<button type="button" class="preset-btn pc-copy-code" data-pc-copy-code="${escapeHtml(n)}">Copy code</button><button type="button" class="preset-btn pc-copy" data-pc-copy="${escapeHtml(n)}">Copy message</button>`}
           <button type="button" class="preset-btn pc-new" data-pc-make="${escapeHtml(n)}"${busy ? ' disabled' : ''}>${busy ? 'Making…' : 'New code'}</button>`
           : `<button type="button" class="tab-btn active pc-make" data-pc-make="${escapeHtml(n)}"${busy ? ' disabled' : ''}>${busy ? 'Making…' : 'Make code'}</button>`}
           ${isTestPlayerName(n) ? `<button type="button" class="preset-btn pc-reset" data-pc-reset="${escapeHtml(n)}"${busy ? ' disabled' : ''}>Reset to new</button>` : ''}
@@ -134,6 +134,15 @@ function wirePlayerCodes(){
     };
   });
   body.querySelectorAll('[data-pc-times]').forEach(b => { b.onclick = () => openAvailabilitySheet(b.dataset.pcTimes); });
+  // The code alone (Shaun, 23 Nov), for pasting wherever the message isn't wanted.
+  body.querySelectorAll('[data-pc-copy-code]').forEach(b => {
+    b.onclick = async () => {
+      const c = playerCodesState[b.dataset.pcCopyCode];
+      const ok = await copyText(formatPlayerCode(c.code));
+      b.textContent = ok ? 'Copied ✓' : 'Couldn’t copy';
+      setTimeout(() => { b.textContent = 'Copy code'; }, 2000);
+    };
+  });
   body.querySelectorAll('[data-pc-copy]').forEach(b => {
     b.onclick = async () => {
       const name = b.dataset.pcCopy, c = playerCodesState[name];
