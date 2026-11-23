@@ -257,7 +257,7 @@ function rankingsPeriodShort(){
   return noun === 'quarter' ? 'QTR' : noun === 'month' ? 'MTH' : noun.slice(0, 3).toUpperCase();
 }
 function rankingsColumnHeaderHtml(){
-  return `<span>#</span><span>Player</span><span class="col-center">Tier</span><span class="col-right">Rating</span><span class="col-right">Δ (${rankingsPeriodShort()})</span><span class="col-center">Form</span><span></span>`;
+  return `<span>#</span><span>Player</span><span class="col-center">Tier</span><span class="col-right">Rating</span><span class="col-right">Δ ${rankingsPeriodShort()}</span><span class="col-center">Form</span><span></span>`;
 }
 
 // ‹ and ›: a period earlier or later. From All time, ‹ is the latest period.

@@ -40,6 +40,8 @@ maybe('Padel Championships: the tabs, the title, the bar, the two leaders and th
         form: form(first), run, fourthForm: form(fourth).length,
         delta: t('#list .rk-row .rk-delta'),
         chevron: !!first.querySelector('.rk-chev'),
+        // The column headings never run into one another (Shaun, 23 Nov: "Δ (QTR)FORM").
+        headsClear: (() => { const b = [...document.querySelectorAll('#rankingsColumnHeader > span')].filter((e) => e.textContent).map((e) => { const g = document.createRange(); g.selectNodeContents(e); return g.getBoundingClientRect(); }); return b.every((x, i) => !i || x.left >= b[i - 1].right + 2); })(),
         // An eight-letter name fits its row (Shaun's screenshot: "Jerm…").
         rowName: (() => { const n = first.querySelector('.nm'); n.textContent = 'Jermaine'; return n.scrollWidth <= n.clientWidth + 1; })(),
         // A long name is shown whole (Shaun's screenshot: "Jerm…").
@@ -49,7 +51,7 @@ maybe('Padel Championships: the tabs, the title, the bar, the two leaders and th
     });
     assert.deepStrictEqual(r.tabs, ['Power', 'Quarter', 'Stats']);
     assert.strictEqual(r.title, 'Rankings');
-    assert.deepStrictEqual(r.header, ['#', 'Player', 'Tier', 'Rating', 'Δ (QTR)', 'Form', '']);
+    assert.deepStrictEqual(r.header, ['#', 'Player', 'Tier', 'Rating', 'Δ QTR', 'Form', '']);
     assert.strictEqual(r.leaders[0], 'Power Leader');
     assert.strictEqual(r.leaders[1], r.want[0]);
     assert.strictEqual(r.leaders[2], r.want[1]);
@@ -64,6 +66,7 @@ maybe('Padel Championships: the tabs, the title, the bar, the two leaders and th
     assert.strictEqual(r.fourthForm, 5);
     assert.match(r.delta, /^(▲\+\d+|▼−\d+|0|–)$/);
     assert.ok(r.chevron);
+    assert.ok(r.headsClear, 'headings clear of each other');
     assert.ok(r.rowName, '"Jermaine" is not cut short in the table');
     assert.ok(r.nameWhole, 'the leader\'s name is never cut short');
     assert.strictEqual(r.wide, 390);

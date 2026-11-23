@@ -907,3 +907,45 @@
   #list .rk-row .nm{ font-size: 16px; }
 }
 #list .rk-row .rating-big, .rk-delta, .rk-leader-value, #list .rk-row .rk-pos{ font-variant-numeric: lining-nums tabular-nums; }
+
+/* A size down (Shaun, 23 Nov: "everything looks a bit too big, like the
+   fonts are in your face"). The period and tier boxes stay 16px on a phone:
+   smaller, and iOS zooms the page when they're tapped. */
+.section-subnav.is-underline .mp-seg-item,
+.section-subnav.is-underline .section-more-btn{ height: 42px; font-size: 15px; gap: 6px; }
+.section-subnav.is-underline .mp-seg-item svg,
+.section-subnav.is-underline .section-more-btn svg{ width: 16px; height: 16px; }
+.section-subnav.is-underline .mp-seg-item + .mp-seg-item::before,
+.section-subnav.is-underline .section-more-btn::before{ top: 12px; bottom: 12px; }
+.rankings-hero-title{ font-size: 32px; margin-top: 2px; }
+.rankings-hero-sub{ font-size: 9px; letter-spacing: .16em; margin-top: 6px; }
+.rankings-toolbar{ height: 46px; margin-top: 12px; }
+.rk-leaders{ gap: 8px; margin-top: 14px; }
+.rk-leader{ padding: 11px 12px; border-radius: 14px; gap: 4px; }
+.rk-leader-label{ font-size: 8.5px; letter-spacing: .14em; gap: 6px; }
+.rk-leader-icon svg{ width: 15px; height: 15px; }
+.rk-leader-name{ font-size: 19px; }
+.rk-leader-tier{ font-size: 11.5px; }
+.rk-leader-value{ font-size: 20px; padding-left: 8px; }
+.rk-board-head{ margin: 18px var(--space-4) 8px; }
+.rk-board-title{ font-size: 18px; }
+.rk-method{ font-size: 12.5px; }
+.rk-info{ width: 15px; height: 15px; font-size: 9.5px; }
+#rankingsColumnHeader.rankings-col-header{ font-size: 8.5px; letter-spacing: .08em; padding-top: 10px; padding-bottom: 8px; }
+#list .row.rk-row{ min-height: 46px; padding-top: 8px; padding-bottom: 8px; }
+#list .rk-row .rank{ width: 26px; height: 26px; font-size: 14px; }
+#list .rk-row .nm{ font-size: 15px; }
+#list .rk-row .meta{ font-size: 10px; }
+#list .rk-row .tier-badge{ min-width: 24px; height: 18px; font-size: 10.5px; padding: 0 5px; }
+#list .rk-row .rating-big{ font-size: 15px; }
+.rk-delta{ font-size: 11.5px; }
+.rk-chev{ font-size: 15px; }
+@media (min-width: 768px){
+  #list .rk-row .nm, #list .rk-row .rating-big{ font-size: 16px; }
+  .rankings-hero-title{ font-size: 36px; }
+}
+/* The two narrow right-hand headings: no extra spacing, so "Δ QTR" and
+   "FORM" don't run into each other. */
+#rankingsColumnHeader.rankings-col-header > span:nth-child(5),
+#rankingsColumnHeader.rankings-col-header > span:nth-child(6){ letter-spacing: 0; white-space: nowrap; }
+#rankingsColumnHeader.rankings-col-header > span:nth-child(6){ text-align: right; }
