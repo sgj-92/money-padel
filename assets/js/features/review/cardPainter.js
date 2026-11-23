@@ -961,6 +961,33 @@
     return cv;
   }
 
+  // A player's games (Shaun, 23 Nov: "quickly share their games played"):
+  // their name, the month, four figures, then the games.
+  function playerGames(v, o = {}) {
+    const P = 64, inner = W - 2 * P, SH = 190;
+    const rowsH = v.rows.length ? v.rows.length * 124 + 24 : 0;
+    const h = P + 56 + 40 + 76 + 10 + 50 + 30 + SH + 40 + rowsH + (v.more ? 70 : 0) + P;
+    const cv = canvas(W, h);
+    const ctx = cv.getContext('2d');
+    background(ctx, W, h);
+    let y = P;
+    brand(ctx, o.brand, v.month, P, y, 56, W - P); y += 56 + 40;
+    font(ctx, 62, { serif: true }); textAt(ctx, fit(ctx, v.title, inner), P, y + 56, { color: C.text }); y += 76 + 10;
+    font(ctx, 32); textAt(ctx, fit(ctx, v.context, inner), P, y + 34, { color: C.soft }); y += 50 + 30;
+    card(ctx, P, y, inner, SH);
+    const colW = inner / v.stats.length;
+    v.stats.forEach((st, i) => {
+      const cx = P + colW * i + colW / 2;
+      if (i) { ctx.fillStyle = C.hair; ctx.fillRect(P + colW * i, y + 40, 2, SH - 80); }
+      font(ctx, 58, { serif: true }); textAt(ctx, fit(ctx, st.value, colW - 30), cx, y + 96, { color: st.tone ? TONE[st.tone] : C.bright, align: 'center' });
+      font(ctx, 24, { weight: 700, spacing: 0.08 }); textAt(ctx, st.label.toUpperCase(), cx, y + 146, { color: C.dim, align: 'center' });
+    });
+    y += SH + 40;
+    if (v.rows.length) y += rowsCard(ctx, v.rows, P, y, inner);
+    if (v.more) { font(ctx, 30); textAt(ctx, `+ ${v.more} more game${v.more === 1 ? '' : 's'} (the figures above count them all)`, W / 2, y + 50, { color: C.dim, align: 'center' }); }
+    return cv;
+  }
+
   // The weekly recap (Shaun, 15 Nov): one card per line -- icon, title, text.
   function recapItems(lines) {
     const TEXT_W = W - 2 * 64 - 150;
@@ -1071,5 +1098,5 @@
     return cv;
   }
 
-  return { W, SLIDE_H, loadImage, slide, sheet, matchResult, matchup, matchups, nominees, headToHead, headToHeadAll, gamesRecord, weeklyRecap, weeklyGames, weeklyCombined, summary, toBlob, toFile, toPdf, share, save };
+  return { W, SLIDE_H, loadImage, slide, sheet, matchResult, matchup, matchups, nominees, headToHead, headToHeadAll, gamesRecord, playerGames, weeklyRecap, weeklyGames, weeklyCombined, summary, toBlob, toFile, toPdf, share, save };
 });

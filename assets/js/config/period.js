@@ -16,6 +16,9 @@
 //   Period.name(key)         "October"      | "Oct–Dec"
 //   Period.next / prev(key)
 //   Period.noun              'month' | 'quarter'   (and Noun, Adjective)
+//   Period.calendar          the same, always by calendar month, for what is
+//                            about months whatever the club's period (a
+//                            player's games by month, Shaun 23 Nov)
 //
 // Periods are anchored to January, so none crosses a year end.
 // Loads after config/club.js; in Node, require() it (the community is Money
@@ -73,10 +76,12 @@
     const next = (key) => shift(key, 1);
     const prev = (key) => shift(key, -1);
 
-    return {
+    const api = {
       MONTHS, noun: NOUN, Noun: NOUN[0].toUpperCase() + NOUN.slice(1), Adjective: ADJECTIVE,
       of, current, start, end, contains, name, label, next, prev, make,
     };
+    api.calendar = MONTHS === 1 ? api : make({ months: 1 });
+    return api;
   }
 
   return make(club().period);

@@ -398,6 +398,9 @@ function buildDevAreasSection(name){
 // positive; a player who sat the month out still gets their boundary state.
 function buildMonthlyRatingSection(name){
   if(profileMonth === 'all' || !MONTHLY_VIEWS) return '';
+  // The profile's month is a calendar month; this section speaks for the
+  // club's period, so only where the two are the same thing.
+  if(Period.of(profileMonth + '-15') !== profileMonth) return '';
   const label = monthLabel(profileMonth);
   const r = MonthlyViews.playerMonth(MONTHLY_VIEWS, profileMonth, name);
   const p = PLAYERS.find(x=>x.name===name);
@@ -439,12 +442,119 @@ function buildMonthlyRatingSection(name){
 // The explicit month control on the profile's results. Lives here so the
 // premium profile (shell.js) and anything else that shows a player's results
 // draw the same control from the same state.
+// The month chips' own control: every calendar month with games, kept in a
+// select (hidden; the chips drive it) so the choice is one value in one place.
 function profileMonthSelectHtml(){
-  const months = getAvailableMonths();
-  return `<select id="profileMonthSelect" class="pp-month-select" aria-label="Show results from">
+  const months = [...new Set(matchesIncludingDraws().map(m => Period.calendar.of(m.date)))].sort().reverse();
+  return `<select id="profileMonthSelect" class="pp-month-select sr-only" data-native="1" tabindex="-1" aria-hidden="true">
     <option value="all" ${profileMonth==='all'?'selected':''}>All time</option>
-    ${months.map(m=>`<option value="${m}" ${m===profileMonth?'selected':''}>${monthLabel(m)}</option>`).join('')}
+    ${months.map(m=>`<option value="${m}" ${m===profileMonth?'selected':''}>${calMonthLabel(m)}</option>`).join('')}
   </select>`;
+}
+
+// ---- Games by month, and sharing them (Shaun, 23 Nov) ----------------------
+const PP_SHARE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+function calMonthLabel(ym, short){
+  if(!/^\d{4}-\d{2}$/.test(String(ym))) return String(ym);
+  return short ? Period.calendar.name(ym).slice(0, 3) : Period.calendar.label(ym);
+}
+function shortDay(date){
+  const d = Number(String(date).split('-')[2]);
+  return `${d} ${Period.calendar.name(Period.calendar.of(date)).slice(0, 3)}`;
+}
+
+// A player's games grouped by calendar month, newest first, each month with
+// its record and how far the rating moved in those games.
+function profileGamesByMonth(name){
+  const deltas = journeyDeltasByMatchId((playerJourney(name) || {}).journey);
+  const groups = [];
+  PlayerForm.gamesOf(matchesIncludingDraws(), name).forEach(m => {
+    const month = Period.calendar.of(m.date);
+    let g = groups[groups.length - 1];
+    if(!g || g.month !== month){ g = { month, games: [], w: 0, d: 0, l: 0, delta: 0, rated: 0 }; groups.push(g); }
+    g.games.push(m);
+    const letter = MatchOutcome.letterFor(m, name);
+    if(letter === 'W') g.w++; else if(letter === 'D') g.d++; else g.l++;
+    if(typeof deltas[m.id] === 'number'){ g.delta += deltas[m.id]; g.rated++; }
+  });
+  return groups;
+}
+function profileTotals(groups){
+  const t = { month: 'all', games: [], w: 0, d: 0, l: 0, delta: 0, rated: 0 };
+  groups.forEach(g => { t.games = t.games.concat(g.games); t.w += g.w; t.d += g.d; t.l += g.l; t.delta += g.delta; t.rated += g.rated; });
+  return t;
+}
+const profileRecordText = (g) => `${g.w}W${g.d ? ` ${g.d}D` : ''} ${g.l}L`;
+const profileWinPct = (g) => g.games.length ? Math.round(100 * g.w / g.games.length) : 0;
+const profileDeltaText = (g) => !g.rated ? '–' : `${g.delta >= 0 ? '+' : '−'}${Math.abs(Math.round(g.delta))}`;
+// Who they played with most in these games.
+function profileTopPartner(name, games){
+  const count = {};
+  games.forEach(m => { const p = MatchOutcome.sidesFor(m, name).partner; if(p) count[p] = (count[p] || 0) + 1; });
+  const top = Object.entries(count).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+  return top ? { name: top[0], games: top[1] } : null;
+}
+
+function profileMonthChipsHtml(groups){
+  const chip = (value, label, count) => `<button type="button" class="pp-chip${profileMonth === value ? ' is-on' : ''}" data-pp-month="${value}" aria-pressed="${profileMonth === value}">${escapeHtml(label)}<span class="pp-chip-n">${count}</span></button>`;
+  const total = groups.reduce((n, g) => n + g.games.length, 0);
+  const thisYear = String(new Date().getFullYear());
+  return `<div class="pp-chips" role="group" aria-label="Games by month">${chip('all', 'All', total)}${groups.map(g => chip(g.month, g.month.slice(0, 4) === thisYear ? calMonthLabel(g.month, true) : `${calMonthLabel(g.month, true)} ’${g.month.slice(2, 4)}`, g.games.length)).join('')}</div>`;
+}
+
+function profileSummaryHtml(name, g){
+  const partner = profileTopPartner(name, g.games);
+  return `<div class="pp-month-card">
+    <div class="pp-mc-stats">
+      <div><b>${g.games.length}</b><span>Games</span></div>
+      <div><b>${g.w}-${g.d}-${g.l}</b><span>W-D-L</span></div>
+      <div><b>${profileWinPct(g)}%</b><span>Win rate</span></div>
+      <div><b class="${g.delta > 0 ? 'perf-pos' : g.delta < 0 ? 'perf-neg' : ''}">${profileDeltaText(g)}</b><span>Rating</span></div>
+    </div>
+    ${partner ? `<div class="pp-mc-partner">Most often with <b>${escapeHtml(partner.name)}</b> · ${partner.games} game${partner.games === 1 ? '' : 's'}</div>` : ''}
+  </div>`;
+}
+
+// The picture: the player, the month (or all time), four figures, the games.
+const PROFILE_SHARE_ROWS = 15;
+async function profileGamesPicture(name, g){
+  const label = g.month === 'all' ? 'All games' : calMonthLabel(g.month);
+  const rows = g.games.slice(0, PROFILE_SHARE_ROWS).map(m => {
+    const s = MatchOutcome.sidesFor(m, name);
+    const letter = MatchOutcome.letterFor(m, name);
+    const mine = s.partner ? `w/ ${s.partner}` : 'Singles';
+    return { date: shortDay(m.date), teams: `${mine} v ${s.theirs.join(' & ')}`, score: setsForViewer(m, m.winners.includes(name)).map(x => x.join('-')).join('  '),
+      result: letter === 'W' ? 'WON' : letter === 'D' ? 'DRAW' : 'LOST', tone: letter === 'W' ? 'win' : letter === 'D' ? 'draw' : 'loss' };
+  });
+  const view = { title: name, month: label, context: `${label} · ${CLUB.name}`,
+    stats: [{ label: 'Games', value: String(g.games.length) }, { label: 'W-D-L', value: `${g.w}-${g.d}-${g.l}` },
+      { label: 'Win rate', value: `${profileWinPct(g)}%` }, { label: 'Rating', value: profileDeltaText(g), tone: g.delta > 0 ? 'win' : g.delta < 0 ? 'loss' : null }],
+    rows, more: Math.max(0, g.games.length - rows.length) };
+  const brand = await CardPainter.loadImage(CLUB.logo);
+  const cv = CardPainter.playerGames(view, { brand });
+  const file = await CardPainter.toFile(cv, `${CLUB.fileSlug}-${String(name).replace(/[^A-Za-z0-9_-]+/g, '-')}-${g.month}.png`);
+  return { files: [file], meta: { title: `${name} · ${label}`, text: `${name} · ${label}: ${g.games.length} game${g.games.length === 1 ? '' : 's'}, ${profileRecordText(g)} (${profileWinPct(g)}% won).` } };
+}
+
+// Share: the picture is made, then the share sheet opened. A phone may want
+// a fresh tap by then (CardPainter.share says 'ready'): the button says so.
+let profileSharePending = null;   // { key, files, meta }
+async function shareProfileGames(name, g, btn){
+  const key = `${name}|${g.month}|${g.games.length}`;
+  const note = document.getElementById('ppShareNote');
+  const say = (t) => { if(note) note.textContent = t; };
+  try {
+    btn.disabled = true;
+    const pending = (profileSharePending && profileSharePending.key === key) ? profileSharePending : { key, ...(await profileGamesPicture(name, g)) };
+    btn.disabled = false;
+    const outcome = await CardPainter.share(pending.files, pending.meta);
+    profileSharePending = outcome === 'ready' ? pending : null;
+    if(outcome === 'ready'){ btn.dataset.label = btn.dataset.label || btn.textContent; btn.textContent = 'Tap to share'; say(''); }
+    else { if(btn.dataset.label) btn.textContent = btn.dataset.label; say(outcome === 'shared' ? 'Shared.' : outcome === 'saved' ? 'Saved to this device — post it from your photos.' : ''); }
+  } catch(e){
+    btn.disabled = false; profileSharePending = null;
+    say('Could not make the picture: ' + (e && e.message ? e.message : 'unknown error'));
+  }
 }
 
 function wireProfileMonthSelect(name){
@@ -499,7 +609,9 @@ function openSheet(name, matchFilter){
   // started choosing August automatically.
   const monthActive = profileMonth !== 'all';
   if(monthActive){
-    ms = ms.filter(m => Period.of(m.date) === profileMonth);
+    // Calendar months (Shaun, 23 Nov: "the matches they've played by month"),
+    // whatever period the club's tables use.
+    ms = ms.filter(m => Period.calendar.of(m.date) === profileMonth);
   }
 
   let filterBannerHtml = '';
@@ -522,8 +634,12 @@ function openSheet(name, matchFilter){
     });
   }
 
-  if(monthActive || upsetFilterActive){
-    const monthPart = monthActive ? monthLabel(profileMonth) : '';
+  // A month alone needs no banner: its chip is lit and the heading names it.
+  if(monthActive && !upsetFilterActive && ms.length === 0){
+    filterBannerHtml = `<div class="section-sub">No games this month.</div>`;
+  }
+  if(upsetFilterActive){
+    const monthPart = monthActive ? calMonthLabel(profileMonth) : '';
     const upsetPart = upsetFilterActive ? (matchFilter === 'upset_wins' ? 'upset wins' : 'upset losses') : '';
     let label;
     if(monthActive && upsetFilterActive) label = `${upsetPart} in ${monthPart}`;
@@ -826,6 +942,8 @@ function renderPremiumProfile(name, matchFilter){
     ? `<div class="pp-viewer-tag">Your Profile</div>`
     : (viewer ? `<div class="pp-viewer-tag">Player Profile</div>` : '');
 
+  const gameGroups = profileGamesByMonth(name);
+
   // ---- Assemble the new wrapper, insert before the legacy content ----
   wrap = document.createElement('div');
   wrap.id = 'premiumProfileWrap';
@@ -833,10 +951,18 @@ function renderPremiumProfile(name, matchFilter){
     // The month control lives on the heading it scopes, and says All time
     // unless the reader chose otherwise here. It is the profile's own; see
     // `profileMonth` in app.js.
-    + `<div class="pp-section"><div class="pp-results-head">
-        <div class="pp-section-label" style="margin:0;">${profileMonth === 'all' ? 'Recent Results' : 'Results · ' + monthLabel(profileMonth)}</div>
+    // Games by month (Shaun, 23 Nov): a chip per month, the month's figures,
+    // a Share button for the picture, then the games -- under All, in month
+    // groups, each with its own figures and share.
+    + `<div class="pp-section pp-games"><div class="pp-results-head">
+        <div class="pp-section-label" style="margin:0;">${profileMonth === 'all' ? 'Games' : 'Results · ' + calMonthLabel(profileMonth)}</div>
+        <button type="button" class="pp-share-btn" id="ppShareGames">${PP_SHARE_ICON}<span>Share</span></button>
         ${profileMonthSelectHtml()}
-      </div><div id="ppMatchesHost"></div></div>`
+      </div>
+      ${profileMonthChipsHtml(gameGroups)}
+      ${profileSummaryHtml(name, profileMonth === 'all' ? profileTotals(gameGroups) : (gameGroups.find(g => g.month === profileMonth) || profileTotals([])))}
+      <div class="pp-share-note" id="ppShareNote" role="status"></div>
+      <div id="ppMatchesHost"></div></div>`
     + `<div class="pp-section" id="ppDevAreasHost"></div>`;
 
   const sheetProfileEl = document.getElementById('sheetProfile');
@@ -862,7 +988,29 @@ function renderPremiumProfile(name, matchFilter){
   wireProfileMonthSelect(name);
   const matchesHost = document.getElementById('ppMatchesHost');
   const matchEls = [...document.querySelectorAll('#sheetMatches .match')];
+  const gameById = {};
+  gameGroups.forEach(g => g.games.forEach(m => { gameById[m.id] = m; }));
+  let lastMonth = null;
   matchEls.forEach(matchEl=>{
+    // Under All, a heading for each month: its figures and its own share.
+    const monthOf = Period.calendar.of((matchEl.querySelector('.top span:first-child') || {}).textContent || '');
+    if(profileMonth === 'all' && monthOf && monthOf !== lastMonth){
+      lastMonth = monthOf;
+      const g = gameGroups.find(x => x.month === monthOf);
+      if(g){
+        const head = document.createElement('div');
+        head.className = 'pp-month-head';
+        head.innerHTML = `<button type="button" class="pp-month-name" data-pp-month="${g.month}">${escapeHtml(calMonthLabel(g.month))}</button>
+          <span class="pp-month-figs">${g.games.length} game${g.games.length === 1 ? '' : 's'} · ${profileRecordText(g)}${g.rated ? ` · <span class="${g.delta > 0 ? 'perf-pos' : g.delta < 0 ? 'perf-neg' : ''}">${profileDeltaText(g)}</span>` : ''}</span>
+          <button type="button" class="pp-month-share" data-pp-share-month="${g.month}" aria-label="Share ${escapeHtml(calMonthLabel(g.month))}">${PP_SHARE_ICON}</button>`;
+        matchesHost.appendChild(head);
+      }
+    }
+    // Each game can be shared on its own, as its result card.
+    const mid = matchEl.dataset.matchId;
+    if(mid && typeof scorecardButtonHtml === 'function' && !matchEl.querySelector('.scorecard-open')){
+      matchEl.insertAdjacentHTML('beforeend', `<div class="pp-game-share">${scorecardButtonHtml(mid, 'Share this game')}</div>`);
+    }
     // The card below already states the outcome; this row repeats it, so it
     // must repeat it rather than re-decide it. `=== 'WIN'` followed by
     // `won ? 'WIN' : 'LOSS'` is the exact shape that turns a draw into a
@@ -875,13 +1023,18 @@ function renderPremiumProfile(name, matchFilter){
     const parts = teamsText.split(' vs ');
     const summaryRow = document.createElement('div');
     summaryRow.className = 'pp-match-row';
+    // One game at a glance (Shaun, 23 Nov: "fairly basic"): the result, who
+    // with and against whom, the score and the day.
+    const gm = gameById[matchEl.dataset.matchId];
+    const sd = gm ? MatchOutcome.sidesFor(gm, name) : null;
+    const withText = sd ? (sd.partner ? `with ${escapeHtml(sd.partner)}` : 'Singles') : escapeHtml(parts[0] || '');
+    const vText = sd ? `v ${sd.theirs.map(escapeHtml).join(' &amp; ')}` : escapeHtml(parts[1] || '');
+    const scoreShown = gm ? escapeHtml(scoreForViewer(gm, gm.winners.includes(name)).replace(/,\s*/g, '  ')) : escapeHtml(scoreText.split(' · ')[0] || '');
     summaryRow.innerHTML = `
       <div class="pp-match-summary">
         <span class="pp-match-result ${resultClass}">${resultText || 'LOSS'}</span>
-        <span class="pp-match-date">${dateText}</span>
-        <span class="pp-match-teams">${parts[0]||''}</span>
-        <span class="pp-match-score">${scoreText.split(' · ')[0]||''}</span>
-        <span class="pp-match-opp">${parts[1]||''}</span>
+        <span class="pp-match-mid"><span class="pp-match-teams">${withText}</span><span class="pp-match-opp">${vText}</span></span>
+        <span class="pp-match-right"><span class="pp-match-score">${scoreShown}</span><span class="pp-match-date">${gm ? shortDay(gm.date) : escapeHtml(dateText)}</span></span>
         <span class="pp-match-chev">›</span>
       </div>
     `;
@@ -896,6 +1049,23 @@ function renderPremiumProfile(name, matchFilter){
   });
   const banner = document.querySelector('#sheetMatches > .section-sub');
   if(banner) matchesHost.insertBefore(banner, matchesHost.firstChild);
+
+  // Months: a chip (or a month heading) chooses; Share makes the picture.
+  wrap.querySelectorAll('[data-pp-month]').forEach(b => {
+    b.onclick = () => {
+      const sel = document.getElementById('profileMonthSelect');
+      if(!sel) return;
+      sel.value = b.dataset.ppMonth;
+      sel.dispatchEvent(new Event('change'));
+    };
+  });
+  const onChip = wrap.querySelector('.pp-chip.is-on');
+  if(onChip && onChip.scrollIntoView) onChip.scrollIntoView({ block: 'nearest', inline: 'center' });
+  const shareBtn = document.getElementById('ppShareGames');
+  if(shareBtn) shareBtn.onclick = () => shareProfileGames(name, profileMonth === 'all' ? profileTotals(gameGroups) : gameGroups.find(g => g.month === profileMonth) || profileTotals([]), shareBtn);
+  wrap.querySelectorAll('[data-pp-share-month]').forEach(b => {
+    b.onclick = (e) => { e.stopPropagation(); const g = gameGroups.find(x => x.month === b.dataset.ppShareMonth); if(g) shareProfileGames(name, g, b); };
+  });
 
   // Wire the new toggles and CTA
   const fa = document.getElementById('ppFullAnalysisToggle');
