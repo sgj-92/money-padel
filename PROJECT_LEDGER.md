@@ -152,6 +152,8 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
+**Who's free notes my games; Arrange a Game laid out like Add a game — DONE on `redesign` (dcfc80b), 23 Nov; not yet on main.** Shaun: if a game he's already in falls on one of his free days, say so; and make Arrange a Game match Add a game's format. When you're free rows and the Who's free sheet now show "🎾 Booked/Agreed/Asked 21:00 · venue · You & X v Y & Z" for any open game the viewer is in that day (`whosFreeMyGames`, FixtureFlow.isOpen + participantName). The Agreed and Request forms now use Add a game's layout: a card, "Team A" (Request: "Team A (you)") over "Team B", four full-width boxes Player name / Partner, then Date | Time, Venue as labelled rows (same seat inputs and wiring). Redesign 1194 / 1194.
+
 **Add a result on My Games and Club; Who's free by the week — DONE on `redesign` (647ea2e), 23 Nov; not yet on main.** Shaun: Add a game was hidden under "Played games & results"; and Who's free should go by week, to book games in advance. My Games and Club each open with an **Add a result** button (`playAddResultHtml` / `openAddResult`: Games tab, Add a game form open on Game). The Who's free sheet now shows **a week at a time** (‹ This week / Next week / "7 Dec – 13 Dec" ›, up to 8 weeks ahead), Monday–Sunday as a 7-day grid with counts, past days disabled; picking people still prefills the request with that day and the first common time. Redesign 1192 / 1192.
 
 **Player codes: Copy code — DONE (3774088), 23 Nov.** Shaun asked for a "Copy code" button beside Copy message in Admin › Player codes: copies the code alone (XXXX-XXXX); not shown once a player chose their own. 1116 / 1116.
