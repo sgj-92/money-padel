@@ -116,3 +116,35 @@ maybe('a signed-in player sets their week and a date that is different; it is sa
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+// Shaun, 23 Nov: "When I tap a block on my phone, it jumps to the top of the
+// page rather than keeping me there to continue."
+maybe('tapping a block keeps the sheet where it is: the cell changes in place, the summary follows', async () => {
+  const app = await H.open({ path: 'index.html?club=padelchampionships', viewport: { width: 390, height: 700 }, mobile: true });
+  try {
+    const r = await app.run(() => {
+      isUnlocked = true;
+      openAvailabilitySheet('Kaz');
+      const panel = document.querySelector('#availabilitySheet .av-panel');
+      document.querySelector('#availabilitySheet .av-half-toggle').click();
+      const panel2 = document.querySelector('#availabilitySheet .av-panel');
+      panel2.scrollTop = 600;
+      const before = panel2.scrollTop;
+      const cell = panel2.querySelector('[data-av-day="tue"][data-av-hour="20.5"]');
+      cell.click();
+      const after = { top: document.querySelector('#availabilitySheet .av-panel').scrollTop, same: cell.isConnected, on: cell.classList.contains('is-on'),
+        summary: document.querySelector('#availabilitySheet .av-summary').textContent };
+      panel2.querySelector('[data-av-col="sat"]').click();
+      const col = { top: document.querySelector('#availabilitySheet .av-panel').scrollTop, summary: document.querySelector('#availabilitySheet .av-summary').textContent };
+      return { before, after, col, keptOnToggle: panel !== panel2 };
+    });
+    assert.ok(r.before > 0);
+    assert.strictEqual(r.after.top, r.before, 'not back at the top');
+    assert.ok(r.after.same, 'the same cell, changed in place');
+    assert.ok(r.after.on);
+    assert.match(r.after.summary, /Tue 8:30–9pm/);
+    assert.strictEqual(r.col.top, r.before);
+    assert.match(r.col.summary, /Sat 8am–10pm/);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});

@@ -56,6 +56,12 @@ function renderAvailabilitySheet(message){
     : `<div class="av-empty">None. Add a date you can’t make, or an extra one you can.</div>`;
   const hourOpts = (sel, endTimes) => A.HALVES.map(h => endTimes ? h + 0.5 : h).map(h => `<option value="${h}"${h === sel ? ' selected' : ''}>${A.hourLabel(h)}</option>`).join('');
   const summary = A.summary(d);
+  // Redrawn in place, the reader stays where they were (Shaun, 23 Nov: a tap
+  // "jumps to the top of the page rather than keeping me there").
+  const sheetEl = availabilitySheet();
+  const oldPanel = sheetEl.querySelector('.av-panel');
+  const keepScroll = oldPanel ? oldPanel.scrollTop : 0;
+  const wasOpen = sheetEl.classList.contains('show');
   availabilitySheet().innerHTML = `<div class="shell-more-panel av-panel" role="dialog" aria-label="When I can play">
     <div class="game-sheet-head"><h3>${mine ? 'When I can play' : `When ${escapeHtml(d.name)} can play`}</h3><button type="button" class="mp-sheet-close av-close" aria-label="Close">×</button></div>
     <div class="av-sub">Tap the hours you can usually play (tap a day to fill or clear it). Everyone sees this when a game is being arranged.</div>
@@ -78,7 +84,28 @@ function renderAvailabilitySheet(message){
     <button type="button" class="mp-btn-primary mp-btn-touch mp-btn-accent av-save">Save</button>
     <div class="av-msg" role="status">${escapeHtml(message || '')}</div>
   </div>`;
+  const panel = sheetEl.querySelector('.av-panel');
+  if(wasOpen && panel){ panel.style.animation = 'none'; panel.scrollTop = keepScroll; }
   wireAvailabilitySheet();
+}
+
+// After a tap: each cell's look and the summary line, nothing else -- the
+// sheet stays exactly where it is.
+function refreshAvailabilityCells(){
+  const sheet = availabilitySheet(), d = availabilityDraft, A = Availability;
+  sheet.querySelectorAll('[data-av-day]').forEach(cell => {
+    const have = d.weekly[cell.dataset.avDay] || [], h = Number(cell.dataset.avHour);
+    const parts = d.halfHourGrid ? [h] : [h, h + 0.5];
+    const n = parts.filter(x => have.includes(x)).length;
+    const on = n === parts.length, some = n > 0 && !on;
+    cell.className = `av-cell${on ? ' is-on' : some ? (have.includes(h) ? ' is-part is-first' : ' is-part is-second') : ''}`;
+    cell.setAttribute('aria-pressed', String(on));
+  });
+  const summary = A.summary(d);
+  const line = sheet.querySelector('.av-summary');
+  if(line) line.textContent = summary || 'Nothing set yet.';
+  const msg = sheet.querySelector('.av-msg');
+  if(msg) msg.textContent = '';
 }
 
 function wireAvailabilitySheet(){
@@ -90,14 +117,14 @@ function wireAvailabilitySheet(){
       const parts = d.halfHourGrid ? [h] : [h, h + 0.5];
       const allOn = parts.every(x => cur.includes(x));
       d.weekly[day] = allOn ? cur.filter(x => !parts.includes(x)) : [...new Set(cur.concat(parts))];
-      renderAvailabilitySheet('');
+      refreshAvailabilityCells();
     };
   });
   sheet.querySelectorAll('[data-av-col]').forEach(b => {
     b.onclick = () => {
       const day = b.dataset.avCol, full = (d.weekly[day] || []).length === A.HALVES.length;
       d.weekly[day] = full ? [] : A.HALVES.slice();
-      renderAvailabilitySheet('');
+      refreshAvailabilityCells();
     };
   });
   sheet.querySelectorAll('[data-av-del]').forEach(b => {
