@@ -873,6 +873,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(standings){ const lg = legacyTabBtn('summary'); if(lg) lg.click(); }
   shellHistoryInstall();
   if(typeof nativeFeelInstall === 'function') nativeFeelInstall();
+  if(typeof whosFreeInstall === 'function') whosFreeInstall();
   // A laptop or a monitor gets the desktop layout; a phone, nothing new.
   initDesktopShell();
   initMatchScorecard();

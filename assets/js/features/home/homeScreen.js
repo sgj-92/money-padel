@@ -239,6 +239,7 @@ function homeNextGameHtml(g, viewer, now){
     ${mpSectionHeadHtml({ title: 'Next game', meta: next ? homeWhenText(next.preferredDate, now) : '' })}
     ${nextRow}
     ${rows.length ? `<div class="shell-list">${rows.join('')}</div>` : ''}
+    ${typeof homeFreeWeekHtml === 'function' ? homeFreeWeekHtml(viewer) : ''}
   </section>`;
 }
 

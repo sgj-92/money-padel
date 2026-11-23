@@ -132,6 +132,7 @@ function renderArrange(show){
   sheet.innerHTML = `<div class="shell-more-panel arrange-sheet" role="dialog" aria-label="Arrange a Game">
     <div class="game-sheet-head"><h3>Arrange a Game</h3><button type="button" class="mp-sheet-close arrange-close" aria-label="Close">×</button></div>
     ${modes.length > 1 ? mpSegmentedHtml(modes, arrangeMode, 'Arrange a Game') : ''}
+    ${typeof whosFreeOn === 'function' && whosFreeOn() ? `<button type="button" class="wf-browse wf-arrange" data-free-day="">See who's free this week ›</button>` : ''}
     <div class="arrange-body">${body}</div>
   </div>`;
   const panel = sheet.querySelector('.arrange-sheet');

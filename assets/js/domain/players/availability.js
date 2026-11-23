@@ -141,5 +141,43 @@
     return Object.entries(groups).map(([k, days]) => `${daysText(days)} ${k}`).join(' · ');
   }
 
-  return { DAYS, DAY_LABEL, HOURS, HALVES, FIRST_HOUR, LAST_HOUR, hourLabel, hourOfTime, dayOf, clean, hasAny, freeOn, statusOn, whoIsFree, rangesText, summary };
+  // ---- Who is free around my times (Shaun, 23 Nov: "see who else is
+  // available around their times so they can request games with them") ----
+
+  // The half-hours in both.
+  function overlap(a, b) {
+    const inB = new Set((b || []).map(Number));
+    return HALVES.filter((h) => (a || []).map(Number).includes(h) && inB.has(h));
+  }
+  // Everyone else free on a date, and when: [{ name, free, shared }], those
+  // sharing most of `me`'s time first. With `me`, only those who share some
+  // of it (and `shared` is that time); without, everyone free (shared = free).
+  function othersFree(all, names, date, me) {
+    const mine = me ? freeOn((all || {})[me], date) : null;
+    if (me && (!mine || !mine.length)) return [];
+    return (names || []).filter((n) => n !== me).map((n) => {
+      const f = freeOn((all || {})[n], date);
+      if (!f || !f.length) return null;
+      return { name: n, free: f, shared: mine ? overlap(f, mine) : f };
+    }).filter((x) => x && x.shared.length)
+      .sort((a, b) => b.shared.length - a.shared.length || a.name.localeCompare(b.name));
+  }
+  // The earliest half-hour every one of `names` is free on a date; null if none.
+  function firstCommon(all, names, date) {
+    let common = HALVES.slice();
+    for (const n of names || []) {
+      const f = freeOn((all || {})[n], date);
+      if (!f) return null;
+      common = overlap(common, f);
+    }
+    return common.length ? common[0] : null;
+  }
+  // 20.5 -> "20:30", 9 -> "09:00": the time a request form takes.
+  function timeOf(h) {
+    const whole = Math.floor(h);
+    return `${String(whole).padStart(2, '0')}:${h !== whole ? '30' : '00'}`;
+  }
+
+  return { DAYS, DAY_LABEL, HOURS, HALVES, FIRST_HOUR, LAST_HOUR, hourLabel, hourOfTime, dayOf, clean, hasAny, freeOn, statusOn, whoIsFree, rangesText, summary,
+    overlap, othersFree, firstCommon, timeOf };
 });
