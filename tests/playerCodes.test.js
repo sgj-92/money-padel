@@ -40,6 +40,7 @@ maybe('an Admin makes a code; the player taps their name, enters it, and stays s
       const before = document.querySelector('[data-pc-player="Kaz"]').textContent;
       document.querySelector('[data-pc-make="Kaz"]').click();
       for (let k = 0; k < 200 && !(playerCodesState && playerCodesState.Kaz); k++) await new Promise((res) => setTimeout(res, 20));
+      document.querySelector('[data-pc-copy-code="Kaz"]').click(); await new Promise((res) => setTimeout(res, 30));
       document.querySelector('[data-pc-copy="Kaz"]').click(); await new Promise((res) => setTimeout(res, 30));
       const writes = window.__writes.filter((w) => ['playerAccounts', 'playerCodes', 'playerLogins'].includes(w.collection));
       return { before, code: playerCodesState.Kaz.code, copied, writes, stillAdmin: !!signedInAdmin, created: window.__auth.filter((a) => a.created) };
@@ -51,8 +52,9 @@ maybe('an Admin makes a code; the player taps their name, enters it, and stays s
     const acct = r.writes.find((w) => w.collection === 'playerAccounts');
     assert.strictEqual(acct.doc.player, 'Kaz');
     assert.strictEqual(r.writes.find((w) => w.collection === 'playerCodes').id, 'Kaz');
-    assert.match(r.copied[0], new RegExp(`Hi Kaz, here's your Padel Championships code: ${r.code.slice(0, 4)}-${r.code.slice(4)}`));
-    code = r.code; message = r.copied[0];
+    assert.strictEqual(r.copied[0], `${r.code.slice(0, 4)}-${r.code.slice(4)}`, 'Copy code: the code alone');
+    assert.match(r.copied[1], new RegExp(`Hi Kaz, here's your Padel Championships code: ${r.code.slice(0, 4)}-${r.code.slice(4)}`));
+    code = r.code; message = r.copied[1];
     const login = r.writes.find((w) => w.collection === 'playerLogins');
     assert.match(login.doc.email, /^p[a-z0-9]{10}@players\.sgj\.luxe$/, 'a made-up sign-in, not derived from the code');
     assert.strictEqual(login.id, 'Kaz');
