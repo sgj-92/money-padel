@@ -152,7 +152,9 @@ built; they exist — `scripts/screenshots.js`, 19 captures in
 
 ### Added since the compaction
 
-**Header stays at the top on phones — DONE (this commit), 22 Nov.** Shaun's iPhone screenshot showed the page scrolling under the clock/battery: `body{overflow-x:hidden}` (with `html` overflow set) made the body a scroll container, so the sticky `.shell-header` never stuck. Body now uses `overflow-x: clip` (hidden as the fallback), as the desktop layout already did. New `tests/stickyHeader.test.js`. 1116 / 1116.
+**Rankings a size down — DONE on `redesign` (91269d8), 23 Nov.** Shaun: "everything looks a bit too big like the fonts are in your face". Title 44→32px, tabs 17→15, leader names 24→19 / figures 26→20, board title 22→18, rows 17→15 with slimmer rows, smaller tier pills and form; "Δ (QTR)" heading now "Δ QTR" and clear of "FORM" (tested). Earlier the same day: table names fit at phone width, lining/tabular figures. Period/tier selects stay 16px (iOS zoom). Redesign 1183 / 1183.
+
+**Header stays at the top on phones — DONE (a872df2), 22 Nov.** Shaun's iPhone screenshot showed the page scrolling under the clock/battery: `body{overflow-x:hidden}` (with `html` overflow set) made the body a scroll container, so the sticky `.shell-header` never stuck. Body now uses `overflow-x: clip` (hidden as the fallback), as the desktop layout already did. New `tests/stickyHeader.test.js`. 1116 / 1116.
 
 **Ticker pause button drawn, not typed — DONE (7a69bae), 22 Nov.** Shaun's phone showed a box for ❚❚ (no glyph in its font); pause/play are now small SVGs. 1115 / 1115. Same round on `redesign`: leader names no longer cut short (name on its own line, tier and figure beneath), the rotation note under a name is just "1 rotation", and the Filters dot follows the club's own default minimum (it was lit at Padel Championships with nothing changed).
 
