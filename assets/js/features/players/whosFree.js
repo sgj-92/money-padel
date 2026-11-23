@@ -6,7 +6,8 @@
 //
 //   Home › Next game   the next seven days a player said they're free, each
 //                      with how many others are free at the same time
-//   Who's free sheet   a day at a time: everyone free then (sharing your
+//   Who's free sheet   by the week (this one and up to eight ahead), a day
+//                      at a time: everyone free then (sharing your
 //                      time first), tap up to three, Request a game -- the
 //                      request form opens filled in: the four, the date and
 //                      the first time you're all free. An Admin who isn't
@@ -16,7 +17,10 @@
 // only; whosFreeInstall() wires the taps.
 
 const WHOS_FREE_DAYS = 7;
-let whosFreeView = null;   // { date, me, picked: [] }
+// By the week, up to eight ahead (Shaun, 23 Nov: "needs to show by week as
+// the aim is we can book games in advance").
+const WHOS_FREE_WEEKS_AHEAD = 8;
+let whosFreeView = null;   // { week, date, me, picked: [] }
 
 function whosFreeOn(){ return typeof playerAccountsOn === 'function' && playerAccountsOn(); }
 
@@ -34,6 +38,31 @@ function whosFreeDayLabel(date, i){
   if(i === 0) return 'Today';
   if(i === 1) return 'Tomorrow';
   return `${Availability.DAY_LABEL[Availability.dayOf(date)]} ${Number(date.slice(8))}`;
+}
+const wfIso = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+// The seven days, Monday first, of this week (0), next week (1) ...
+function whosFreeWeekDates(week){
+  const t = new Date(), back = (t.getDay() + 6) % 7;
+  const mon = new Date(t.getFullYear(), t.getMonth(), t.getDate() - back + 7 * week);
+  return Array.from({ length: 7 }, (_, i) => wfIso(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i)));
+}
+// Which week a date is in, counted from this one.
+function whosFreeWeekOf(date){
+  for(let w = 0; w <= WHOS_FREE_WEEKS_AHEAD; w++) if(whosFreeWeekDates(w).includes(date)) return w;
+  return 0;
+}
+function whosFreeWeekLabel(week){
+  if(week === 0) return 'This week';
+  if(week === 1) return 'Next week';
+  const d = whosFreeWeekDates(week), mon = (x) => Period.calendar.name(Period.calendar.of(x)).slice(0, 3);
+  const a = `${Number(d[0].slice(8))} ${mon(d[0])}`, b = `${Number(d[6].slice(8))} ${mon(d[6])}`;
+  return `${a} – ${b}`;
+}
+// A day in the sheet: "Today", "Tomorrow", else "Mon 1".
+function whosFreeChipLabel(date){
+  const today = whosFreeDates();
+  const i = today.indexOf(date);
+  return i === 0 || i === 1 ? whosFreeDayLabel(date, i) : `${Availability.DAY_LABEL[Availability.dayOf(date)]} ${Number(date.slice(8))}`;
 }
 
 // ---- Home: my week -------------------------------------------------------
@@ -68,14 +97,15 @@ function whosFreeMe(){
 }
 
 function openWhosFree(date){
-  whosFreeView = { date: date || whosFreeDates()[0], me: whosFreeMe(), picked: [] };
+  const d = date || whosFreeDates()[0];
+  whosFreeView = { week: whosFreeWeekOf(d), date: d, me: whosFreeMe(), picked: [] };
   renderWhosFree();
   playSheet('whosFreeSheet').classList.add('show');
 }
 
 function renderWhosFree(){
   const sheet = playSheet('whosFreeSheet');
-  const v = whosFreeView, A = Availability, dates = whosFreeDates();
+  const v = whosFreeView, A = Availability, dates = whosFreeWeekDates(v.week), today = whosFreeDates()[0];
   const everyone = entryPlayerNames();
   const me = v.me;
   const myFree = me ? (A.freeOn(availabilityState[me], v.date) || []) : null;
@@ -83,10 +113,17 @@ function renderWhosFree(){
   // With me free that day: those who share my time. Otherwise everyone free.
   const list = (me && myFree.length) ? A.othersFree(availabilityState, everyone, v.date, me) : A.othersFree(availabilityState, everyone.filter(n => n !== me), v.date, null);
   const max = me ? 3 : 4;
-  const chips = dates.map((d, i) => {
-    const n = (me && (A.freeOn(availabilityState[me], d) || []).length) ? A.othersFree(availabilityState, everyone, d, me).length : A.othersFree(availabilityState, everyone.filter(x => x !== me), d, null).length;
-    return `<button type="button" class="pp-chip wf-chip${d === v.date ? ' is-on' : ''}" data-wf-date="${d}" aria-pressed="${d === v.date}">${escapeHtml(whosFreeDayLabel(d, i))}<span class="pp-chip-n">${n}</span></button>`;
+  const chips = dates.map((d) => {
+    const past = d < today;
+    const n = past ? 0 : (me && (A.freeOn(availabilityState[me], d) || []).length) ? A.othersFree(availabilityState, everyone, d, me).length : A.othersFree(availabilityState, everyone.filter(x => x !== me), d, null).length;
+    return `<button type="button" class="pp-chip wf-chip${d === v.date ? ' is-on' : ''}${past ? ' is-past' : ''}${d === today ? ' is-today' : ''}" data-wf-date="${d}" aria-pressed="${d === v.date}" aria-label="${escapeHtml(whosFreeChipLabel(d))}${past ? '' : `, ${n} free`}"${past ? ' disabled' : ''}>
+      <span class="wf-dn">${A.DAY_LABEL[A.dayOf(d)]}</span><span class="wf-dd">${Number(d.slice(8))}</span>${past ? '<span class="pp-chip-n">&nbsp;</span>' : `<span class="pp-chip-n">${n}</span>`}</button>`;
   }).join('');
+  const weekBar = `<div class="wf-weekbar">
+    <button type="button" class="wf-step" data-wf-week="-1" aria-label="Earlier week"${v.week <= 0 ? ' disabled' : ''}>‹</button>
+    <span class="wf-week-label">${escapeHtml(whosFreeWeekLabel(v.week))}</span>
+    <button type="button" class="wf-step" data-wf-week="1" aria-label="Later week"${v.week >= WHOS_FREE_WEEKS_AHEAD ? ' disabled' : ''}>›</button>
+  </div>`;
   const you = me ? `<div class="wf-you">${myFree.length ? `You: <b>${escapeHtml(A.rangesText(myFree))}</b> · showing who's free then` : `You haven't said you're free this day · showing everyone who is`}</div>` : '';
   const rows = list.length ? list.map(o => {
     const on = v.picked.includes(o.name);
@@ -104,7 +141,8 @@ function renderWhosFree(){
     : 'Choose who you are to request a game';
   sheet.innerHTML = `<div class="shell-more-panel wf-panel" role="dialog" aria-label="Who's free">
     <div class="game-sheet-head"><h3>Who's free</h3><button type="button" class="mp-sheet-close wf-close" aria-label="Close">×</button></div>
-    <div class="pp-chips wf-chips" role="group" aria-label="Day">${chips}</div>
+    ${weekBar}
+    <div class="wf-days" role="group" aria-label="Day">${chips}</div>
     ${you}
     <div class="wf-list">${rows}</div>
     <div class="wf-foot">
@@ -115,6 +153,15 @@ function renderWhosFree(){
   </div>`;
   sheet.querySelector('.wf-close').onclick = () => sheet.classList.remove('show');
   sheet.querySelectorAll('[data-wf-date]').forEach(b => { b.onclick = () => { v.date = b.dataset.wfDate; v.picked = []; renderWhosFree(); }; });
+  // A week earlier or later: its first day still to come.
+  sheet.querySelectorAll('[data-wf-week]').forEach(b => {
+    b.onclick = () => {
+      v.week = Math.max(0, Math.min(WHOS_FREE_WEEKS_AHEAD, v.week + Number(b.dataset.wfWeek)));
+      v.date = whosFreeWeekDates(v.week).find(d => d >= today);
+      v.picked = [];
+      renderWhosFree();
+    };
+  });
   sheet.querySelectorAll('[data-wf-pick]').forEach(b => {
     b.onclick = () => {
       const n = b.dataset.wfPick;
@@ -127,8 +174,6 @@ function renderWhosFree(){
   if(go) go.onclick = () => whosFreeRequest();
   const who = sheet.querySelector('.wf-who');
   if(who) who.onclick = () => { sheet.classList.remove('show'); if(typeof buildViewerSelector === 'function') buildViewerSelector(); };
-  const onChip = sheet.querySelector('.wf-chip.is-on');
-  if(onChip && onChip.scrollIntoView) onChip.scrollIntoView({ block: 'nearest', inline: 'center' });
 }
 
 // The request (or, for an Admin not playing, the Agreed form), filled in.

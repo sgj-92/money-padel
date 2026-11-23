@@ -49,6 +49,7 @@ maybe('Home › Next game: my next seven days free, each with who else is free t
       document.querySelectorAll('#homeNextGame .wf-day')[1].click();
       const sheet = document.getElementById('whosFreeSheet');
       return { rows, open: sheet.classList.contains('show'), on: sheet.querySelector('.wf-chip.is-on').dataset.wfDate,
+        week: sheet.querySelector('.wf-week-label').textContent, days: [...sheet.querySelectorAll('.wf-chip')].map((c) => c.dataset.wfDate),
         people: [...sheet.querySelectorAll('[data-wf-pick]')].map((b) => [b.dataset.wfPick, b.querySelector('.wf-shared').textContent]), wide: document.documentElement.scrollWidth };
     });
     assert.strictEqual(r.rows.length, 7);
@@ -56,6 +57,8 @@ maybe('Home › Next game: my next seven days free, each with who else is free t
     assert.deepStrictEqual(r.rows[1], ['Tomorrow', '6–10pm', 'Erf, Len'], 'Osh is free Tuesday morning: not at my time');
     assert.strictEqual(r.open, true);
     assert.strictEqual(r.on, '2026-11-24');
+    assert.strictEqual(r.week, 'This week');
+    assert.deepStrictEqual(r.days, ['2026-11-23', '2026-11-24', '2026-11-25', '2026-11-26', '2026-11-27', '2026-11-28', '2026-11-29'], 'Monday to Sunday');
     assert.deepStrictEqual(r.people, [['Erf', 'With you 7–9pm'], ['Len', 'With you 8–9:30pm']]);
     assert.strictEqual(r.wide, 390);
   } finally { await app.close(); }
@@ -101,5 +104,34 @@ maybe('an Admin not playing sees everyone free and sets up the game on the Agree
     assert.deepStrictEqual(r.draft.names, ['Kaz', 'Erf', 'Len', 'Osh']);
     assert.strictEqual(r.draft.date, '2026-11-24');
     assert.strictEqual(r.draft.time, '', 'no time all four are free');
+  } finally { await app.close(); }
+});
+
+maybe('by the week: ‹ › move a week at a time, up to eight ahead; past days cannot be chosen', async () => {
+  const app = await H.open({ now: '2026-11-25T10:00:00.000Z', path: 'index.html?club=padelchampionships', viewport: { width: 390, height: 844 }, mobile: true, documents: DOCS });
+  try {
+    const r = await app.run(() => {
+      setCurrentViewer('Kaz');
+      openWhosFree('2026-11-25');
+      const sheet = document.getElementById('whosFreeSheet');
+      const past = [...sheet.querySelectorAll('.wf-chip')].filter((c) => c.disabled).map((c) => c.dataset.wfDate);
+      const prevDisabled = sheet.querySelector('[data-wf-week="-1"]').disabled;
+      sheet.querySelector('[data-wf-week="1"]').click();
+      const next = { label: sheet.querySelector('.wf-week-label').textContent, on: sheet.querySelector('.wf-chip.is-on').dataset.wfDate,
+        people: [...sheet.querySelectorAll('[data-wf-pick]')].map((b) => b.dataset.wfPick) };
+      for (let i = 0; i < 12; i++) { const b = sheet.querySelector('[data-wf-week="1"]'); if (!b.disabled) b.click(); }
+      const far = { label: sheet.querySelector('.wf-week-label').textContent, nextDisabled: sheet.querySelector('[data-wf-week="1"]').disabled, week: whosFreeView.week };
+      sheet.querySelector('[data-wf-pick]') && sheet.querySelector('[data-wf-pick]').click();
+      const day = whosFreeView.date;
+      if (sheet.querySelector('.wf-go') && !sheet.querySelector('.wf-go').disabled) sheet.querySelector('.wf-go').click();
+      return { past, prevDisabled, next, far, day, draftDate: arrangeDraft && arrangeDraft.date };
+    });
+    assert.deepStrictEqual(r.past, ['2026-11-23', '2026-11-24']);
+    assert.strictEqual(r.prevDisabled, true);
+    assert.deepStrictEqual(r.next, { label: 'Next week', on: '2026-11-30', people: [] }, 'Monday 30th: nobody else free on Mondays');
+    assert.strictEqual(r.far.week, 8);
+    assert.strictEqual(r.far.nextDisabled, true);
+    assert.match(r.far.label, /^\d+ \w{3} – \d+ \w{3}$/);
+    if (r.draftDate) assert.strictEqual(r.draftDate, r.day, 'a game booked weeks ahead keeps its date');
   } finally { await app.close(); }
 });

@@ -114,7 +114,7 @@ maybe('Club: four counters that filter, every open fixture once, and the booking
       gameRequestsState.push(legacy);
       renderClub();
       out.reviewPlayer = box().textContent.includes('Court bookings to record');
-      out.previous = [...box().querySelectorAll('[data-play]')].map((b) => b.textContent.trim());
+      out.previous = [...box().querySelectorAll('[data-play]:not([data-play="addresult"])')].map((b) => b.textContent.trim());
       isUnlocked = true; renderClub();
       out.reviewAdmin = box().textContent.includes('Court bookings to record')
         && !!box().querySelector('.fx-book-set[data-fixture-id="fxLegacy"][data-booked="true"]');
@@ -392,6 +392,36 @@ maybe('Home shows a signed-in player their getting-started checklist until they 
       return { shown, after: !!document.querySelector('#homeDashboard .starter') };
     });
     assert.deepStrictEqual(r, { shown: true, after: false });
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
+
+// Shaun, 23 Nov: "add a game is hidden within played games & results ... can
+// we have a button in both the my games and club tab for results to be added."
+maybe('My Games and Club each have Add a result, which opens the Add a game form straight away', async () => {
+  const app = await H.open({ viewport: { width: 390, height: 844 }, mobile: true });
+  try {
+    const r = await app.run(() => {
+      const out = {};
+      for (const screen of ['mygames', 'club']) {
+        enterShellScreen(screen);
+        const view = document.getElementById(screen === 'mygames' ? 'myGamesView' : 'clubView');
+        const btn = view.querySelector('[data-play="addresult"]');
+        out[screen] = { text: btn && btn.querySelector('b').textContent, nearTop: btn && btn.getBoundingClientRect().top < 400 };
+        btn.click();
+        out[screen].tab = activeTab;
+        out[screen].form = getComputedStyle(document.getElementById('addGameBody')).display;
+        out[screen].kind = addGameKind;
+      }
+      return out;
+    });
+    for (const s of ['mygames', 'club']) {
+      assert.strictEqual(r[s].text, 'Add a result', s);
+      assert.ok(r[s].nearTop, `${s}: near the top`);
+      assert.strictEqual(r[s].tab, 'games');
+      assert.strictEqual(r[s].form, 'block', `${s}: the form is open`);
+      assert.strictEqual(r[s].kind, 'game');
+    }
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });

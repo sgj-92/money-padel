@@ -131,7 +131,7 @@ function renderMyGames(){
   const now = playNow();
   // Requests and agreed games each follow their own visibility setting (D4).
   const canReq = canSeeTab('wishlist');
-  let html = `<div class="play-inner"><div class="mp-section-label">Play</div><h2 class="mp-serif-display play-title">My Games</h2>`;
+  let html = `<div class="play-inner"><div class="mp-section-label">Play</div><h2 class="mp-serif-display play-title">My Games</h2>` + playAddResultHtml();
   if(fixtureFlashMessage) html += `<div class="play-flash" role="status">${escapeHtml(fixtureFlashMessage)}</div>`;
   if(!viewer){
     html += playWhoAreYouHtml();
@@ -175,7 +175,28 @@ function renderMyGames(){
   box.querySelectorAll('[data-play]').forEach(b => { b.onclick = () => playOnward(b.dataset.play); });
 }
 
+// Add a result, from My Games and Club (Shaun, 23 Nov: "add a game is hidden
+// within Played games & results"): straight to the Add a game form, open.
+function playAddResultHtml(){
+  if(!canSeeTab('games') || (typeof isStandingsMode === 'function' && isStandingsMode())) return '';
+  return `<button type="button" class="add-game-cta play-add-result" data-play="addresult">
+    <span class="add-game-cta-icon" aria-hidden="true">＋</span>
+    <span class="add-game-cta-text"><b>Add a result</b><span>A game you've played, or a rotation</span></span>
+    <span class="add-game-cta-chev" aria-hidden="true">›</span>
+  </button>`;
+}
+function openAddResult(){
+  addGameExpanded = true;
+  addGameKind = 'game';
+  const b = legacyTabBtn('games');
+  if(b) b.click();
+  if(typeof renderGamesTab === 'function') renderGamesTab();
+  const cta = document.getElementById('addGameToggle');
+  if(cta && cta.scrollIntoView) cta.scrollIntoView({ block: 'start' });
+}
+
 function playOnward(which){
+  if(which === 'addresult'){ openAddResult(); return; }
   if(which === 'results'){ const b = legacyTabBtn('games'); if(b) b.click(); }
   else if(which === 'challenges'){ requestSectionOpen.challenges = true; const b = legacyTabBtn('wishlist'); if(b) b.click(); }
   else if(which === 'upcoming' || which === 'wishlist'){ const b = legacyTabBtn(which); if(b) b.click(); }
@@ -200,7 +221,7 @@ function renderClub(){
     clubFilter = ((counters.find(k => k.key === 'attention' && k.list.length) || counters.find(k => k.key === 'upcoming') || counters[0]) || {}).key || null;
   }
   const current = counters.find(k => k.key === clubFilter);
-  let html = `<div class="play-inner"><div class="mp-section-label">Play</div><h2 class="mp-serif-display play-title">Club</h2>`;
+  let html = `<div class="play-inner"><div class="mp-section-label">Play</div><h2 class="mp-serif-display play-title">Club</h2>` + playAddResultHtml();
   if(fixtureFlashMessage) html += `<div class="play-flash" role="status">${escapeHtml(fixtureFlashMessage)}</div>`;
 
   // Admin only: games whose court booking was never recorded (as in Upcoming).

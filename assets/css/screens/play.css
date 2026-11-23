@@ -392,3 +392,15 @@
 .wf-shared{ color: var(--gold-bright); font-size: 12px; white-space: nowrap; }
 .wf-foot{ position: sticky; bottom: calc(-1 * var(--space-5)); margin: 14px -4px 0; padding: 12px 4px 4px; background: var(--surface-1); display: grid; gap: 8px; justify-items: center; }
 .wf-foot .wf-go{ width: 100%; }
+/* By the week: ‹ This week ›, then its seven days in a grid. */
+.wf-weekbar{ display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0 10px; }
+.wf-week-label{ font: 400 16px/1.2 var(--font-prestige); color: var(--text); }
+.wf-step{ width: 40px; height: 36px; min-height: 0 !important; border-radius: 10px; border: 1px solid var(--surface-border); background: var(--surface-1); color: var(--text-soft); font-size: 18px; line-height: 1; }
+.wf-step:disabled{ opacity: .3; }
+.wf-days{ display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 10px; }
+.wf-days .wf-chip{ flex-direction: column; gap: 3px; padding: 8px 0; border-radius: 10px; justify-content: center; font-size: 11.5px; min-width: 0; white-space: normal; text-align: center; line-height: 1.15; }
+.wf-days .wf-chip.is-past{ opacity: .35; }
+.wf-dn{ font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); }
+.wf-dd{ font: 400 17px/1 var(--font-prestige); color: var(--text); }
+.wf-chip.is-on .wf-dn, .wf-chip.is-on .wf-dd{ color: var(--gold-bright); }
+.wf-chip.is-today .wf-dd{ text-decoration: underline; text-underline-offset: 3px; }
