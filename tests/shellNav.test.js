@@ -43,9 +43,10 @@ maybe('five tabs -- Home, Rankings, Play, Players, Me -- and no More', async () 
   } finally { await app.close(); }
 });
 
-// Shaun's 22 Nov design: underlined tabs Power | Month (Quarter at Padel
-// Championships) | Stats, Stats being what More tables held.
-maybe('Rankings is Power | Month | Stats, underlined tabs, with the other tables under Stats', async () => {
+// The Claude Design canvas (Shaun, 24 Nov): one segmented control, Power |
+// Month race (Quarter race at Padel Championships) | Stats, Stats being what
+// More tables held -- rank-by cards, the stories, How ratings work.
+maybe('Rankings is Power | Month race | Stats in one control, with the other tables under Stats', async () => {
   const app = await open();
   try {
     const r = await app.run((segSrc) => {
@@ -58,21 +59,23 @@ maybe('Rankings is Power | Month | Stats, underlined tabs, with the other tables
       out.stats = document.getElementById('rankingsMoreBtn').textContent.trim();
       out.underline = document.getElementById('sectionSubnav').classList.contains('is-underline');
       document.getElementById('rankingsMoreBtn').click();
-      out.more = [...document.querySelectorAll('#rankingsMoreSheet .mp-list-row')].map((b) => b.textContent.trim());
+      out.more = [...document.querySelectorAll('#rankingsMoreSheet .mp-list-row .mp-list-row-label')].map((b) => b.textContent.trim());
+      out.lenses = [...document.querySelectorAll('#rankingsMoreSheet .rk2-stat-title')].map((b) => b.textContent.trim());
       document.querySelector('#rankingsMoreSheet [data-tab="wl"]').click();
       out.wl = { tab: activeTab, section: activeSection, pressed: document.getElementById('rankingsMoreBtn').getAttribute('aria-pressed'),
         sheetOpen: document.getElementById('rankingsMoreSheet').classList.contains('show') };
       return out;
     }, `(${seg})`);
     assert.strictEqual(r.lands, 'power');
-    assert.deepStrictEqual(r.seg, ['Power', 'Month']);
+    assert.deepStrictEqual(r.seg, ['Power', 'Month race', 'Stats']);
     assert.strictEqual(r.stats, 'Stats');
-    assert.ok(r.underline);
+    assert.ok(!r.underline);
     assert.strictEqual(r.role, 'tablist');
     assert.deepStrictEqual(r.selected, ['Power']);
-    assert.strictEqual(r.thisMonth, 'summary', 'Month is the League / Merit / Race screen');
+    assert.strictEqual(r.thisMonth, 'summary', 'Month race is the League / Merit / Race screen');
     // North vs South lives in Admin / Manage (Shaun, 4 Oct), not in More tables.
-    assert.deepStrictEqual(r.more, ['Win / Loss', 'Insights / Call-Outs', 'Doughnuts']);
+    assert.deepStrictEqual(r.more, ['Insights / Call-Outs', 'Doughnuts', 'Roll of honour']);
+    assert.deepStrictEqual(r.lenses, ['Form', 'Clutch', 'Upsets', 'Win / Loss']);
     assert.deepStrictEqual(r.wl, { tab: 'wl', section: 'rankings', pressed: 'true', sheetOpen: false });
   } finally { await app.close(); }
 });
@@ -260,7 +263,7 @@ maybe('every new entry is a 44px target, and nothing scrolls sideways at 375', a
       goToSection('play');
       out.play = { seg: h(document.querySelector('#sectionSubnav .mp-seg')), labelsFit: [...document.querySelectorAll('#sectionSubnav .mp-seg-item')].every((b) => b.scrollWidth <= b.clientWidth) };
       goToSection('rankings');
-      out.more = h(document.getElementById('rankingsMoreBtn'));
+      out.more = h(document.getElementById('rankingsMoreBtn').closest('.mp-seg') || document.getElementById('rankingsMoreBtn'));
       out.nav = Math.min(...[...document.querySelectorAll('.shell-nav-item')].map(h));
       goToSection('me');
       out.rows = Math.min(...[...document.querySelectorAll('#meView .mp-list-row')].map(h));

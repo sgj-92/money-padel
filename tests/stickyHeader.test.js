@@ -9,7 +9,7 @@ const H = require('./helpers/uiHarness.js');
 const maybe = H.available() ? test : test.skip;
 
 maybe('the header stays at the top of a phone screen while the page scrolls, and nothing scrolls sideways', async () => {
-  const app = await H.open({ viewport: { width: 390, height: 844 }, mobile: true });
+  const app = await H.open({ now: '2026-09-21T10:00:00.000Z', viewport: { width: 390, height: 844 }, mobile: true });
   try {
     await app.run(() => goToSection('rankings'));
     await app.page.evaluate(() => window.scrollTo(0, 800));

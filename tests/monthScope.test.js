@@ -231,6 +231,8 @@ test('only Power Rankings reads or writes selectedMonth', () => {
     'syncRankingsFilterDot',
     'computeMonthlyChampions', 'renderMonthlyChampionsPanel', 'renderKingsPanel',
     'rankingsLeaderPeriod', 'renderRankingsLeaders',
+    // The Claude Design Power screen (Shaun, 24 Nov): rankingsDesign.js.
+    'rkBasis', 'rkUnrankedHtml', 'openRankQuickSheet',
   ]);
   const offenders = [];
   const { appScriptFiles, readAppScript } = require('./helpers/appSource.js');

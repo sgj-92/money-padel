@@ -20,9 +20,11 @@ const look = () => {
   const kingsStub = computeKingsOfTiers;
   // The seeded record never gives Tier S a field; give the panel one.
   computeKingsOfTiers = () => ({ S: { name: 'Manny', rating: 1800, currentTier: 'S' }, A: { name: 'Kaz', rating: 1735, currentTier: 'A' }, _fieldSize: { S: 2, A: 4 } });
-  document.getElementById('kingsOfTiersPanel') && document.getElementById('kingsOfTiersPanel').remove();
+  document.getElementById('rankingsHonours') && document.getElementById('rankingsHonours').remove();
+  const tab = activeTab; activeTab = 'power';
   renderKingsOfTiersPanel();
-  const kingTiles = [...document.querySelectorAll('#kingsOfTiersPanel .kings-card')].map((c) => c.className.match(/kings-tier-(\w)/)[1]);
+  activeTab = tab;
+  const kingTiles = [...document.querySelectorAll('#rankingsHonours [data-rk-king]')].map((c) => c.dataset.rkKing);
   computeKingsOfTiers = kingsStub;
   const d = (id, o) => boardPackModuleData({ id, options: Object.assign(BoardPack.defaultOptions(id), o || {}) }, '2026-09');
   return {

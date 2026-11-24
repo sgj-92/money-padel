@@ -278,10 +278,29 @@ function render(){
   const leaderPeriod = selectedMonth !== 'all' ? selectedMonth : (typeof currentMonthKey === 'function' ? currentMonthKey() : null);
   const periodMove = (activeTab === 'power' && selectedMonth === 'all' && leaderPeriod && typeof monthlyMovementIndex === 'function') ? monthlyMovementIndex(leaderPeriod) : {};
   const allMatches = activeTab === 'power' ? getAllApprovedMatches() : [];
+  if(activeTab === 'power' && activeTier === 'All' && typeof powerRowsOverall !== 'undefined') powerRowsOverall = rows;
+  // A heading where the tier changes (the Claude Design canvas, Shaun 24 Nov),
+  // each tier's rows one card; positions stay the club's overall order.
+  const viewerName = (typeof getCurrentViewer === 'function' && getCurrentViewer()) ? getCurrentViewer().name : null;
+  const tierOfRow = (p) => tierInScope(p) || p.tier;
+  const tierCount = {};
+  rows.forEach(p => { const t = tierOfRow(p); tierCount[t] = (tierCount[t] || 0) + 1; });
   rows.forEach((p, i)=>{
     const row = document.createElement('div');
     row.className = 'row';
+    if(activeTab === 'power' && activeSortP === 'rating'){
+      const t = tierOfRow(p), prevT = i ? tierOfRow(rows[i - 1]) : null, nextT = rows[i + 1] ? tierOfRow(rows[i + 1]) : null;
+      if(t !== prevT){
+        const head = document.createElement('div');
+        head.className = 'rk2-group-head';
+        head.innerHTML = `<span class="rk2-group-tier tier-${t.toLowerCase()}">Tier ${t}</span><span class="rk2-group-n">${tierCount[t]} ${selectedMonth !== 'all' || includeIdle || includeInactive ? 'shown' : 'ranked'}</span>`;
+        list.appendChild(head);
+        row.classList.add('rk2-first');
+      }
+      if(t !== nextT) row.classList.add('rk2-last');
+    }
     row.onclick = ()=>{
+      if(activeTab === 'power' && typeof openRankQuickSheet === 'function'){ openRankQuickSheet(p.name); return; }
       if(activeTab==='power' && selectedMonth!=='all' && p.month_rating!==null && p.month_rating!==undefined && typeof openMonthlyRatingBreakdown==='function'){
         openMonthlyRatingBreakdown(p.name, selectedMonth);
       } else {
@@ -370,23 +389,27 @@ function render(){
         : `<span class="rk-delta ${mv > 0 ? 'is-up' : mv < 0 ? 'is-down' : 'is-flat'}"><span class="rk-tri" aria-hidden="true">${mv > 0 ? '▲' : mv < 0 ? '▼' : ''}</span>${mv > 0 ? '+' : mv < 0 ? '−' : ''}${Math.abs(Math.round(mv))}</span>`;
       const recent = PlayerForm.recent(allMatches, p.name, 5);
       const run = recent ? recent.run : [];
-      const formHtml = `<span class="rk-form" aria-label="Last ${run.length} result${run.length === 1 ? '' : 's'}: ${run.join(' ') || 'none'}">${Array.from({ length: 5 }, (_, k) => {
-        const r = run[k - (5 - run.length)];
-        return `<i class="rk-f ${r === 'W' ? 'is-w' : r === 'L' ? 'is-l' : r === 'D' ? 'is-d' : 'is-none'}"></i>`;
-      }).join('')}</span>`;
+      if(typeof powerDeltaShown !== 'undefined') powerDeltaShown[p.name] = (mv === null || mv === undefined) ? null : mv;
       const pos = i + 1;
-      row.classList.add('rk-row');
+      const you = viewerName === p.name;
+      row.classList.add('rk-row', 'rk2-row');
       if(pos <= 3) row.classList.add('rk-top', `rk-top-${pos}`);
+      if(you) row.classList.add('rk2-you');
+      // Rank ring (medal for the top three) · name, YOU, form · rating over
+      // its change · chevron. The tier is the heading above; the badge stays
+      // for whatever reads it, unseen.
       row.innerHTML = `
-        <div class="rank">${pos <= 3 ? RK_LAUREL : ''}<span class="rk-pos">${pos}</span></div>
+        <div class="rank rk2-rank"><span class="rk-pos">${pos}</span></div>
         <div class="namecol">
-          <div class="nm">${p.name}</div>
+          <div class="nm">${p.name}</div>${you ? '<span class="rk2-youtag">You</span>' : ''}
           <div class="meta">${activeSortP !== 'rating' ? metaHtml : (rotsOf ? `${rotsOf} rotation${rotsOf === 1 ? '' : 's'}` : '')}</div>
+          ${rkFormSquaresHtml(run, 5)}
         </div>
-        <span class="tier-badge tier-${rowTier.toLowerCase()}">${rowTier}</span>
-        <div class="rating-big${shownRating === null ? ' is-none' : ''}">${shownRating === null ? '–' : shownRating}</div>
-        ${delta}
-        ${formHtml}
+        <span class="tier-badge tier-${rowTier.toLowerCase()} rk2-hidden-badge">${rowTier}</span>
+        <div class="rk2-figs">
+          <div class="rating-big${shownRating === null ? ' is-none' : ''}">${shownRating === null ? '–' : shownRating}</div>
+          ${delta}
+        </div>
         <span class="rk-chev" aria-hidden="true">›</span>
       `;
     }

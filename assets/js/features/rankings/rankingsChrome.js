@@ -126,6 +126,9 @@ function renderRankingsPodium(){
 
 // Kings first, then the month's Champions under them, both above the podium.
 function renderKingsOfTiersPanel(){
+  // The Claude Design canvas (Shaun, 24 Nov): the honours are two tiles under
+  // the leaderboard (rankingsDesign.js), not two panels.
+  if(typeof renderRankingsHonours === 'function'){ renderRankingsHonours(); return; }
   renderKingsPanel();
   renderMonthlyChampionsPanel();
 }
@@ -297,67 +300,15 @@ function placeAfterLeaderboard(panel){
   after.insertAdjacentElement('afterend', panel);
 }
 
-// The two leaders over the table: Power (the top of the list as it stands)
-// and the period's race (all tiers). Each only where there is one.
-function renderRankingsLeaders(){
-  syncRankingsPeriodSteps();
-  const header = document.getElementById('rankingsColumnHeader');
-  if(header) header.innerHTML = rankingsColumnHeaderHtml();
-  let box = document.getElementById('rankingsLeaders');
-  const list = document.getElementById('list');
-  const notes = document.getElementById('rankingsPeriodNotes');
-  if(notes) notes.style.display = activeTab === 'power' ? '' : 'none';
-  if(activeTab !== 'power' || !list || !DATA_READY){ if(box) box.remove(); const h = document.getElementById('rankingsBoardHead'); if(h) h.remove(); return; }
-  const rows = (typeof powerRowsShown !== 'undefined' ? powerRowsShown : []) || [];
-  const basis = (p) => selectedMonth !== 'all' ? (p.month_rating ?? -Infinity) : p.rating;
-  const top = rows.slice().sort((a, b) => basis(b) - basis(a))[0];
-  const power = top && isFinite(basis(top)) ? { name: top.name, tier: tierInScope(top) || top.tier, value: Math.round(basis(top)) } : null;
-  let race = null;
-  const period = rankingsLeaderPeriod();
-  try {
-    if(period && typeof buildMonthlyRace === 'function'){
-      const lead = MonthlyRace.overall(buildMonthlyRace(period).table, raceMinMatches()).find(r => r.qualified);
-      const p = lead && PLAYERS.find(x => x.name === lead.playerId);
-      const tier = (lead && lead.tier && lead.tier !== 'ALL') ? lead.tier : (p && (tierInScope(p) || p.tier)) || '';
-      if(lead) race = { name: lead.playerId, tier, value: raceWholePoints(lead.score), period };
-    }
-  } catch(e){ race = null; }
-  const noun = (CLUB.period && CLUB.period.noun) || 'month';
-  const card = (kind, icon, label, d) => d ? `<button type="button" class="rk-leader rk-leader-${kind}" data-leader="${kind}" data-player="${escapeHtml(d.name)}">
-      <span class="rk-leader-label"><span class="rk-leader-icon">${icon}</span>${escapeHtml(label)}</span>
-      <span class="rk-leader-name">${escapeHtml(d.name)}</span>
-      <span class="rk-leader-body"><span class="rk-leader-tier">${d.tier ? `Tier ${escapeHtml(d.tier)}` : ''}</span>
-      <span class="rk-leader-value">${escapeHtml(String(d.value))}</span></span></button>` : '';
-  const html = card('power', RK_ICON_CROWN, 'Power Leader', power) + card('race', RK_ICON_TREND, `${noun} Leader`, race);
-  if(!box){ box = document.createElement('div'); box.id = 'rankingsLeaders'; box.className = 'rk-leaders'; }
-  box.innerHTML = html;
-  box.style.display = html ? '' : 'none';
-  let head = document.getElementById('rankingsBoardHead');
-  if(!head){
-    head = document.createElement('div');
-    head.id = 'rankingsBoardHead'; head.className = 'rk-board-head';
-    head.innerHTML = `<h2 class="rk-board-title">Power Leaderboard</h2><button type="button" class="rk-method" id="rankingsMethodBtn">Methodology <span class="rk-info" aria-hidden="true">i</span></button>`;
-  }
-  const anchor = header || list;
-  anchor.parentNode.insertBefore(box, anchor);
-  anchor.parentNode.insertBefore(head, anchor);
-  head.querySelector('#rankingsMethodBtn').onclick = () => { if(typeof openPowerRatingGuide === 'function') openPowerRatingGuide(); };
-  box.querySelectorAll('[data-leader]').forEach(b => {
-    b.onclick = () => {
-      if(b.dataset.leader === 'race') openMonthlyRaceFor(period);
-      else if(selectedMonth !== 'all' && typeof openMonthlyRatingBreakdown === 'function') openMonthlyRatingBreakdown(b.dataset.player, selectedMonth);
-      else openSheet(b.dataset.player);
-    };
-  });
-}
+// The Power screen's own parts (Your standing, tier pills, the board heading,
+// Not ranked yet, the honours tiles): features/rankings/rankingsDesign.js.
 
 function buildRankingsHero(){
   const hero = document.createElement('div');
   hero.id = 'rankingsHero';
   hero.style.cssText = 'display:none; padding: var(--space-4) var(--space-4) 0;';
   hero.innerHTML = `
-    <h1 class="mp-display-title rankings-hero-title">Rankings</h1>
-    <div class="rankings-hero-sub">A tier-anchored rating. Scoreline counts, not just who won.</div>
+    <div class="rk2-titlebar"><h1 class="mp-display-title rankings-hero-title">Rankings</h1></div>
   `;
   const controls = document.querySelector('.controls');
   controls.parentNode.insertBefore(hero, controls);

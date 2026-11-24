@@ -214,7 +214,7 @@ test('only redesigned screens use the helpers (Phases 1-3a): the shell, Me, Play
   const { appScriptFiles, readAppScript } = require('./helpers/appSource.js');
   const users = appScriptFiles().filter((f) => f !== 'ui/components/primitives.js'
     && /\bmp(CountBadge|Pill|DateBlock|Segmented|ListRow|SectionHead|Stepper)Html\(/.test(readAppScript(f)));
-  assert.deepStrictEqual(users.sort(), ['features/home/homeScreen.js', 'features/me/meScreen.js', 'features/play/arrangeScreen.js', 'features/play/playScreens.js', 'shell.js']);
+  assert.deepStrictEqual(users.sort(), ['features/home/homeScreen.js', 'features/me/meScreen.js', 'features/play/arrangeScreen.js', 'features/play/playScreens.js', 'features/rankings/rankingsDesign.js', 'shell.js']);
 });
 
 // ---------- in a browser ----------

@@ -289,18 +289,22 @@ function renderSectionSubnav(){
   // Rankings (Shaun, 22 Nov, from his design): Power | Quarter | Stats as
   // underlined tabs, with icons; "This Quarter" reads "Quarter", and More
   // tables is "Stats".
-  const underline = activeSection === 'rankings' && !document.body.classList.contains('standings-mode');
-  container.classList.toggle('is-underline', underline);
-  const rkIcon = (tab) => underline ? (RANKINGS_TAB_ICONS[tab] || '') : '';
-  const rkLabel = (label) => underline ? String(label).replace(/^This /, '') : label;
+  // Rankings (the Claude Design canvas, Shaun 24 Nov): one segmented control,
+  // Power | Quarter race | Stats -- Stats being what More tables held.
+  const rk = activeSection === 'rankings' && !document.body.classList.contains('standings-mode');
+  container.classList.remove('is-underline');
+  container.classList.toggle('is-rankings', rk);
+  const rkIcon = () => '';
+  const rkLabel = (label) => rk && /Month$|Quarter$/.test(String(label)) ? `${Period.Noun} race` : label;
   container.innerHTML = `<div class="mp-seg" role="tablist" aria-label="${escapeHtml(SECTION_LABELS[activeSection] || '')}">`
     + entries.map(it => it.href
       // A page of its own (the standings site's Monthly: review/), so a link.
       ? `<a class="section-subnav-item mp-seg-item" ${it.attr} href="${it.href}" tabindex="-1">${escapeHtml(it.label)}</a>`
-      : `<button type="button" role="tab" class="section-subnav-item mp-seg-item${it.on ? ' active' : ''}" ${it.attr} aria-selected="${it.on}" tabindex="${it.on ? 0 : -1}">${rkIcon((it.attr.match(/data-tab="([^"]+)"/) || [])[1])}<span>${escapeHtml(rkLabel(it.label))}</span></button>`
+      : `<button type="button" role="tab" class="section-subnav-item mp-seg-item${it.on ? ' active' : ''}" ${it.attr} aria-selected="${it.on}" tabindex="${it.on ? 0 : -1}">${rkIcon()}<span>${escapeHtml(rkLabel(it.label))}</span></button>`
     ).join('')
+    + (rk && moreTables.length ? `<button type="button" class="section-subnav-item mp-seg-item${onMore ? ' active' : ''}" id="rankingsMoreBtn" aria-haspopup="dialog" aria-pressed="${onMore}" tabindex="-1"><span>Stats</span></button>` : '')
     + `</div>`
-    + (moreTables.length ? `<button type="button" class="section-more-btn" id="rankingsMoreBtn" aria-haspopup="dialog" aria-pressed="${onMore}">${underline ? `${RANKINGS_TAB_ICONS.stats}<span>Stats</span>` : 'More tables'}</button>` : '')
+    + (!rk && moreTables.length ? `<button type="button" class="section-more-btn" id="rankingsMoreBtn" aria-haspopup="dialog" aria-pressed="${onMore}">More tables</button>` : '')
     + (arrange.length ? `<button type="button" class="section-more-btn section-arrange-btn" id="arrangeGameBtn" aria-haspopup="dialog">Arrange a Game</button>` : '');
   const tabs = [...container.querySelectorAll('.section-subnav-item')];
   tabs.forEach((btn, i)=>{
@@ -339,6 +343,13 @@ function openRankingsMoreTables(){
     sheet.id = 'rankingsMoreSheet';
     document.body.appendChild(sheet);
     sheet.addEventListener('click', (e)=>{ if(e.target === sheet) sheet.classList.remove('show'); });
+  }
+  // Stats (the Claude Design canvas, Shaun 24 Nov): rankingsDesign.js.
+  if(typeof rankingsStatsHtml === 'function' && !isStandingsMode()){
+    sheet.innerHTML = `<div class="shell-more-panel rk2-stats">${rankingsStatsHtml()}</div>`;
+    wireRankingsStats(sheet);
+    sheet.classList.add('show');
+    return;
   }
   sheet.innerHTML = `<div class="shell-more-panel">
     <h3>More tables</h3>

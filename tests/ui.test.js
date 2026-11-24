@@ -1505,7 +1505,7 @@ test('Tier S is supported, and a sole qualifier is not crowned', { skip }, async
       out.field = kings._fieldSize.S;
       out.crowned = kings.S ? kings.S.name : null;
       renderKingsOfTiersPanel();
-      out.panel = document.getElementById('kingsOfTiersPanel').innerText.replace(/\n+/g, ' | ');
+      out.sTile = !!document.querySelector('#rankingsHonours [data-rk-king="s"]');
       return out;
     });
     assert.ok(r.tierFilters.includes('S'), 'Tier S must be offered as a filter');
@@ -1513,7 +1513,7 @@ test('Tier S is supported, and a sole qualifier is not crowned', { skip }, async
     assert.deepStrictEqual(r.leagueGroupsBy, ['S', 'A', 'B', 'C'], 'the league table must group every tier');
     assert.strictEqual(r.field, 1, 'exactly one qualifier, which is the case under test');
     assert.strictEqual(r.crowned, null, 'a sole qualifier must not be crowned');
-    assert.match(r.panel, /TIER S \| only one qualified/);
+    assert.strictEqual(r.sTile, false, 'no King of Tier S tile for a sole qualifier');
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });

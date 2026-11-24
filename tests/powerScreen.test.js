@@ -45,7 +45,8 @@ for (const width of [360, 390]) {
       await openPower(app);
       const r = await app.run(() => {
         const c = document.createElement('canvas').getContext('2d');
-        return ['monthSelect', 'tierSelectCompact'].map((id) => {
+        // The tier is pills on Power now (the Claude Design canvas); the period box remains.
+        return ['monthSelect'].map((id) => {
           const s = document.getElementById(id);
           const cs = getComputedStyle(s);
           c.font = `${cs.fontWeight} ${cs.fontSize} Inter`;
@@ -56,11 +57,11 @@ for (const width of [360, 390]) {
           return { id, room, longest, icons: [...s.parentElement.querySelectorAll('.toolbar-icon')].filter((e) => e.getClientRects().length).length };
         }).concat([{ page: document.documentElement.scrollWidth > window.innerWidth + 1 }]);
       });
-      r.slice(0, 2).forEach((x) => {
+      r.slice(0, 1).forEach((x) => {
         assert.ok(x.room >= x.longest, `${x.id}: ${Math.round(x.longest)}px of text in ${Math.round(x.room)}px`);
         assert.strictEqual(x.icons, 0, `${x.id}: no leading icon`);
       });
-      assert.strictEqual(r[2].page, false);
+      assert.strictEqual(r[1].page, false);
     } finally { await app.close(); }
   });
 }
@@ -87,20 +88,21 @@ maybe('Include idle / temporarily inactive live in Filters, which shows a dot wh
   } finally { await app.close(); }
 });
 
-maybe('Kings of Tiers is a list: one row per tier, name over tier, rating on the right', async () => {
+// The Claude Design canvas (Shaun, 24 Nov): the honours are tiles under the
+// leaderboard -- a King of each tier, then who leads the race.
+maybe('the honours are tiles under the leaderboard: King of each tier, then the race leader', async () => {
   const app = await H.open({ viewport: { width: 390, height: 844 }, mobile: true });
   try {
     await openPower(app);
-    const r = await app.run(() => [...document.querySelectorAll('#kingsOfTiersPanel .kings-card')].map((card) => {
-      const box = (sel) => card.querySelector(sel).getBoundingClientRect();
-      return { name: box('.kings-name'), tier: box('.kings-tier-label'), rating: box('.kings-rating'), card: card.getBoundingClientRect() };
-    }));
-    assert.ok(r.length >= 2);
-    r.forEach((k, i) => {
-      assert.ok(k.tier.top >= k.name.bottom - 1, 'tier under the name');
-      assert.ok(k.rating.left > k.name.right, 'rating to the right');
-      if (i) assert.ok(k.card.top >= r[i - 1].card.bottom - 1, 'stacked, not side by side');
+    const r = await app.run(() => {
+      const tiles = [...document.querySelectorAll('#rankingsHonours .rk2-tile')];
+      const list = document.getElementById('list').getBoundingClientRect();
+      return { labels: tiles.map((t) => t.querySelector('.rk2-tile-label').textContent), below: tiles.every((t) => t.getBoundingClientRect().top >= list.bottom - 1),
+        sameRow: tiles.length > 1 && Math.abs(tiles[0].getBoundingClientRect().top - tiles[1].getBoundingClientRect().top) < 2 };
     });
+    assert.ok(r.labels.filter((l) => /^King of Tier [SABC]$/.test(l)).length >= 2, r.labels.join(', '));
+    assert.ok(r.below, 'under the leaderboard');
+    assert.ok(r.sameRow, 'two to a row');
   } finally { await app.close(); }
 });
 

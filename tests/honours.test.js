@@ -57,45 +57,45 @@ maybe('a Monthly Champion is the tier\'s Race leader among qualified players; "L
       const want = Object.fromEntries(['A', 'B', 'C'].map((t) => [t, (race.find((x) => x.tier === t && x.qualified) || {}).playerId || null]));
       const got = Object.fromEntries(['A', 'B', 'C'].map((t) => [t, champs[t] ? champs[t].name : null]));
       legacyTabBtn('power').click();
-      const panelTitle = (document.querySelector('#monthlyChampionsPanel .kings-panel-title') || {}).textContent;
+      const panelTitle = ([...document.querySelectorAll('#rankingsHonours .rk2-tile-label')].find((l) => /^Leading/.test(l.textContent)) || {}).textContent;
       return { want, got, final: champs._final, panelTitle, august: championsFor('2026-08')._final, all: championsFor('all') };
     });
     assert.deepStrictEqual(r.got, r.want);
     assert.strictEqual(r.final, false, 'September is still being played on 26 September');
-    assert.strictEqual(r.panelTitle, 'Leading September');
+    assert.strictEqual(r.panelTitle, 'Leading the month', 'Power names who leads the race (the Claude Design canvas, 24 Nov)');
     assert.strictEqual(r.august, true, 'August is over: its leaders are Champions');
     assert.strictEqual(r.all, null, 'All time has no Monthly Champion');
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
 
-// Shaun's 22 Nov design: the leader cards and the laurelled top three in the
-// leaderboard replace the podium; Kings and Champions sit under the table.
-maybe('Power Rankings: a month shows Kings then its Champions under the leaderboard; a Champion opens the Race; All time shows Kings, no podium', async () => {
+// The Claude Design canvas (Shaun, 24 Nov): the honours are tiles under the
+// leaderboard -- King of each tier, then who leads the race; the race tile
+// opens the Race. No podium.
+maybe('Power Rankings: the honours tiles sit under the leaderboard; the race tile opens the Race; no podium', async () => {
   const app = await H.open({ viewport: { width: 390, height: 844 }, now: NOW });
   try {
     const r = await app.run(() => {
       legacyTabBtn('power').click();
       const month = selectedMonth;
-      const order = [...document.querySelectorAll('#kingsOfTiersPanel, #monthlyChampionsPanel, #rankingsPodium')].map((e) => e.id);
-      const below = document.getElementById('list').compareDocumentPosition(document.getElementById('kingsOfTiersPanel')) & Node.DOCUMENT_POSITION_FOLLOWING;
-      const title = document.querySelector('#monthlyChampionsPanel .kings-panel-title').textContent;
-      const champ = document.querySelector('#monthlyChampionsPanel .champ-card');
-      const name = champ.dataset.player;
-      champ.click();
+      const box = document.getElementById('rankingsHonours');
+      const below = document.getElementById('list').compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING;
+      const labels = [...box.querySelectorAll('.rk2-tile-label')].map((l) => l.textContent);
+      box.querySelector('[data-rk-race]').click();
       const opened = { tab: activeTab, mode: summaryMode, month: summaryMonth, heading: document.querySelector('#summaryContent .section-heading').textContent };
       legacyTabBtn('power').click();
       applyRankingsMonth('all'); render();
-      return { month, order, below: !!below, title, name, opened, allTime: [...document.querySelectorAll('#kingsOfTiersPanel, #monthlyChampionsPanel, #rankingsPodium')].map((e) => e.id) };
+      return { month, below: !!below, labels, opened, podium: !!document.getElementById('rankingsPodium'), old: !!document.getElementById('kingsOfTiersPanel') || !!document.getElementById('monthlyChampionsPanel'),
+        allTime: !!document.getElementById('rankingsHonours') };
     });
-    // Shaun, 1 Nov: a month's podium ranked regulars by Power Rating, so Len
-    // stood third in October on 0W 1D 6L. The month's winners are its Champions.
-    assert.deepStrictEqual(r.order, ['kingsOfTiersPanel', 'monthlyChampionsPanel']);
     assert.ok(r.below, 'under the leaderboard');
-    assert.match(r.title, /^(Leading \w+|\w+ Champions)$/);
+    assert.ok(r.labels.some((l) => /^King of Tier [SABC]$/.test(l)));
+    assert.strictEqual(r.labels[r.labels.length - 1], 'Leading the month');
     assert.deepStrictEqual([r.opened.tab, r.opened.mode, r.opened.month], ['summary', 'race', r.month]);
     assert.match(r.opened.heading, /Monthly Race/);
-    assert.deepStrictEqual(r.allTime, ['kingsOfTiersPanel'], 'All time: Kings; the top three are the laurelled rows');
+    assert.strictEqual(r.podium, false);
+    assert.strictEqual(r.old, false, 'the panels are gone');
+    assert.ok(r.allTime, 'All time keeps the honours');
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
