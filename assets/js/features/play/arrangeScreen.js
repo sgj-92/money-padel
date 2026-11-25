@@ -107,6 +107,8 @@ function arrangeAgreedHtml(){
     <label class="fx-m-booking"><input type="checkbox" class="agreed-booked"${d.booked ? ' checked' : ''}>
       <span><b>Court booked</b><br><span class="fx-m-sub">Goes straight to Upcoming; otherwise Called Out.</span></span></label>
     <button type="button" class="mp-btn-primary mp-btn-touch mp-btn-accent agreed-save">Add agreed game</button>
+    <button type="button" class="preset-btn agreed-suggest">Not agreed yet? Suggest it to all four</button>
+    <div class="play-note agreed-suggest-note">They each get a notification and say whether they'd play it.</div>
     <div class="play-flash agreed-msg" role="status">${escapeHtml(agreedFlash)}</div>
     </div>
     <div class="shell-list arrange-onward">${mpListRowHtml({ label: 'Several at once? Paste a list', data: { arrange: 'paste' } })}</div>`;
@@ -180,6 +182,21 @@ function renderArrange(show){
       renderArrange(false);
       const first = playSheet('arrangeSheet').querySelector('.agreed-name');
       if(first) first.focus();
+    };
+    // Suggest it instead (Shaun, 25 Nov): all four are asked, nobody is in yet.
+    const suggest = panel.querySelector('.agreed-suggest');
+    if(suggest) suggest.onclick = async () => {
+      read();
+      const msg = panel.querySelector('.agreed-msg');
+      suggest.disabled = true;
+      const r = await suggestGame({ ...agreedDraft, by: fixtureAdminName() });
+      suggest.disabled = false;
+      if(!r.ok){ msg.textContent = r.message; return; }
+      const [a, b] = requestTeams(r.req);
+      agreedFlash = `Suggested: ${a.join(' & ')} v ${b.join(' & ')}. All four are asked; it's a game when they all say yes.`;
+      agreedDraft = { ...agreedDraft, names: ['', '', '', ''] };
+      dataChanged();
+      renderArrange(false);
     };
   }
   const send = panel.querySelector('.arrange-send');

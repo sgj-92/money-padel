@@ -392,3 +392,46 @@
 .pp-games .pp-match-score{ color: var(--text); font-variant-numeric: tabular-nums; white-space: pre; font-size: 12.5px; }
 .pp-games .pp-match-date{ color: var(--text-dim); font-size: 11px; }
 .pp-games .pp-match-chev{ color: var(--text-dim); }
+
+/* ---- Messages (features/players/messages.js; Shaun, 25 Nov) ------------- */
+.shell-messages-btn{ position: relative; margin-left: auto; }
+.shell-messages-btn + .shell-capture-btn{ margin-left: 0; }
+.shell-messages-btn .msg-badge{ position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-bright); display: none; box-shadow: 0 0 0 2px var(--surface-0, var(--bg0)); }
+.shell-messages-btn.has-unread{ color: var(--gold-bright); }
+.shell-messages-btn.has-unread .msg-badge{ display: block; }
+.msg-panel{ display: flex; flex-direction: column; gap: 10px; }
+.msg-panel .game-sheet-head{ display: flex; align-items: center; gap: 8px; }
+.msg-panel .game-sheet-head h3{ flex: 1; margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-back{ width: 40px; height: 40px; min-height: 0 !important; border: 0; background: none; color: var(--text-soft); font-size: 24px; line-height: 1; border-radius: 50%; }
+.msg-new{ width: 100%; }
+.msg-list{ display: flex; flex-direction: column; }
+.msg-row{ display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; padding: 10px 2px; border: 0; border-top: 1px solid var(--surface-border); background: none; color: var(--text); text-align: left; cursor: pointer; position: relative; }
+.msg-row:first-child{ border-top: 0; }
+.msg-avatar{ width: 40px; height: 40px; border-radius: 50%; background: rgba(var(--gold-rgb), .14); color: var(--gold-bright); display: flex; align-items: center; justify-content: center; font: 400 17px/1 var(--font-prestige); }
+.msg-row-main{ display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.msg-row-title{ font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msg-row-last{ font-size: 12.5px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msg-row.is-unread .msg-row-last{ color: var(--text); }
+.msg-row-when{ font-size: 11px; color: var(--text-dim); align-self: start; padding-top: 4px; }
+.msg-dot{ position: absolute; right: 4px; bottom: 14px; width: 9px; height: 9px; border-radius: 50%; background: var(--gold-bright); }
+.msg-empty{ font-size: 13px; color: var(--text-soft); padding: 12px 2px; }
+.msg-private{ font-size: 11.5px; color: var(--text-dim); text-align: center; }
+.msg-people{ display: flex; flex-direction: column; max-height: 50vh; overflow-y: auto; }
+.msg-person{ text-align: left; padding: 12px 4px; min-height: 46px; border: 0; border-top: 1px solid var(--surface-border); background: none; color: var(--text); font: 500 15px/1.2 var(--font-interface); cursor: pointer; }
+.msg-thread{ height: min(80vh, 640px); }
+.msg-thread-sub{ font-size: 12px; color: var(--text-dim); margin-top: -6px; }
+.msg-bubbles{ flex: 1; min-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 6px 2px; }
+.msg-bubble{ max-width: 80%; align-self: flex-start; display: flex; flex-direction: column; gap: 2px; padding: 8px 11px; border-radius: 16px 16px 16px 5px; background: var(--surface-2, rgba(255,255,255,.06)); color: var(--text); }
+.msg-bubble.is-mine{ align-self: flex-end; border-radius: 16px 16px 5px 16px; background: rgba(var(--gold-rgb), .22); }
+.msg-bubble.is-pending{ opacity: .6; }
+.msg-by{ font-size: 11px; font-weight: 700; color: var(--gold-bright); }
+.msg-text{ font-size: 14.5px; line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg-at{ font-size: 10.5px; color: var(--text-dim); align-self: flex-end; }
+.msg-compose{ display: flex; gap: 8px; align-items: flex-end; }
+.msg-input{ flex: 1; min-height: 44px; max-height: 120px; resize: none; border-radius: 22px; padding: 11px 14px; font-size: 16px; line-height: 1.3; }
+.msg-send{ min-height: 44px; border-radius: 22px; padding: 0 16px; }
+.msg-error{ font-size: 12.5px; color: var(--red); }
+.msg-error:empty{ display: none; }
+.game-chat{ width: 100%; }
+.agreed-suggest{ width: 100%; margin-top: 8px; }
+.agreed-suggest-note{ font-size: 12px; margin-top: 4px; }

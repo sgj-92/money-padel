@@ -56,7 +56,9 @@ function playMetaText(req, now){
   if(req.preferredTime) bits.push(req.preferredTime);
   if(req.location) bits.push(req.location);
   if(st === S.ATTENTION) bits.push(fixtureAttentionText(req));
-  else if(st === S.PROPOSED) bits.push(`asked by ${req.requestedBy} ${fmtRelative(req.requestedAt)}`);
+  else if(st === S.PROPOSED) bits.push(req.recommended
+    ? `suggested by ${req.requestedBy} ${fmtRelative(req.requestedAt)} · would you play?`
+    : `asked by ${req.requestedBy} ${fmtRelative(req.requestedAt)}`);
   return bits.filter(Boolean).join(' · ');
 }
 
@@ -314,6 +316,8 @@ function renderGameSheet(show){
     card = buildPendingRequestCardHtml(req);
   }
   const state = st === S.ATTENTION ? mpPillHtml('Needs attention', 'attention') : st === S.ARCHIVED ? mpPillHtml('Archived') : '';
+  // The game's own chat, for its four (messages.js; Shaun, 25 Nov).
+  const canChat = typeof messagesOn === 'function' && messagesOn() && !!messagesMe() && !!FixtureFlow.participantName(req, messagesMe());
   sheet.innerHTML = `<div class="shell-more-panel game-sheet" role="dialog" aria-label="Game">
     <div class="game-sheet-head">
       <h3>${escapeHtml(playTeamsText(req, viewer && viewer.name))}</h3>
@@ -321,8 +325,9 @@ function renderGameSheet(show){
     </div>
     ${mpStepperHtml(PlayView.STEPS, PlayView.step(req, now))}
     ${state ? `<div class="game-sheet-state">${state}</div>` : ''}
-    ${(canBook || isUnlocked) ? `<div class="game-sheet-actions">
+    ${(canBook || isUnlocked || canChat) ? `<div class="game-sheet-actions">
       ${canBook ? `<button type="button" class="mp-btn-primary mp-btn-touch mp-btn-accent game-book">I've booked a court</button>` : ''}
+      ${canChat ? `<button type="button" class="preset-btn game-chat">Chat with the four</button>` : ''}
       ${isUnlocked ? `<button type="button" class="section-more-btn game-admin" aria-label="Admin: manage this fixture">Admin ···</button>` : ''}
     </div>` : ''}
     <div class="game-sheet-card">${card}</div>
@@ -331,6 +336,8 @@ function renderGameSheet(show){
   panel.querySelector('.game-sheet-close').onclick = () => sheet.classList.remove('show');
   const book = panel.querySelector('.game-book');
   if(book) book.onclick = () => openBookingConfirm(req.id);
+  const chat = panel.querySelector('.game-chat');
+  if(chat) chat.onclick = () => { sheet.classList.remove('show'); openGameChat(req); };
   const admin = panel.querySelector('.game-admin');
   if(admin) admin.onclick = () => {
     fixtureManageOpen = req.id; fixtureManageMessage = ''; fixtureRemoveArmed = null;

@@ -788,6 +788,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     // could not actually prevent.
     if(typeof DATA_READY !== 'undefined' && !DATA_READY) return;
     applyRankingEligibility();
+    if(typeof ensureMessagesWatch === 'function') ensureMessagesWatch();
     renderRankingsPodium();
     renderKingsOfTiersPanel();
     renderRankingsLeaders();
@@ -885,6 +886,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   shellHistoryInstall();
   if(typeof nativeFeelInstall === 'function') nativeFeelInstall();
   if(typeof whosFreeInstall === 'function') whosFreeInstall();
+  if(typeof messagesInstall === 'function') messagesInstall();
   // A laptop or a monitor gets the desktop layout; a phone, nothing new.
   initDesktopShell();
   initMatchScorecard();

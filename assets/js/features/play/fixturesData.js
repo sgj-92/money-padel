@@ -104,7 +104,17 @@ async function submitGameRequest({ names, requestedBy, date, time, venue }){
 // four are checked like a request -- anyone in the club, rated or waiting for
 // a first game, never an archived player -- and written in the club's own
 // spelling. Called Out, or Upcoming when the court is booked.
-async function addAgreedGame({ names, by, date, time, venue, booked }){
+// Shaun, 25 Nov: "admin to be able to recommend a game to four people, they
+// get a notification and say whether they'd play it or not." A request from
+// the Admin, who is not one of the four: nobody is in yet, each answers in
+// Needs you, all four in makes it a game. Marked `recommended` so the
+// notification and the card say it came from the club.
+async function suggestGame({ names, by, date, time, venue }){
+  const r = await addAgreedGame({ names, by, date, time, venue, booked: false, suggest: true });
+  return r;
+}
+
+async function addAgreedGame({ names, by, date, time, venue, booked, suggest }){
   const typed = (names || []).map(n => String(n || '').trim());
   if(typed.length !== 4 || typed.some(n => !n)) return { ok: false, message: 'Enter all four players.' };
   if(new Set(typed.map(n => n.toLowerCase())).size !== 4) return { ok: false, message: 'The same name appears more than once.' };
@@ -115,16 +125,22 @@ async function addAgreedGame({ names, by, date, time, venue, booked }){
   if(unrecognized.length) return { ok: false, message: `Unrecognized name${unrecognized.length > 1 ? 's' : ''}: ${unrecognized.join(', ')}.` };
   if(archived.length) return { ok: false, message: archivedRefusal(archived) };
   const clean = typed.map(n => club.find(c => c.toLowerCase() === n.toLowerCase()) || n);
-  const req = FixtureFlow.createAgreed({
-    players: clean, teams: [clean.slice(0, 2), clean.slice(2, 4)], by,
-    preferredDate: date || '', preferredTime: time || '', location: String(venue || '').trim(),
-    courtBookingMade: !!booked,
-  });
+  const req = suggest
+    ? Object.assign(FixtureFlow.createRequest({
+        players: clean, teams: [clean.slice(0, 2), clean.slice(2, 4)], requestedBy: by,
+        preferredDate: date || '', preferredTime: time || '', location: String(venue || '').trim(),
+      }), { recommended: true })
+    : FixtureFlow.createAgreed({
+        players: clean, teams: [clean.slice(0, 2), clean.slice(2, 4)], by,
+        preferredDate: date || '', preferredTime: time || '', location: String(venue || '').trim(),
+        courtBookingMade: !!booked,
+      });
   gameRequestsState.push(req);
   if(!await saveGameRequests(gameRequestsState)){
     gameRequestsState.pop();
     return { ok: false, message: storageAvailable() ? `Save failed (${lastStorageError || 'unknown error'}) — try again.` : `Save failed — this page can't reach shared storage.` };
   }
+  if(suggest) return { ok: true, req, message: 'Suggested. All four are asked; it becomes a game when they all say yes.' };
   return { ok: true, req, message: booked ? 'Added to Upcoming.' : 'Added to Called Out.' };
 }
 

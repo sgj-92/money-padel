@@ -160,49 +160,96 @@ async function open(options = {}) {
       },
       async signOut() { this.user = null; },
     };
+    // Live listeners (onSnapshot), by collection path; told after each write.
+    const listeners = {};
+    const changed = (name) => (listeners[name] || []).slice().forEach((f) => setTimeout(f, 0));
+    let autoId = 0;
+    // A collection at any path ("threads", "threads/t1/messages"): documents,
+    // nested collections, add, equality / array-contains queries, orderBy and
+    // limitToLast, and onSnapshot -- what the app asks of Firestore.
+    window.__fsColl = function coll(name) {
+      const rows = () => Object.entries(data[name] || {});
+      const snapOf = (pairs) => ({ docs: pairs.map(([id, v]) => ({ id, data: () => v, ref: api.doc(id) })), empty: !pairs.length,
+        forEach(f) { this.docs.forEach(f); } });
+      const query = (filters, order, last) => {
+        const run = () => {
+          let out = rows().filter(([, v]) => v && filters.every(([f, op, val]) => op === 'array-contains' ? Array.isArray(v[f]) && v[f].includes(val) : v[f] === val));
+          if (order) out = out.slice().sort((x, y) => (x[1][order] < y[1][order] ? -1 : x[1][order] > y[1][order] ? 1 : 0));
+          if (last) out = out.slice(-last);
+          return out;
+        };
+        return {
+          where(f, op, val) { return query(filters.concat([[f, op, val]]), order, last); },
+          orderBy(f) { return query(filters, f, last); },
+          limitToLast(n) { return query(filters, order, n); },
+          limit(n) { return query(filters, order, n); },
+          async get() { if (failReads) fail(); return snapOf(run()); },
+          onSnapshot(cb) {
+            const f = () => cb(snapOf(run()));
+            (listeners[name] = listeners[name] || []).push(f);
+            setTimeout(f, 0);
+            return () => { listeners[name] = (listeners[name] || []).filter((x) => x !== f); };
+          },
+        };
+      };
+      const api = {
+        doc(id) {
+          return {
+            // A batch collects refs and applies them later, so a ref has
+            // to carry what it points at.
+            _collection: name, _id: id,
+            async get() {
+              const started = Date.now();
+              if (held) await held();
+              window.__reads.push({ collection: name, id, started, ended: Date.now() });
+              const v = (data[name] || {})[id]; return { exists: !!v, id, data: () => v };
+            },
+            async set(v, opts) {
+              const doc = opts && opts.merge ? { ...((data[name] || {})[id] || {}), ...v } : v;
+              window.__writes.push({ collection: name, id, doc }); (data[name] = data[name] || {})[id] = doc;
+              changed(name);
+            },
+            async update(v) {
+              if (!(data[name] || {})[id]) throw new Error('No document to update');
+              const doc = { ...data[name][id], ...v };
+              window.__writes.push({ collection: name, id, doc }); data[name][id] = doc;
+              changed(name);
+            },
+            async delete() { window.__writes.push({ collection: name, id, deleted: true }); delete (data[name] || {})[id]; changed(name); },
+            collection(sub) { return coll(`${name}/${id}/${sub}`); },
+            onSnapshot(cb) {
+              const f = () => { const v = (data[name] || {})[id]; cb({ exists: !!v, id, data: () => v }); };
+              (listeners[name] = listeners[name] || []).push(f);
+              setTimeout(f, 0);
+              return () => { listeners[name] = (listeners[name] || []).filter((x) => x !== f); };
+            },
+          };
+        },
+        async add(v) {
+          const id = `auto${++autoId}`;
+          await api.doc(id).set(v);
+          return api.doc(id);
+        },
+        async get() {
+          const started = Date.now();
+          if (held) await held();
+          window.__reads.push({ collection: name, started, ended: Date.now() });
+          if (failReads) fail();
+          return snapOf(rows());
+        },
+        where(f, op, val) { return query([[f, op, val]], null, null); },
+        orderBy(f) { return query([], f, null); },
+        limitToLast(n) { return query([], null, n); },
+        onSnapshot(cb) { return query([], null, null).onSnapshot(cb); },
+      };
+      return api;
+    };
     window.firebase = {
       auth() { return authApi; },
       initializeApp(config, name) { return name ? { auth() { return secondAuth; } } : undefined; },
       firestore() {
         return {
-          collection(name) {
-            return {
-              doc(id) {
-                return {
-                  // A batch collects refs and applies them later, so a ref has
-                  // to carry what it points at.
-                  _collection: name, _id: id,
-                  async get() {
-                    const started = Date.now();
-                    if (held) await held();
-                    window.__reads.push({ collection: name, id, started, ended: Date.now() });
-                    const v = (data[name] || {})[id]; return { exists: !!v, data: () => v };
-                  },
-                  async set(v, opts) {
-                    const doc = opts && opts.merge ? { ...((data[name] || {})[id] || {}), ...v } : v;
-                    window.__writes.push({ collection: name, id, doc }); (data[name] = data[name] || {})[id] = doc;
-                  },
-                  async delete() { window.__writes.push({ collection: name, id, deleted: true }); delete (data[name] || {})[id]; },
-                };
-              },
-              async get() {
-                const started = Date.now();
-                if (held) await held();
-                window.__reads.push({ collection: name, started, ended: Date.now() });
-                if (failReads) fail();
-                return { docs: Object.entries(data[name] || {}).map(([id, v]) => ({ id, data: () => v })) };
-              },
-              // Equality only: what the app asks.
-              where(field, op, value) {
-                const coll = this;
-                return { async get() {
-                  if (failReads) fail();
-                  return { docs: Object.entries(data[name] || {}).filter(([, v]) => v && v[field] === value)
-                    .map(([id, v]) => ({ id, data: () => v, ref: coll.doc(id) })) };
-                } };
-              },
-            };
-          },
+          collection(name) { return window.__fsColl(name); },
           // The application batches its replay writes, so the stub has to as
           // well: without this the tests would exercise the one-at-a-time
           // fallback while the real app takes a path nothing covers.

@@ -319,6 +319,7 @@ function openRankQuickSheet(name){
     <div class="rkq-actions">
       ${me && me !== name && canSeeTab('wishlist') ? `<button type="button" class="mp-btn-primary mp-btn-touch mp-btn-accent rkq-request">Request a game</button>` : ''}
       ${canSeeTab('h2h') ? `<button type="button" class="preset-btn rkq-compare">Compare</button>` : ''}
+      ${typeof messagesOn === 'function' && messagesOn() && messagesMe() && messagesMe() !== name ? `<button type="button" class="preset-btn rkq-message">Message</button>` : ''}
     </div>
     <button type="button" class="rk2-link rkq-profile">Full profile ›</button>
   </div>`;
@@ -326,6 +327,8 @@ function openRankQuickSheet(name){
   sheet.querySelector('.rkq-close').onclick = close;
   const req = sheet.querySelector('.rkq-request');
   if(req) req.onclick = () => { close(); openArrangeGame('request', { names: [me, '', name, ''], date: '', time: '', venue: '' }); };
+  const msg = sheet.querySelector('.rkq-message');
+  if(msg) msg.onclick = () => { close(); openDirectMessage(name); };
   const cmp = sheet.querySelector('.rkq-compare');
   if(cmp) cmp.onclick = () => {
     close();

@@ -43,8 +43,12 @@
       const tag = `fixture-${r.id}`;
       if (!old) {
         if (r.status === PENDING) {
-          out.push({ to: players.filter((n) => n !== r.requestedBy), tag,
-            title: 'Game request', body: `${r.requestedBy || 'Someone'} asked you to play: ${line(r)}${at(r)}. Answer in Play.` });
+          out.push(r.recommended
+            // An Admin's suggestion (Shaun, 25 Nov): from the club, to all four.
+            ? { to: players.filter((n) => n !== r.requestedBy), tag, title: 'Suggested game',
+                body: `${r.requestedBy || 'The club'} suggests a game: ${line(r)}${at(r)}. Would you play? Answer in Play.` }
+            : { to: players.filter((n) => n !== r.requestedBy), tag,
+                title: 'Game request', body: `${r.requestedBy || 'Someone'} asked you to play: ${line(r)}${at(r)}. Answer in Play.` });
         } else if (r.status === AGREED) {
           out.push(r.courtBookingMade
             ? { to: players, tag, title: 'Court booked', body: `${line(r)}${at(r)}${venue}.` }
