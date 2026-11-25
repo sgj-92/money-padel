@@ -61,3 +61,26 @@ from there first; the sheet says so. They are told when someone asks them to
 play, when all four are in, when a court is booked, and when a game is
 cancelled — never about something they did themselves. **Send me a test**
 checks it end to end.
+
+## Messages
+
+**One-off, in Firebase:** publish the latest `firestore.rules` (Firestore
+Database › Rules › paste › Publish). It adds `threads`: without it, sending a
+message says "Couldn't send. Publish the latest database rules".
+
+A player signed in with their code taps the speech bubble in the header:
+their conversations, newest first, a dot on the unread ones, and **New
+message** to start one with any player. A game's sheet has **Chat with the
+four**; a player tapped in Rankings has **Message**. Each message notifies the
+others (if they have notifications on).
+
+Only the players in a conversation can read it. Admins have no special
+access: an Admin sees a game chat only when they are one of its four, as their
+own player.
+
+## Suggesting a game (Admins)
+
+Arrange a Game › Agreed › fill in the four (and a date, time, venue if known)
+› **Not agreed yet? Suggest it to all four**. Each of the four gets a
+"Suggested game" notification and answers Yes / Can't in Play › Needs you;
+when all four say yes it becomes a game, as any request does.

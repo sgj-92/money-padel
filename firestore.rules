@@ -111,6 +111,45 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['own', 'changedAt']));
     }
 
+    // Messages (Shaun, 25 Nov: "messaging between players"; decided: a chat
+    // on every game and one-to-one messages, readable ONLY by the players in
+    // them -- not by Admins). A conversation lists its members by name; the
+    // signed-in account is a member if its player (playerAccounts) or, for
+    // an Admin playing as themselves, its admins entry's name is on the list.
+    // Members read it and write to it, and every message says who sent it:
+    // the account's own name, nobody else's. The member list never changes.
+    function myPlayer() {
+      return get(/databases/$(database)/documents/playerAccounts/$(request.auth.uid)).data.player;
+    }
+    function myAdminName() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.name;
+    }
+    function isMemberOf(members) {
+      return request.auth != null && (
+        (exists(/databases/$(database)/documents/playerAccounts/$(request.auth.uid)) && myPlayer() in members)
+        || (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) && myAdminName() in members));
+    }
+    function isMe(name) {
+      return request.auth != null && (
+        (exists(/databases/$(database)/documents/playerAccounts/$(request.auth.uid)) && myPlayer() == name)
+        || (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) && myAdminName() == name));
+    }
+    match /threads/{id} {
+      allow read: if isMemberOf(resource.data.members);
+      allow create: if isMemberOf(request.resource.data.members)
+        && request.resource.data.members is list
+        && request.resource.data.members.size() >= 2 && request.resource.data.members.size() <= 4;
+      allow update: if isMemberOf(resource.data.members)
+        && request.resource.data.members == resource.data.members;
+      match /messages/{m} {
+        allow read: if isMemberOf(get(/databases/$(database)/documents/threads/$(id)).data.members);
+        allow create: if isMemberOf(get(/databases/$(database)/documents/threads/$(id)).data.members)
+          && isMe(request.resource.data.by)
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000;
+      }
+    }
+
     // Who is an Admin. Each Admin may read their own entry (the app checks it
     // at sign-in); nobody may write it -- the console does that.
     match /admins/{uid} {
