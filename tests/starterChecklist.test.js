@@ -63,3 +63,32 @@ maybe('nobody else is shown it: not a player browsing without a code, not Money 
     assert.deepStrictEqual(r, { shaun: false });
   } finally { await mp.close(); }
 });
+
+// Shaun, 26 Nov: "Notifications are on but I cannot tick this button." This
+// phone had notifications on but wasn't on the list under his name.
+maybe('notifications on for this phone but not on the list: the step ticks, and the phone is listed under the player', async () => {
+  const email = 'pkazkazkaz1@players.sgj.luxe';
+  const app = await H.open({ path: 'index.html?club=padelchampionships', record: EMPTY, club: TAGS, now: '2026-11-20T10:00:00.000Z',
+    accounts: { [email]: { password: '472915', uid: 'uid-kaz' } }, signedIn: email,
+    documents: { playerAccounts: { 'uid-kaz': { player: 'Kaz' } }, playerLogins: { Kaz: { email, own: true } } } });
+  try {
+    const r = await app.run(async () => {
+      const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+      for (let k = 0; k < 100 && !signedInPlayer; k++) await wait(20);
+      const sub = { endpoint: 'https://push.example/kaz-phone', toJSON: () => ({ endpoint: 'https://push.example/kaz-phone', keys: { p256dh: 'p', auth: 'a' } }) };
+      currentPushSubscription = async () => sub;
+      starterNotifyOn = null;
+      const box = document.createElement('div');
+      box.innerHTML = starterChecklistHtml('Kaz');
+      document.body.appendChild(box);
+      wireStarterChecklist(box);
+      for (let k = 0; k < 100 && starterNotifyOn !== true; k++) await wait(20);
+      const saved = window.__writes.filter((w) => w.collection === 'pushSubscriptions').map((w) => w.doc.player);
+      return { on: starterNotifyOn, saved, step: starterSteps('Kaz').find((s) => s.key === 'notify').done };
+    });
+    assert.strictEqual(r.on, true);
+    assert.deepStrictEqual(r.saved, ['Kaz'], 'put on the list under the player');
+    assert.strictEqual(r.step, true);
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
