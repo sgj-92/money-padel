@@ -150,6 +150,28 @@ service cloud.firestore {
       }
     }
 
+    // Match reviews and feedback (Shaun, 26 Nov: "a review/debrief section
+    // to games ... individualised to each player as feedback"). Decided:
+    // Admins and the four who played write them; the recap is public;
+    // feedback for one player is read only by that player, its writer and
+    // Admins. Each document carries the game's four (`players`); a writer
+    // must be one of them (or an Admin), and that list never changes.
+    match /matchReviews/{matchId} {
+      allow read: if true;
+      allow create: if isAdmin() || (isMemberOf(request.resource.data.players) && isMe(request.resource.data.by));
+      allow update: if isAdmin() || (isMemberOf(resource.data.players) && isMe(request.resource.data.by)
+        && request.resource.data.players == resource.data.players);
+      allow delete: if isAdmin();
+    }
+    match /matchFeedback/{id} {
+      allow read: if isAdmin() || isMe(resource.data.player) || isMe(resource.data.by);
+      allow create: if isAdmin() || (isMemberOf(request.resource.data.players) && isMe(request.resource.data.by)
+        && request.resource.data.player in request.resource.data.players);
+      allow update: if isAdmin() || (isMe(resource.data.by) && isMe(request.resource.data.by)
+        && request.resource.data.players == resource.data.players && request.resource.data.player == resource.data.player);
+      allow delete: if isAdmin() || isMe(resource.data.by);
+    }
+
     // Who is an Admin. Each Admin may read their own entry (the app checks it
     // at sign-in); nobody may write it -- the console does that.
     match /admins/{uid} {
