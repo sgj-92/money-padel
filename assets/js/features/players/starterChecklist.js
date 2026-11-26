@@ -75,17 +75,30 @@ function wireStarterChecklist(root, after){
     starterNotifyOn = false;
     // On only if this phone is on the list for this player (one phone can
     // serve two people, and a reset takes a player off the list).
+    // On only if this phone is on the list for this player (one phone can
+    // serve two people, and a reset takes a player off the list). Signed in
+    // as them with this phone's notifications on, it is theirs: put it on the
+    // list if it isn't (Shaun, 26 Nov: on, but the step wouldn't tick).
     const name = root.querySelector('.starter').dataset.starter;
     currentPushSubscription().then(async sub => {
       if(!sub) return;
+      let listed = false;
       try {
         const doc = await db.collection(PUSH_SUBSCRIPTIONS_COLLECTION).doc(await subscriptionId(sub.endpoint)).get();
-        if(!doc.exists || (doc.data() || {}).player !== name) return;
-      } catch(e){ return; }
+        listed = doc.exists && (doc.data() || {}).player === name;
+      } catch(e){ listed = false; }
+      if(!listed && verifiedPlayerName() === name && typeof savePushSubscription === 'function') listed = await savePushSubscription(name);
+      if(!listed) return;
       starterNotifyOn = true;
-      if(typeof renderActiveTab === 'function') renderActiveTab();
+      redrawStarterHosts();
     });
   }
+}
+
+// Wherever the list is drawn: the active tab, and Home in the redesign.
+function redrawStarterHosts(){
+  if(typeof renderActiveTab === 'function') renderActiveTab();
+  if(typeof renderHomeDashboard === 'function') renderHomeDashboard();
 }
 
 // Right after a player first signs in with their code: the list, as a sheet.

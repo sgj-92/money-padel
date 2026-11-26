@@ -87,7 +87,7 @@ async function enableNotifications(){
       player: name, endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth,
       createdAt: new Date().toISOString(), device: String(navigator.userAgent || '').slice(0, 160),
     });
-    if(typeof starterNotifyOn !== 'undefined') starterNotifyOn = true;
+    if(typeof starterNotifyOn !== 'undefined'){ starterNotifyOn = true; if(typeof redrawStarterHosts === 'function') redrawStarterHosts(); }
     return { ok: true, message: 'Notifications are on for this phone.' };
   } catch(e){
     console.error('turning notifications on failed', e);
@@ -181,8 +181,11 @@ async function openNotificationsSheet(){
       draw(testOutcome(r, saved));
     };
   };
-  // A phone turned on before the rules let it be saved is put on the list now.
-  if(verifiedPlayerName()) savePushSubscription(verifiedPlayerName());
+  // A phone turned on before the rules let it be saved is put on the list
+  // now -- and the Get started step ticks once it is.
+  if(verifiedPlayerName()) savePushSubscription(verifiedPlayerName()).then(ok => {
+    if(ok && typeof starterNotifyOn !== 'undefined' && starterNotifyOn !== true){ starterNotifyOn = true; if(typeof redrawStarterHosts === 'function') redrawStarterHosts(); }
+  });
   await draw('');
   sheet.classList.add('show');
 }
