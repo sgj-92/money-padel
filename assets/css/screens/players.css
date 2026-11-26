@@ -435,3 +435,41 @@
 .game-chat{ width: 100%; }
 .agreed-suggest{ width: 100%; margin-top: 8px; }
 .agreed-suggest-note{ font-size: 12px; margin-top: 4px; }
+
+/* ---- A game's review and each player's feedback (matchReview.js; Shaun, 26 Nov) ---- */
+.msc-review{ margin-top: 14px; }
+.mr{ display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: var(--surface-1); border: 1px solid var(--surface-border); text-align: left; }
+.mr-head{ font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; color: var(--text-dim); }
+.mr-sub{ font-size: 12px; font-weight: 600; color: var(--text); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.mr-private{ font-size: 11px; font-weight: 500; color: var(--text-dim); }
+.mr-muted{ font-size: 12.5px; color: var(--text-dim); }
+.mr-recap-text{ margin: 0; font-size: 14px; line-height: 1.45; white-space: pre-wrap; color: var(--text); }
+.mr-by{ font-size: 11.5px; color: var(--text-dim); margin-top: 4px; }
+.mr-person{ padding-top: 10px; border-top: 1px solid var(--surface-border-soft); display: flex; flex-direction: column; gap: 6px; }
+.mr-person-head{ display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.mr-person-name{ font-weight: 600; font-size: 14px; }
+.mr-note{ display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 12px; background: var(--surface-0); }
+.mr-note-row{ display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; font-size: 13px; line-height: 1.4; }
+.mr-note-text{ white-space: pre-wrap; }
+.mr-note-label{ font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; }
+.mr-note-label.is-good{ color: var(--green); }
+.mr-note-label.is-work{ color: rgba(var(--gold-rgb), 1); }
+.mr-chip{ display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+.mr-chip.is-good{ background: rgba(90,156,90,.16); color: var(--text); }
+.mr-chip.is-work{ background: rgba(var(--gold-rgb), .16); color: var(--text); }
+.mr-form{ display: flex; flex-direction: column; gap: 8px; }
+.mr-label{ font-size: 12px; font-weight: 600; color: var(--text-dim); }
+.mr-text{ width: 100%; box-sizing: border-box; font-size: 16px; min-height: 64px; resize: vertical; font-family: inherit; line-height: 1.4; }
+.mr-chips{ display: flex; flex-wrap: wrap; gap: 6px; }
+.mr-tag{ min-height: 32px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--surface-border); background: transparent; color: var(--text); font-size: 12.5px; font-family: inherit; }
+.mr-tag.is-on{ background: rgba(var(--gold-rgb), .2); border-color: rgba(var(--gold-rgb), .6); font-weight: 600; }
+.mr-form-actions{ display: flex; gap: 8px; flex-wrap: wrap; }
+.mr-msg:empty{ display: none; }
+.mr-msg{ font-size: 12.5px; color: var(--red); }
+/* On a profile */
+.pp-fb{ display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.pp-fb-head{ display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.pp-fb-focus{ display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pp-fb-list{ display: flex; flex-direction: column; gap: 8px; }
+.pp-fb-item{ display: flex; flex-direction: column; gap: 4px; text-align: left; width: 100%; padding: 10px; border-radius: 14px; background: var(--surface-1); border: 1px solid var(--surface-border); color: inherit; font-family: inherit; }
+.pp-fb-game{ font-size: 11.5px; color: var(--text-dim); font-weight: 600; }

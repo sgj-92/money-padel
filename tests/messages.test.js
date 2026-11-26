@@ -18,7 +18,7 @@ const KAZ = { accounts: { 'pkaz@players.sgj.luxe': { password: 'AAAABBBB', uid: 
 const docs = (extra) => ({ playerAccounts: { 'uid-kaz': { player: 'Kaz' } }, playerLogins: { Kaz: { email: 'pkaz@players.sgj.luxe' } }, ...(extra || {}) });
 
 test('the rules: only members read or write a conversation; a message is sent as yourself; members never change', () => {
-  const block = RULES.slice(RULES.indexOf('match /threads/{id}'), RULES.indexOf('// Who is an Admin.'));
+  const block = RULES.slice(RULES.indexOf('match /threads/{id}'), RULES.indexOf('// Match reviews and feedback'));
   assert.match(block, /allow read: if isMemberOf\(resource\.data\.members\);/);
   assert.match(block, /allow update: if isMemberOf\(resource\.data\.members\)\s*&& request\.resource\.data\.members == resource\.data\.members;/);
   assert.match(block, /match \/messages\/\{m\}[\s\S]*allow read: if isMemberOf\(get\(/);

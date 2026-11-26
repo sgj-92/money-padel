@@ -84,3 +84,22 @@ Arrange a Game › Agreed › fill in the four (and a date, time, venue if known
 › **Not agreed yet? Suggest it to all four**. Each of the four gets a
 "Suggested game" notification and answers Yes / Can't in Play › Needs you;
 when all four say yes it becomes a game, as any request does.
+
+## Match reviews and feedback
+
+Open any played game (its **Match result** sheet) and scroll to **Review**.
+
+- **Recap**: one write-up of the game, by an Admin or any of the four who
+  played. Everyone can read it, and it shows on each player's profile under
+  **Match reviews**. Saving it notifies the other players.
+- **Feedback for each player**: *What went well* and *To work on*, in words
+  and/or focus areas (Serve, Return, Volleys, Smash, Lobs, Positioning,
+  Movement, Shot choice, Communication, Consistency). Only that player, the
+  person who wrote it and Admins can read it. The player is notified.
+- On a player's profile, **Feedback** (seen only by them and Admins) counts
+  their most-named **Strengths** and **Working on** areas and lists the
+  latest notes; tap one to open the game.
+
+Needs the latest `firestore.rules` published (the `matchReviews` and
+`matchFeedback` blocks): Firebase console → Firestore Database → Rules →
+paste the whole file → Publish.

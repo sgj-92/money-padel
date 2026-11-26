@@ -963,6 +963,8 @@ function renderPremiumProfile(name, matchFilter){
       ${profileSummaryHtml(name, profileMonth === 'all' ? profileTotals(gameGroups) : (gameGroups.find(g => g.month === profileMonth) || profileTotals([])))}
       <div class="pp-share-note" id="ppShareNote" role="status"></div>
       <div id="ppMatchesHost"></div></div>`
+    // Reviews of their games, and (for them and Admins) their feedback (matchReview.js).
+    + `<div class="pp-section" id="ppFeedbackHost" data-player="${escapeHtml(name)}" style="display:none;"></div>`
     + `<div class="pp-section" id="ppDevAreasHost"></div>`;
 
   const sheetProfileEl = document.getElementById('sheetProfile');
@@ -986,6 +988,7 @@ function renderPremiumProfile(name, matchFilter){
   // wrapping, not rebuilding, so edit/delete listeners already attached to
   // these exact nodes keep working untouched.
   wireProfileMonthSelect(name);
+  if(typeof mountProfileFeedback === 'function') mountProfileFeedback(name);
   const matchesHost = document.getElementById('ppMatchesHost');
   const matchEls = [...document.querySelectorAll('#sheetMatches .match')];
   const gameById = {};

@@ -192,7 +192,10 @@ function renderMatchScorecardSheet(modal){
     ${body}
     <div class="msc-actions">${actions}</div>
     ${message ? `<div class="msc-message">${escapeHtml(message)}</div>` : ''}
+    ${!analysis && typeof mountMatchReview === 'function' ? '<div class="msc-review"></div>' : ''}
   </div>`;
+  // The game's review and each player's feedback (matchReview.js; Shaun, 26 Nov).
+  if(!analysis && typeof mountMatchReview === 'function') mountMatchReview(modal, id);
 }
 
 // ---- Sharing -------------------------------------------------------------------
