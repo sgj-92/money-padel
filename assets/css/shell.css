@@ -383,3 +383,18 @@ a.section-subnav-item.mp-seg-item{ display: flex; align-items: center; justify-c
 .capture-draw{ position: fixed; inset: 0; z-index: 9999; touch-action: none; cursor: crosshair; background: rgba(0,0,0,0.15); }
 .capture-box{ transition: none; }
 .capture-dragging .capture-bar{ opacity: 0; pointer-events: none; transition: opacity .15s; }
+
+/* The header with the viewer chip, Messages and the camera (Shaun, 26 Nov:
+   the camera fell off the right edge and "Shaun ▾" wrapped). Tighter gaps
+   and buttons, the chip on one line, and the wordmark gives way first. */
+@media (max-width: 480px){
+  .shell-header{ gap: 6px; }
+  .shell-header .brand-wordmark{ min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: clip; letter-spacing: 0.06em; font-size: 13px; }
+  .shell-header .shell-capture-btn{ width: 36px; height: 40px; margin-left: 0; }
+  .shell-header .shell-messages-btn{ margin-left: auto; }
+  .shell-header .home-viewer-switch, .shell-header .shell-section-title{ white-space: nowrap; flex: none; }
+  .home-viewer-switch{ padding-left: 10px; padding-right: 10px; }
+}
+@media (max-width: 370px){
+  .shell-header .brand-wordmark{ font-size: 11.5px; letter-spacing: 0.03em; }
+}
