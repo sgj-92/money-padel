@@ -418,7 +418,7 @@ function renderSummaryLeagueTable(){
       if(rows.length === 0) return;
       anyTierShown = true;
       const open = tierSectionOpen(leagueTierOpen, tier, rows.length);
-      html += leagueTierHeading(tier, open);
+      html += open ? headingWithShare(leagueTierHeading(tier, open), `leagueTierBody${tier}`, `Tier ${tier}`) : leagueTierHeading(tier, open);
       if(open) html += `<div id="leagueTierBody${tier}">${buildLeagueTableHtml(rows, false)}</div>`;
     });
     if(!anyTierShown) html += `<div class="section-sub">No games recorded for ${label}.</div>`;
@@ -429,6 +429,7 @@ function renderSummaryLeagueTable(){
   }
 
   content.innerHTML = html;
+  wireSectionShare(content);
   wireRequestPlayerLinks(content);
   wireTableCounts(content, ()=> leagueDrill, (k)=>{ leagueDrill = k; }, renderSummaryLeagueTable);
 
@@ -695,7 +696,8 @@ function renderMeritTable(){
       if(rows.length === 0) return;
       anyShown = true;
       const open = tierSectionOpen(meritTierOpen, tier, rows.length);
-      html += leagueTierHeading(tier, open).replace('leagueTier', 'meritTier');
+      const head = leagueTierHeading(tier, open).replace('leagueTier', 'meritTier');
+      html += open ? headingWithShare(head, `meritTierBody${tier}`, `Tier ${tier}`) : head;
       if(open) html += `<div id="meritTierBody${tier}">${buildMeritTableHtml(rows, false, race)}</div>`;
     });
     if(!anyShown) html += `<div class="section-sub">No games recorded for ${label}.</div>`;
@@ -709,6 +711,7 @@ function renderMeritTable(){
   }
 
   content.innerHTML = html;
+  wireSectionShare(content);
   wireRequestPlayerLinks(content);
   wireRaceStakes(content);
 
@@ -908,8 +911,9 @@ function renderMonthlyRace(){
     rowsByTier.ALL = everyone.length;
     const openAll = tierSectionOpen(raceTierOpen, 'ALL', everyone.length);
     const lead = everyone.find(r => r.qualified);
-    html += foldHeading('raceTierALL', '🌐 All tiers', openAll,
+    const allHead = foldHeading('raceTierALL', '🌐 All tiers', openAll,
       { data: { tier: 'ALL' }, bodyId: 'raceTierBodyALL', summary: lead ? `leading: ${escapeHtml(lead.playerId)}` : '' });
+    html += openAll ? headingWithShare(allHead, 'raceTierBodyALL', 'All tiers') : allHead;
     if(openAll){
       const q = everyone.filter(r => r.qualified), p = everyone.filter(r => !r.qualified);
       html += `<div id="raceTierBodyALL"><div class="section-sub race-all-note">Everyone together, on the same points: each match is scored against an ordinary player of the player’s own tier, so a win counts the same in any tier. Tier titles are decided in the tier tables below.</div>`;
@@ -929,7 +933,8 @@ function renderMonthlyRace(){
     anyShown = true;
     rowsByTier[tier] = rows.length;
     const open = tierSectionOpen(raceTierOpen, tier, rows.length);
-    html += leagueTierHeading(tier, open).replace('leagueTier', 'raceTier');
+    const head = leagueTierHeading(tier, open).replace('leagueTier', 'raceTier');
+    html += open ? headingWithShare(head, `raceTierBody${tier}`, `Tier ${tier}`) : head;
     if(!open) return;
     const qualified = rows.filter(r => r.qualified);
     const provisional = rows.filter(r => !r.qualified);
@@ -946,6 +951,7 @@ function renderMonthlyRace(){
   if(unresolved.length) html += `<div class="section-sub">${unresolved.length} match${unresolved.length===1?'':'es'} could not be scored: a player's tier or pre-match rating on that date is unknown.</div>`;
 
   content.innerHTML = html;
+  wireSectionShare(content);
   wireRaceStakes(content);
   wireRequestPlayerLinks(content);
   const ex = document.getElementById('raceExplainerToggle');

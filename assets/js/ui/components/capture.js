@@ -231,7 +231,8 @@ function endCapture(){
 // The element as a picture, whole: past the bottom of the screen, and a table
 // that scrolls sideways at its full width. Framed with the community's name
 // and the date, on its own background.
-async function capturePicture(el){
+async function capturePicture(el, opts){
+  const o = opts || {};
   if(!el || !el.offsetWidth || !el.offsetHeight) throw new Error('that part of the screen is not showing.');
   const h2c = await captureLibrary();
   const css = getComputedStyle(document.documentElement);
@@ -255,6 +256,8 @@ async function capturePicture(el){
     windowWidth: Math.max(document.documentElement.clientWidth, el.offsetWidth + extra),
     ignoreElements: (n) => n.classList && (n.classList.contains('capture-box') || n.classList.contains('capture-bar') || n.classList.contains('capture-sheet')),
     onclone: (doc, clone) => {
+      // A shared table reads as a picture, not a page of controls.
+      if(o.clean) doc.body.classList.add('capture-clean');
       clone.style.maxHeight = 'none';
       clone.style.overflow = 'visible';
       clone.style.overflowX = 'visible';
@@ -267,18 +270,24 @@ async function capturePicture(el){
     },
   });
   } finally { if(G) G.addColorStop = addStop; }
-  return captureFrame(shot, bg, css);
+  return captureFrame(shot, bg, css, o.title);
 }
 
 // The frame: a margin and a quiet footer with the community and the date.
-function captureFrame(shot, bg, css){
-  const pad = 32, foot = 56;
+function captureFrame(shot, bg, css, title){
+  const pad = 32, foot = 56, head = title ? 72 : 0;
   const out = document.createElement('canvas');
   out.width = shot.width + pad * 2;
-  out.height = shot.height + pad * 2 + foot;
+  out.height = shot.height + pad * 2 + foot + head;
   const ctx = out.getContext('2d');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, out.width, out.height);
-  ctx.drawImage(shot, pad, pad);
+  if(title){
+    ctx.fillStyle = (css.getPropertyValue('--text') || '#f3f0fa').trim();
+    ctx.font = '700 36px "Helvetica Neue", Arial, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(title, pad, pad + head / 2 - 6, out.width - pad * 2);
+  }
+  ctx.drawImage(shot, pad, pad + head);
   ctx.fillStyle = (css.getPropertyValue('--text-dim') || '#bcb096').trim();
   ctx.font = '600 22px "Helvetica Neue", Arial, sans-serif';
   ctx.textBaseline = 'middle';
@@ -325,9 +334,9 @@ async function takeCapture(target){
 
 // The picture, then what to do with it. Share needs a fresh tap on a phone,
 // so it is offered here rather than fired as the picture is made.
-function showCaptureResult(cv){
+function showCaptureResult(cv, slug){
   const d = new Date();
-  const name = `${CLUB.fileSlug}-picture-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}.png`;
+  const name = `${CLUB.fileSlug}-${slug || 'picture'}-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}-${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}.png`;
   const sheet = document.createElement('div');
   sheet.className = 'capture-sheet';
   const canCopy = typeof ClipboardItem !== 'undefined' && navigator.clipboard && navigator.clipboard.write;
@@ -355,4 +364,46 @@ function showCaptureResult(cv){
     try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob() })]); say('Copied — paste it anywhere.'); }
     catch(e){ say('This browser would not copy it. Use Share / Save.'); }
   };
+}
+
+// ---- A camera beside a heading: that section as a picture -----------------------
+// Shaun, 27 Nov: "I need these screens to be shareable with a button ... a
+// small camera icon next to each heading ... The screen capture tool at the top
+// doesn't work great ... when I'm trying to capture the entire width." The
+// button makes the picture of exactly that section (its whole table, however
+// wide or long), titled, then offers Share / Save as the header camera does.
+const SECTION_SHARE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+
+function sectionShareButtonHtml(targetId, label){
+  return `<button type="button" class="section-share-btn" data-share-section="${escapeHtml(targetId)}" data-share-label="${escapeHtml(label)}" aria-label="Share a picture of ${escapeHtml(label)}" title="Share a picture">${SECTION_SHARE_ICON}</button>`;
+}
+
+// The heading and its camera on one line.
+function headingWithShare(headingHtml, targetId, label){
+  return `<div class="section-share-row">${headingHtml}${sectionShareButtonHtml(targetId, label)}</div>`;
+}
+
+// "🏁 Oct–Dec 2026 Quarterly Race" -> "Oct–Dec 2026 Quarterly Race"
+function sectionSharePageTitle(box){
+  const h = box && box.querySelector('.section-heading:not(.lg-tier-head)');
+  return h ? h.textContent.replace(/^[^\p{L}\p{N}]+/u, '').replace(/\s+/g, ' ').trim() : '';
+}
+
+function wireSectionShare(box){
+  box.querySelectorAll('[data-share-section]').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      const el = document.getElementById(btn.dataset.shareSection);
+      if(!el || btn.disabled) return;
+      const page = sectionSharePageTitle(box);
+      const title = [page, btn.dataset.shareLabel].filter(Boolean).join(' · ');
+      btn.disabled = true; btn.classList.add('is-busy');
+      try {
+        const cv = await capturePicture(el, { title, clean: true });
+        showCaptureResult(cv, title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60));
+      } catch(err){
+        alert(`Couldn't make the picture: ${err.message}`);
+      } finally { btn.disabled = false; btn.classList.remove('is-busy'); }
+    };
+  });
 }

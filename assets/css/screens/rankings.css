@@ -1093,3 +1093,14 @@
 .rkq-actions{ display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; }
 .rkq-actions button{ width: 100%; min-height: 46px; }
 .rkq-profile{ align-self: center; }
+
+/* A camera beside a tier heading: that table as a picture (capture.js; Shaun, 27 Nov). */
+.section-share-row{ display: flex; align-items: center; gap: 8px; }
+.section-share-row > .lg-tier-head{ flex: 1; width: auto; min-width: 0; }
+.section-share-btn{ flex: none; width: 36px; height: 36px; margin-top: 4px; border-radius: 50%; border: 1px solid var(--surface-border); background: transparent; color: var(--text-dim); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.section-share-btn:active{ transform: scale(.94); }
+.section-share-btn.is-busy{ opacity: .5; }
+/* In the picture: numbers, not controls. */
+.capture-clean .merit-count{ border-bottom: 0; }
+.capture-clean .request-player-link{ text-decoration: none !important; }
+.capture-clean .section-share-btn, .capture-clean .lg-inline-chev{ display: none; }
