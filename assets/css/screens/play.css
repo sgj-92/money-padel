@@ -450,3 +450,12 @@
 /* No date yet: solid, just "TBC" (Shaun, 28 Nov: "maybe just say TBC and a solid square"). */
 .mp-date-block.mp-date-block-tbc{ background: var(--surface-2); border: 1px solid var(--surface-border); font-style: normal; }
 .mp-date-block-tbc .play-tbc{ font-size: 15px; font-weight: 700; letter-spacing: .06em; color: var(--text-dim); }
+
+/* A game's venue, opening Google Maps (venueMaps.js; Shaun, 28 Nov). */
+.venue-link{ display: inline-flex; align-items: center; gap: 8px; margin: 8px 0 2px; min-height: 40px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--surface-border); background: var(--surface-0); color: var(--text); text-decoration: none; font-size: 14px; font-weight: 600; max-width: 100%; box-sizing: border-box; }
+.venue-link svg{ flex: none; color: var(--gold-bright); }
+.venue-link-name{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.venue-link-go{ flex: none; color: var(--gold-bright); font-size: 13px; }
+.venue-link:active{ transform: scale(.97); }
+.fx-manage .fx-m-map-sub{ margin-top: -2px; }

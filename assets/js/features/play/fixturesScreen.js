@@ -193,6 +193,8 @@ function fixtureManageHtml(req){
       <label class="fx-m-field"><span class="fx-m-label">Time</span><input type="time" class="fg-select fx-m-time" value="${escapeHtml(req.preferredTime || '')}"></label>
     </div>
     <label class="fx-m-field"><span class="fx-m-label">Venue</span><input class="fg-select fx-m-venue" value="${escapeHtml(req.location || '')}" placeholder="Court or venue"></label>
+    <label class="fx-m-field"><span class="fx-m-label">Google Maps link</span><input class="fg-select fx-m-map" type="url" inputmode="url" autocomplete="off" value="${escapeHtml(typeof savedVenueMap === 'function' ? savedVenueMap(req.location) : '')}" placeholder="Paste from Google Maps › Share"></label>
+    <div class="fx-m-sub fx-m-map-sub">Saved for the venue: every game there opens this place. Without one, Directions searches Google Maps for the venue’s name.</div>
     <label class="fx-m-booking fx-m-switch-row">
       <span class="fx-m-switch-text"><b>Court booking made</b><span class="fx-m-sub">Marks this game as booked and moves it to Upcoming.${recorded ? '' : ' Not recorded for this game yet.'}</span></span>
       <input type="checkbox" role="switch" class="fx-m-booked mp-switch" data-initial="${recorded ? String(booked) : 'unset'}"${booked ? ' checked' : ''}>
@@ -216,7 +218,7 @@ function fixtureManageSnapshot(root){
   if(!panel) return null;
   const v = (sel) => [...panel.querySelectorAll(sel)].map(x => x.value);
   const b = panel.querySelector('.fx-m-booked');
-  return { id: panel.dataset.fixtureId, seats: v('.fx-m-seat'), states: v('.fx-m-state'), date: v('.fx-m-date'), time: v('.fx-m-time'), venue: v('.fx-m-venue'), booked: b ? b.checked : null,
+  return { id: panel.dataset.fixtureId, seats: v('.fx-m-seat'), states: v('.fx-m-state'), date: v('.fx-m-date'), time: v('.fx-m-time'), venue: v('.fx-m-venue'), map: v('.fx-m-map'), booked: b ? b.checked : null,
     hint: panel.querySelector('.fx-m-hint') ? panel.querySelector('.fx-m-hint').hidden : true };
 }
 function fixtureManageRestore(root, snap){
@@ -229,7 +231,7 @@ function fixtureManageRestore(root, snap){
     if(typeof segSync === 'function') segSync(x);
   });
   put('.fx-m-seat', snap.seats); put('.fx-m-state', snap.states);
-  put('.fx-m-date', snap.date); put('.fx-m-time', snap.time); put('.fx-m-venue', snap.venue);
+  put('.fx-m-date', snap.date); put('.fx-m-time', snap.time); put('.fx-m-venue', snap.venue); put('.fx-m-map', snap.map || []);
   const b = panel.querySelector('.fx-m-booked');
   if(b && snap.booked != null) b.checked = snap.booked;
   const hint = panel.querySelector('.fx-m-hint');
@@ -293,6 +295,7 @@ function buildPendingRequestCardHtml(req){
   return `<div class="callout-card fx-card${attention.length ? ' fx-attn' : ''}" data-fixture-id="${escapeHtml(req.id)}">
     <div class="cc-title">${fixtureTeamsHtml(req)}</div>
     <div class="cc-detail">${requestWhenHtml(req, { tbc: false })}requested by ${escapeHtml(req.requestedBy)} (${fmtRelative(req.requestedAt)})</div>
+    ${typeof venueLinkHtml === 'function' ? venueLinkHtml(req.location) : ''}
     <div class="fx-count">${FixtureFlow.confirmedCount(req)}/${req.players.length} confirmed${attention.length ? ` · <span class="fx-tag fx-tag-attn">Needs attention</span>` : ''}</div>
     ${fixturePlayersHtml(req)}
     ${fixtureViewerActionsHtml(req)}
@@ -347,6 +350,7 @@ function buildUpcomingCardHtml(req, ctx){
     html += `<div class="fx-body" id="fxBody_${id}">
       <div class="cc-title">${fixtureTeamsHtml(req)}</div>
       <div class="cc-detail">${proposed ? 'Proposed: ' : ''}${escapeHtml(fixtureWhenText(req))} · requested by ${escapeHtml(req.requestedBy)} (${fmtRelative(req.requestedAt)})</div>
+      ${typeof venueLinkHtml === 'function' ? venueLinkHtml(req.location) : ''}
       <div class="fx-court ${booked ? 'fx-court-yes' : 'fx-court-no'}">${booked ? 'Court booked' : 'Court not booked yet'}</div>
       ${fixturePlayersHtml(req)}
       ${stage === S.ATTENTION ? `<div class="fx-note fx-note-attn">${escapeHtml(fixtureAttentionText(req))} — this game needs sorting out${booked ? ', and a court is booked' : ''}.</div>` : ''}
@@ -425,7 +429,19 @@ function wireFixtureControls(box){
       };
       // Left unrecorded unless the admin actually answered it.
       if(!(booking.dataset.initial === 'unset' && !booking.checked)) edit.courtBookingMade = booking.checked;
+      // The venue's Google Maps link (venueMaps.js): checked before anything is saved.
+      const mapBox = panel.querySelector('.fx-m-map');
+      const mapText = mapBox ? mapBox.value.trim() : '';
+      const mapUrl = mapText ? googleMapsUrlFrom(mapText) : '';
+      if(mapBox && mapText && !mapUrl){ fixtureManageMessage = 'That isn’t a Google Maps link. In Google Maps, open the place, tap Share, then Copy link and paste it here.'; renderActiveTab(); return; }
+      if(mapBox && mapUrl && !edit.venue.trim()){ fixtureManageMessage = 'Add the venue’s name too, so the link is saved for it.'; renderActiveTab(); return; }
+      const mapChanged = !!mapBox && edit.venue.trim() && mapUrl !== savedVenueMap(edit.venue);
+      if(mapChanged){
+        const m = await saveVenueMap(edit.venue, mapUrl);
+        if(!m.ok){ fixtureManageMessage = m.message; renderActiveTab(); return; }
+      }
       const result = await commitFixtureChange(()=> FixtureFlow.adminEdit(req, edit, { isAdmin: isUnlocked, by: fixtureAdminName(), canon: playerIdFor }));
+      if(mapChanged && result && result.ok && result.saved && !result.changes) result.changes = 1;
       if(result && result.ok && result.saved){
         fixtureManageOpen = null; fixtureManageMessage = '';
         fixtureFlashMessage = result.changes ? 'Fixture updated.' : 'Nothing changed.';
