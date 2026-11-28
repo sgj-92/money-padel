@@ -172,9 +172,11 @@ function fixtureManageHtml(req){
       .map(x => `<option value="${escapeHtml(x)}"${x === n ? ' selected' : ''}>${escapeHtml(x)}</option>`).join('');
     const st = FixtureFlow.availabilityOf(req, n);
     const stOpt = (v, label) => `<option value="${v}"${st === v ? ' selected' : ''}>${label}</option>`;
-    return `<div class="fx-m-seat-row">
+    // The name on its own line (Shaun, 28 Nov: "You can't see the names"),
+    // its answer as pills under it.
+    return `<div class="fx-m-seat-card">
       <select class="fg-select fx-m-seat" data-seat="${i}" data-original="${escapeHtml(n)}" aria-label="Player ${i + 1}">${options}</select>
-      <select class="fg-select fx-m-state" data-seat="${i}" aria-label="Player ${i + 1} answer">${stOpt('in', 'In')}${stOpt('waiting', 'Not answered')}${stOpt('out', 'Backed out')}</select>
+      <select class="fg-select fx-m-state" data-seat="${i}" aria-label="${escapeHtml(n)}: answer">${stOpt('in', 'In')}${stOpt('waiting', 'Waiting')}${stOpt('out', 'Backed out')}</select>
     </div>`;
   };
   const booked = req.courtBookingMade === true;
@@ -191,19 +193,47 @@ function fixtureManageHtml(req){
       <label class="fx-m-field"><span class="fx-m-label">Time</span><input type="time" class="fg-select fx-m-time" value="${escapeHtml(req.preferredTime || '')}"></label>
     </div>
     <label class="fx-m-field"><span class="fx-m-label">Venue</span><input class="fg-select fx-m-venue" value="${escapeHtml(req.location || '')}" placeholder="Court or venue"></label>
-    <label class="fx-m-booking">
-      <input type="checkbox" class="fx-m-booked" data-initial="${recorded ? String(booked) : 'unset'}"${booked ? ' checked' : ''}>
-      <span><b>Court booking made</b><br><span class="fx-m-sub">Marks this game as booked and moves it to Upcoming.${recorded ? '' : ' Not recorded for this game yet.'}</span></span>
+    <label class="fx-m-booking fx-m-switch-row">
+      <span class="fx-m-switch-text"><b>Court booking made</b><span class="fx-m-sub">Marks this game as booked and moves it to Upcoming.${recorded ? '' : ' Not recorded for this game yet.'}</span></span>
+      <input type="checkbox" role="switch" class="fx-m-booked mp-switch" data-initial="${recorded ? String(booked) : 'unset'}"${booked ? ' checked' : ''}>
     </label>
     ${fixtureManageMessage ? `<div class="fx-note fx-note-attn">${escapeHtml(fixtureManageMessage)}</div>` : ''}
-    <div class="fx-actions">
-      <button type="button" class="preset-btn fx-m-save" data-fixture-id="${id}">Save changes</button>
+    <div class="fx-m-actions">
+      <button type="button" class="mp-btn-primary mp-btn-accent fx-m-save" data-fixture-id="${id}">Save changes</button>
       <button type="button" class="preset-btn fx-m-cancel" data-fixture-id="${id}">Cancel</button>
     </div>
     ${fixtureArchiveControlHtml(req)}
     <div class="fx-m-danger">${fixtureAdminRemoveHtml(req)}</div>
   </div>`;
   return html;
+}
+
+// Manage fixture keeps what the admin has typed or ticked when the screen is
+// redrawn under it (a live update, another panel), until Save or Cancel.
+// Shaun, 28 Nov: "The tick isn't tickable" -- a redraw put it back.
+function fixtureManageSnapshot(root){
+  const panel = root && root.querySelector('.fx-manage');
+  if(!panel) return null;
+  const v = (sel) => [...panel.querySelectorAll(sel)].map(x => x.value);
+  const b = panel.querySelector('.fx-m-booked');
+  return { id: panel.dataset.fixtureId, seats: v('.fx-m-seat'), states: v('.fx-m-state'), date: v('.fx-m-date'), time: v('.fx-m-time'), venue: v('.fx-m-venue'), booked: b ? b.checked : null,
+    hint: panel.querySelector('.fx-m-hint') ? panel.querySelector('.fx-m-hint').hidden : true };
+}
+function fixtureManageRestore(root, snap){
+  const panel = snap && root && root.querySelector(`.fx-manage[data-fixture-id="${CSS.escape(snap.id)}"]`);
+  if(!panel) return;
+  const put = (sel, vals) => panel.querySelectorAll(sel).forEach((x, i) => {
+    if(vals[i] == null) return;
+    if(x.tagName === 'SELECT' && ![...x.options].some(o => o.value === vals[i])) return;
+    x.value = vals[i];
+    if(typeof segSync === 'function') segSync(x);
+  });
+  put('.fx-m-seat', snap.seats); put('.fx-m-state', snap.states);
+  put('.fx-m-date', snap.date); put('.fx-m-time', snap.time); put('.fx-m-venue', snap.venue);
+  const b = panel.querySelector('.fx-m-booked');
+  if(b && snap.booked != null) b.checked = snap.booked;
+  const hint = panel.querySelector('.fx-m-hint');
+  if(hint) hint.hidden = snap.hint;
 }
 
 // Archive call-out / Restore to Called Out: a state change on the same
@@ -488,9 +518,9 @@ function requestWhenHtml(req, opts){
 // The court booking, asked for explicitly wherever an admin records an agreed
 // game. Off unless ticked: a date or a venue is not a booking.
 function courtBookingCheckboxHtml(id){
-  return `<label class="fx-m-booking" style="margin:4px 0 8px;">
-    <input type="checkbox" id="${id}">
-    <span><b>Court booking made</b><br><span class="fx-m-sub">Marks this game as booked and moves it to Upcoming.</span></span>
+  return `<label class="fx-m-booking fx-m-switch-row" style="margin:4px 0 8px;">
+    <span class="fx-m-switch-text"><b>Court booking made</b><span class="fx-m-sub">Marks this game as booked and moves it to Upcoming.</span></span>
+    <input type="checkbox" role="switch" class="mp-switch" id="${id}">
   </label>`;
 }
 

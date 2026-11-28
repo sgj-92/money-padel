@@ -416,3 +416,34 @@
 .arrange-form .fx-m-booking{ margin-top: 2px; }
 .arrange-form .arrange-onward{ margin-top: 12px; }
 .wf-you-game{ display: block; font-size: 12.5px; color: var(--green); margin: -4px 0 10px; }
+
+/* ---- Manage fixture, in the app's current look (Shaun, 28 Nov: "needs to be
+   visually enhanced. The tick isn't tickable ... You can't see the names") ---- */
+.fx-manage{ margin-top: 10px; padding: 14px; border: 1px solid var(--surface-border); border-radius: 18px; background: var(--surface-1); display: flex; flex-direction: column; gap: 8px; }
+.fx-manage > .fx-m-label{ margin: 6px 0 0; font-size: 11px; letter-spacing: .14em; }
+.fx-manage > .fx-m-label:first-child{ margin-top: 0; }
+.fx-m-seat-card{ display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 14px; background: var(--surface-0); border: 1px solid var(--surface-border-soft); }
+.fx-m-seat-card .fx-m-seat{ width: 100%; box-sizing: border-box; min-height: 44px; font-size: 16px; font-weight: 600; }
+.fx-m-seat-card .fx-m-state{ width: 100%; box-sizing: border-box; }
+.fx-m-seat-card .seg-pills{ width: 100%; box-sizing: border-box; }
+.fx-m-seat-card .seg-pills{ display: flex; }
+.fx-m-seat-card .seg-pill{ flex: 1 1 0; min-width: 0; padding: 0 6px; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx-manage .fx-m-grid{ gap: 10px; margin-top: 4px; }
+.fx-manage .fx-m-field .fg-select{ min-height: 44px; font-size: 16px; }
+.fx-manage .fx-m-field .fx-m-label{ margin: 0 0 4px; }
+/* A switch you can see and hit, the whole row taps it. */
+.fx-m-switch-row{ display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--surface-border); background: var(--surface-0); cursor: pointer; }
+.fx-m-switch-text{ display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 14px; line-height: 1.35; }
+.fx-m-switch-text .fx-m-sub{ font-size: 12px; }
+.fx-m-booking input.mp-switch, .mp-switch{
+  -webkit-appearance: none; appearance: none; flex: 0 0 auto; width: 51px; height: 31px; margin: 0; border-radius: 999px;
+  background: rgba(var(--text-rgb), .16); position: relative; cursor: pointer; transition: background .2s ease; outline: none; }
+.mp-switch::after{ content: ''; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35); transition: transform .2s cubic-bezier(.3,.7,.4,1); }
+.mp-switch:checked, .fx-m-booking input.mp-switch:checked{ background: var(--gold-bright); }
+.mp-switch:checked::after{ transform: translateX(20px); }
+.mp-switch:focus-visible{ box-shadow: 0 0 0 3px rgba(var(--gold-rgb), .45); }
+.fx-m-actions{ display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 6px; }
+.fx-m-actions > *{ min-height: 48px; width: 100%; }
+.fx-manage .fx-m-danger{ margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--surface-border-soft); }
+.fx-manage .fx-m-danger .fx-remove-arm{ color: var(--danger-text); }

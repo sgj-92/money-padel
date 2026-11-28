@@ -104,8 +104,8 @@ function arrangeAgreedHtml(){
     </div>
     <div class="agreed-hint">${typeof availabilityHintHtml === 'function' ? availabilityHintHtml(d.names, d.date, d.time) : ''}</div>
     ${arrangeRowHtml('Venue', `<input class="fg-select agreed-venue" value="${escapeHtml(d.venue || '')}" placeholder="Court or venue">`)}
-    <label class="fx-m-booking"><input type="checkbox" class="agreed-booked"${d.booked ? ' checked' : ''}>
-      <span><b>Court booked</b><br><span class="fx-m-sub">Goes straight to Upcoming; otherwise Called Out.</span></span></label>
+    <label class="fx-m-booking fx-m-switch-row"><span class="fx-m-switch-text"><b>Court booked</b><span class="fx-m-sub">Goes straight to Upcoming; otherwise Called Out.</span></span>
+      <input type="checkbox" role="switch" class="mp-switch agreed-booked"${d.booked ? ' checked' : ''}></label>
     <button type="button" class="mp-btn-primary mp-btn-touch mp-btn-accent agreed-save">Add agreed game</button>
     <button type="button" class="preset-btn agreed-suggest">Not agreed yet? Suggest it to all four</button>
     <div class="play-note agreed-suggest-note">They each get a notification and say whether they'd play it.</div>

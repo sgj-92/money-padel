@@ -318,6 +318,10 @@ function renderGameSheet(show){
   const state = st === S.ATTENTION ? mpPillHtml('Needs attention', 'attention') : st === S.ARCHIVED ? mpPillHtml('Archived') : '';
   // The game's own chat, for its four (messages.js; Shaun, 25 Nov).
   const canChat = typeof messagesOn === 'function' && messagesOn() && !!messagesMe() && !!FixtureFlow.participantName(req, messagesMe());
+  // Unsaved Manage fixture edits, and where the reader was, survive a redraw.
+  const kept = typeof fixtureManageSnapshot === 'function' ? fixtureManageSnapshot(sheet) : null;
+  const oldPanel = sheet.querySelector('.game-sheet');
+  const scrollWas = oldPanel ? oldPanel.scrollTop : 0;
   sheet.innerHTML = `<div class="shell-more-panel game-sheet" role="dialog" aria-label="Game">
     <div class="game-sheet-head">
       <h3>${escapeHtml(playTeamsText(req, viewer && viewer.name))}</h3>
@@ -355,6 +359,8 @@ function renderGameSheet(show){
   panel.querySelectorAll('.request-addresult-btn').forEach(b => {
     b.onclick = () => { sheet.classList.remove('show'); navigateToGamesTabForResult(req); };
   });
+  if(kept && fixtureManageOpen === kept.id) fixtureManageRestore(panel, kept);
+  if(!show && scrollWas) panel.scrollTop = scrollWas;
   if(show) sheet.classList.add('show');
 }
 
