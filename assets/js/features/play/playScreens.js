@@ -62,14 +62,15 @@ function playMetaText(req, now){
   return bits.filter(Boolean).join(' · ');
 }
 
-// Solid for a booked court, dashed for anything short of one; "TBC" with no date.
+// Solid for a booked court, dashed for a proposed date; a solid "TBC" with no date.
 function playDateBlockHtml(req){
   const proposed = !FixtureFlow.isBooked(req);
   if(req.preferredDate){
     const block = mpDateBlockHtml(req.preferredDate, { proposed });
     if(block) return block;
   }
-  return `<span class="mp-date-block mp-date-block-proposed"><span class="mp-date-dow">Date</span><span class="mp-date-day play-tbc">TBC</span><span class="mp-date-state">Proposed</span></span>`;
+  // No date yet: a plain solid square that just says TBC (Shaun, 28 Nov).
+  return `<span class="mp-date-block mp-date-block-tbc" role="img" aria-label="Date to be confirmed"><span class="mp-date-day play-tbc">TBC</span></span>`;
 }
 
 // One game, two lines. The row opens the game sheet; a request waiting on the

@@ -447,3 +447,6 @@
 .fx-m-actions > *{ min-height: 48px; width: 100%; }
 .fx-manage .fx-m-danger{ margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--surface-border-soft); }
 .fx-manage .fx-m-danger .fx-remove-arm{ color: var(--danger-text); }
+/* No date yet: solid, just "TBC" (Shaun, 28 Nov: "maybe just say TBC and a solid square"). */
+.mp-date-block.mp-date-block-tbc{ background: var(--surface-2); border: 1px solid var(--surface-border); font-style: normal; }
+.mp-date-block-tbc .play-tbc{ font-size: 15px; font-weight: 700; letter-spacing: .06em; color: var(--text-dim); }
