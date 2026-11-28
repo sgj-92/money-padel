@@ -124,8 +124,12 @@
   width: 100%; background: var(--surface-1); border-top: 1px solid var(--surface-border);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding: var(--space-5) var(--space-4) calc(var(--space-5) + var(--shell-safe-bottom));
-  max-height: 80vh; overflow-y: auto;
+  /* The visible height: on an iPhone, vh is the screen without Safari's
+     toolbar, so the foot of a long sheet sat behind it, out of reach (Shaun,
+     28 Nov: "The remove fixture button isn't working"). */
+  max-height: 80vh; max-height: 80dvh; overflow-y: auto; overscroll-behavior: contain;
 }
+.shell-more-panel::after{ content: ''; display: block; height: 16px; }
 .shell-more-panel h3{
   font-family: var(--font-prestige); color: var(--gold-bright); margin: 0 0 var(--space-4);
   font-size: 18px; font-weight: 400;

@@ -144,7 +144,7 @@ function fixtureAdminRemoveHtml(req){
     return `<div class="fx-remove-confirm">
       <div>Remove this fixture for everyone? It leaves ${FixtureFlow.isAgreed(req) ? 'the Upcoming tab' : 'Requests'}; its history is kept.</div>
       <div class="difficulty-row" style="margin-top:8px;">
-        <button type="button" class="preset-btn fx-remove-yes" data-fixture-id="${id}" style="flex:1;">Remove fixture</button>
+        <button type="button" class="preset-btn fx-remove-yes mp-btn-danger" data-fixture-id="${id}" style="flex:1;">Remove fixture</button>
         <button type="button" class="preset-btn fx-remove-no" data-fixture-id="${id}" style="flex:1;">Keep it</button>
       </div>
     </div>`;
@@ -477,7 +477,13 @@ function wireFixtureControls(box){
     };
   });
   box.querySelectorAll('.fx-remove-arm').forEach(btn=>{
-    btn.onclick = ()=>{ fixtureRemoveArmed = btn.dataset.fixtureId; renderActiveTab(); };
+    btn.onclick = ()=>{
+      fixtureRemoveArmed = btn.dataset.fixtureId; renderActiveTab();
+      // The question opens where the button was, at the foot of a long
+      // sheet: bring it (and its two buttons) into view (Shaun, 28 Nov).
+      const ask = [...document.querySelectorAll('.fx-remove-confirm')].find(el => el.offsetParent);
+      if(ask) ask.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    };
   });
   box.querySelectorAll('.fx-remove-no').forEach(btn=>{
     btn.onclick = ()=>{ fixtureRemoveArmed = null; renderActiveTab(); };
@@ -488,7 +494,14 @@ function wireFixtureControls(box){
       if(!req || fixtureRemoveArmed !== req.id) return;
       fixtureRemoveArmed = null;
       fixtureManageOpen = null;
-      await commitFixtureChange(()=> FixtureFlow.adminRemove(req, { isAdmin: isUnlocked, confirmed: true, by: fixtureAdminName() }));
+      btn.disabled = true; btn.textContent = 'Removing…';
+      const r = await commitFixtureChange(()=> FixtureFlow.adminRemove(req, { isAdmin: isUnlocked, confirmed: true, by: fixtureAdminName() }));
+      // Refused or not saved: say so where the Admin is looking.
+      if(!r || !r.ok || !r.saved){
+        fixtureManageOpen = req.id;
+        fixtureManageMessage = fixtureFlashMessage || 'It wasn’t removed. Try again.';
+        renderActiveTab();
+      }
     };
   });
   box.querySelectorAll('.fx-reconcile-yes').forEach(btn=>{

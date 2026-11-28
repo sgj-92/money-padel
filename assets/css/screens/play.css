@@ -459,3 +459,14 @@
 .venue-link-go{ flex: none; color: var(--gold-bright); font-size: 13px; }
 .venue-link:active{ transform: scale(.97); }
 .fx-manage .fx-m-map-sub{ margin-top: -2px; }
+/* Remove fixture: a real button with a thumb-sized target, and its question
+   (Shaun, 28 Nov: "The remove fixture button isn't working" -- a 23px link). */
+.fx-manage .fx-m-danger .fx-remove-arm{ display: flex; align-items: center; justify-content: center; width: 100%; min-height: 48px !important; margin-top: 4px;
+  border: 1px solid var(--danger-border); border-radius: 14px; background: transparent; font-weight: 600; font-size: 15px; }
+.fx-manage .fx-remove-confirm{ scroll-margin-bottom: 28px; padding: 12px; border-radius: 14px; border: 1px solid var(--danger-border); background: rgba(181,69,63,.08); font-size: 14px; line-height: 1.4; }
+.fx-manage .fx-remove-confirm .preset-btn{ min-height: 48px; }
+.fx-manage .fx-remove-yes{ background: rgba(181,69,63,.9); border-color: transparent; color: #fff; font-weight: 700; }
+/* iOS draws date and time boxes at their own width unless told otherwise. */
+.fx-manage .fx-m-field input[type="date"], .fx-manage .fx-m-field input[type="time"]{
+  -webkit-appearance: none; appearance: none; display: block; width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; text-align: left; }
+.fx-manage .fx-m-grid > .fx-m-field{ min-width: 0; overflow: hidden; }

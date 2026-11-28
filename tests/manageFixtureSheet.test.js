@@ -53,3 +53,27 @@ maybe('the names show in full, answers are pills under them, the booking is a sw
     assert.deepStrictEqual(app.pageErrors, []);
   } finally { await app.close(); }
 });
+
+maybe('Remove fixture: a thumb-sized button; the question comes into view; Remove takes it off and closes the sheet', async () => {
+  const app = await H.open({ now: NOW, mobile: true, viewport: { width: 390, height: 844 }, club: { moneypadel_game_requests: [{ ...fixture, id: 'fxR' }] } });
+  try {
+    await app.run(async () => {
+      const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+      isUnlocked = true; currentUserName = 'Shaun';
+      openGameSheet('fxR'); await wait(100);
+      document.querySelector('#gameSheet .game-admin').click(); await wait(150);
+      const p = document.querySelector('#gameSheet .game-sheet'); p.scrollTop = p.scrollHeight; await wait(100);
+    });
+    const box = await app.page.locator('#gameSheet .fx-remove-arm').boundingBox();
+    assert.ok(box.height >= 44 && box.width > 250, `a real target, not a 23px link (${box.width}×${box.height})`);
+    await app.page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    await app.run(() => new Promise((res) => setTimeout(res, 500)));
+    const yes = await app.page.locator('#gameSheet .fx-remove-yes').boundingBox();
+    assert.ok(yes && yes.y + yes.height <= 844, 'Remove fixture (the second tap) is on screen');
+    await app.page.touchscreen.tap(yes.x + yes.width / 2, yes.y + yes.height / 2);
+    const r = await app.run(async () => { await new Promise((res) => setTimeout(res, 300));
+      return { status: gameRequestsState[0].status, open: document.getElementById('gameSheet').classList.contains('show') }; });
+    assert.deepStrictEqual(r, { status: 'removed', open: false });
+    assert.deepStrictEqual(app.pageErrors, []);
+  } finally { await app.close(); }
+});
